@@ -230,3 +230,111 @@
   }
   .add-main span{display:inline-block!important}
 }
+
+/* Match the lower floating action exactly to the header action */
+.desktop-floating-add{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-width:0;
+  height:50px;
+  min-height:50px;
+  padding:0 21px;
+  border-radius:999px;
+  background:#0b0b0d;
+  color:#fff;
+  font-size:15px;
+  font-weight:760;
+  line-height:1;
+  letter-spacing:-.02em;
+  box-shadow:0 10px 24px rgba(0,0,0,.12);
+  transition:transform .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.desktop-floating-add:hover{
+  transform:translateY(-1px);
+  background:var(--brand);
+  color:#fff;
+  box-shadow:0 14px 30px rgba(242,86,35,.2);
+}
+.desktop-floating-add:active{transform:translateY(0) scale(.985)}
+
+/* Leads */
+.client-lead{background:rgba(142,107,97,.11);color:#74544B}
+.status-lead{background:#8E6B61}
+.lead-detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.lead-detail-grid>div{padding:13px;border-radius:15px;background:rgba(255,255,255,.58)}
+.lead-detail-grid small,.lead-detail-grid strong{display:block}
+.lead-detail-grid small{color:rgba(5,5,5,.34);font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.lead-detail-grid strong{margin-top:6px;font-size:11px}
+
+/* Secure access forms */
+.client-access-block,.studio-access-block{margin-top:20px}
+.access-form{display:grid;gap:10px;margin-bottom:15px;padding:14px;border-radius:18px;background:rgba(255,255,255,.54)}
+.access-form-actions{display:flex;justify-content:flex-end;gap:8px}
+.access-list{display:grid;gap:7px}
+.access-row{display:grid;grid-template-columns:36px minmax(150px,1fr) minmax(150px,.9fr) minmax(150px,.9fr) 32px;align-items:center;gap:10px;padding:10px;border-radius:16px;background:rgba(255,255,255,.62)}
+.access-icon{display:grid;width:34px;height:34px;place-items:center;border-radius:12px;background:rgba(242,86,35,.1);color:var(--brand)}
+.access-main strong,.access-main small,.access-value span,.access-value b{display:block}
+.access-main strong{font-size:11px}
+.access-main small{margin-top:3px;color:rgba(5,5,5,.34);font-size:8px;line-height:1.35}
+.access-value{position:relative;padding-right:46px}
+.access-value span{color:rgba(5,5,5,.3);font-size:7px;text-transform:uppercase;letter-spacing:.08em}
+.access-value b{margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.access-value button{position:relative;display:inline-grid;width:20px;height:20px;place-items:center;margin:3px 0 0 3px;border-radius:50%;background:rgba(5,5,5,.05);color:rgba(5,5,5,.42)}
+.team-page-stack{display:grid;gap:20px}
+.compensation-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.compensation-card{display:flex;align-items:center;gap:9px;padding:12px;border-radius:16px;background:rgba(255,255,255,.58)}
+.team-avatar.small{width:36px;height:36px;border-radius:12px;font-size:9px}
+.compensation-card strong,.compensation-card span,.compensation-card small{display:block}
+.compensation-card strong{font-size:10px}
+.compensation-card span{margin-top:3px;font-size:9px}
+.compensation-card small{color:rgba(5,5,5,.34);font-size:8px}
+.compensation-history{display:grid;gap:6px;margin-top:12px}
+.compensation-history>div{display:grid;grid-template-columns:1fr auto 80px;align-items:center;gap:10px;padding:9px 10px;border-radius:13px;background:rgba(255,255,255,.48)}
+.compensation-history strong,.compensation-history small{display:block}
+.compensation-history strong{font-size:10px}
+.compensation-history small{margin-top:2px;color:rgba(5,5,5,.34);font-size:8px}
+.compensation-history b{font-size:10px}
+.compensation-history span{font-size:8px;color:var(--green);text-align:right}
+
+/* Ledger + deadlines */
+.ledger-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.ledger-summary>div{padding:13px;border-radius:15px;background:rgba(255,255,255,.58)}
+.ledger-summary small,.ledger-summary strong{display:block}
+.ledger-summary small{color:rgba(5,5,5,.34);font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.ledger-summary strong{margin-top:6px;font-size:19px;letter-spacing:-.04em}
+.ledger-list{display:grid;gap:6px}
+.ledger-row{display:grid;grid-template-columns:30px minmax(180px,1fr) 90px 100px 100px;align-items:center;gap:10px;padding:10px;border-radius:15px;background:rgba(255,255,255,.58)}
+.ledger-sign{display:grid;width:28px;height:28px;place-items:center;border-radius:50%;font-weight:800}
+.ledger-sign.income{background:rgba(35,138,88,.11);color:var(--green)}
+.ledger-sign.expense{background:rgba(232,93,104,.11);color:#A62F39}
+.ledger-row strong,.ledger-row small{display:block}
+.ledger-row strong{font-size:10px}
+.ledger-row small{margin-top:2px;color:rgba(5,5,5,.34);font-size:8px}
+.ledger-row time,.ledger-row b{font-size:9px}
+.deadline-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.deadline-card{display:grid;grid-template-columns:1fr 120px 100px;gap:12px;padding:15px;border:1px solid rgba(255,255,255,.8);border-radius:19px;background:rgba(255,255,255,.62)}
+.deadline-card.overdue{border-color:rgba(232,93,104,.18);background:rgba(232,93,104,.045)}
+.deadline-card p,.deadline-card h3,.deadline-card span{margin:0}
+.deadline-card p{font-size:9px;color:rgba(5,5,5,.38)}
+.deadline-card h3{margin-top:4px;font-size:13px}
+.deadline-card span{display:block;margin-top:3px;color:rgba(5,5,5,.35);font-size:8px}
+.deadline-card small,.deadline-card strong{display:block}
+.deadline-card small{font-size:7px;color:rgba(5,5,5,.3);text-transform:uppercase}
+.deadline-card strong{margin-top:4px;font-size:10px}
+.deadline-card .deadline-note{grid-column:1/-1;padding-top:8px;border-top:1px solid var(--hair);font-size:8px}
+
+@media(max-width:900px){
+  .access-row{grid-template-columns:36px 1fr 32px}
+  .access-value{grid-column:2;padding-right:0}
+  .compensation-grid{grid-template-columns:repeat(2,1fr)}
+  .deadline-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .lead-detail-grid,.ledger-summary,.compensation-grid{grid-template-columns:1fr 1fr}
+  .ledger-row{grid-template-columns:28px 1fr auto}
+  .ledger-row time,.ledger-row .status-chip{display:none}
+  .deadline-card{grid-template-columns:1fr 90px}
+  .deadline-card>div:nth-child(3){grid-column:2}
+}
