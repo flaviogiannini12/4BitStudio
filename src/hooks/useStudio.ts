@@ -10,13 +10,73 @@ import type {
 } from '../types/studio'
 
 const STORAGE_KEY = '4bit-studio-v1'
+const EXCEL_MIGRATION_KEY = '4bit-studio-excel-seed-2026-09'
 const cloneDemo = () => JSON.parse(JSON.stringify(demoData)) as StudioData
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID()}`
+
+function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
+  const seed = cloneDemo()
+  const source = value ?? {}
+  const clients = (source.clients ?? []).map(client => ({
+    yearAcquired: null, analyticsEnabled: false, leadSector: '', leadSource: '', leadStage: '',
+    nextAction: '', lastContact: null, ...client,
+  })) as StudioData['clients']
+  return {
+    clients,
+    members: source.members ?? [],
+    projects: source.projects ?? [],
+    tasks: source.tasks ?? [],
+    recurrences: source.recurrences ?? [],
+    payments: source.payments ?? [],
+    ledgerEntries: source.ledgerEntries ?? [],
+    compensations: source.compensations ?? [],
+    deadlines: source.deadlines ?? [],
+    maintenancePeriods: source.maintenancePeriods ?? [],
+  }
+}
 
 function readLocal(): StudioData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) as StudioData : cloneDemo()
+    if (!raw) {
+      const seed = cloneDemo()
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed))
+      localStorage.setItem(EXCEL_MIGRATION_KEY, '1')
+      return seed
+    }
+
+    const parsed = normalizeStudioData(JSON.parse(raw))
+    const alreadyMigrated = localStorage.getItem(EXCEL_MIGRATION_KEY) === '1'
+    if (!alreadyMigrated) {
+      const isLegacyDemo = parsed.clients.some(c => ['Studio Alpha','Cliente Beta','Cliente Gamma','Cliente Delta','Cliente Epsilon'].includes(c.name))
+      if (isLegacyDemo || parsed.clients.length === 0) {
+        const seed = cloneDemo()
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seed))
+        localStorage.setItem(EXCEL_MIGRATION_KEY, '1')
+        return seed
+      }
+
+      const seed = cloneDemo()
+      const clientNames = new Set(parsed.clients.map(c => c.name))
+      const taskTitles = new Set(parsed.tasks.map(t => t.title))
+      const merged: StudioData = {
+        ...parsed,
+        clients: [...parsed.clients, ...seed.clients.filter(c => !clientNames.has(c.name))],
+        tasks: [...parsed.tasks, ...seed.tasks.filter(t => !taskTitles.has(t.title))],
+        ledgerEntries: parsed.ledgerEntries.length ? parsed.ledgerEntries : seed.ledgerEntries,
+        compensations: parsed.compensations.length ? parsed.compensations : seed.compensations,
+        deadlines: parsed.deadlines.length ? parsed.deadlines : seed.deadlines,
+        maintenancePeriods: parsed.maintenancePeriods.length ? parsed.maintenancePeriods : seed.maintenancePeriods,
+        payments: parsed.payments.length ? parsed.payments : seed.payments,
+        recurrences: parsed.recurrences.length ? parsed.recurrences : seed.recurrences,
+        members: parsed.members.length ? parsed.members : seed.members,
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+      localStorage.setItem(EXCEL_MIGRATION_KEY, '1')
+      return merged
+    }
+
+    return parsed
   } catch {
     return cloneDemo()
   }
