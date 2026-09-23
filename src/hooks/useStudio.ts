@@ -23,7 +23,7 @@ function readLocal(): StudioData {
 }
 
 export function useStudio(user: User | null, ready: boolean) {
-  const [data, setData] = useState<StudioData>(() => cloudEnabled ? { clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [] } : readLocal())
+  const [data, setData] = useState<StudioData>(() => cloudEnabled ? { clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], deadlines: [], maintenancePeriods: [] } : readLocal())
   const [loading, setLoading] = useState(cloudEnabled)
   const [error, setError] = useState<string | null>(null)
   const [needsWorkspace, setNeedsWorkspace] = useState(false)
@@ -47,7 +47,7 @@ export function useStudio(user: User | null, ready: boolean) {
       const member = await hasWorkspaceMembership()
       if (!member) {
         setNeedsWorkspace(true)
-        setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [] })
+        setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], deadlines: [], maintenancePeriods: [] })
         setError(null)
         return
       }
@@ -116,7 +116,7 @@ export function useStudio(user: User | null, ready: boolean) {
   const actions = useMemo(() => ({
     async createClient(input: ClientInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createClient(user, input); await reload() })
-      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logoUrl: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', createdAt: new Date().toISOString() }
+      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logoUrl: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', yearAcquired: input.yearAcquired ?? null, analyticsEnabled: input.analyticsEnabled ?? false, leadSector: input.leadSector ?? '', leadSource: input.leadSource ?? '', leadStage: input.leadStage ?? '', nextAction: input.nextAction ?? '', lastContact: input.lastContact ?? null, createdAt: new Date().toISOString() }
       saveLocal(current => ({ ...current, clients: [...current.clients, value] }))
     },
     async updateClient(clientId: string, input: Partial<Client>) {
