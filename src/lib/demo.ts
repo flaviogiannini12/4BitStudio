@@ -8,11 +8,11 @@ const iso = (offset: number) => {
 
 export const demoData: StudioData = {
   clients: [
-    { id: 'c-oxymoro', name: 'Studio Alpha', status: 'active', website: 'studioalpha.it', contactName: '', email: '', phone: '', services: ['Sito', 'Hosting', 'Mantenimento'], notes: 'Manutenzione trimestrale attiva.', createdAt: iso(-500) },
-    { id: 'c-trattoria', name: 'Cliente Beta', status: 'active', website: '', contactName: '', email: '', phone: '', services: ['Sito', 'Hosting'], notes: '', createdAt: iso(-420) },
-    { id: 'c-maurizio', name: 'Cliente Gamma', status: 'active', website: 'clientegamma.it', contactName: '', email: '', phone: '', services: ['Figma', 'Sito', 'Hosting'], notes: '', createdAt: iso(-400) },
-    { id: 'c-uar', name: 'Cliente Delta', status: 'active', website: '', contactName: '', email: '', phone: '', services: ['Sito', 'Hosting'], notes: '', createdAt: iso(-180) },
-    { id: 'c-astra', name: 'Cliente Epsilon', status: 'in_progress', website: '', contactName: '', email: '', phone: '', services: ['Sito'], notes: '', createdAt: iso(-80) },
+    { id: 'c-oxymoro', name: 'Studio Alpha', status: 'active', website: 'studioalpha.it', contactName: '', email: '', phone: '', logoUrl: '', services: ['Sito', 'Hosting', 'Mantenimento'], notes: 'Manutenzione trimestrale attiva.', createdAt: iso(-500) },
+    { id: 'c-trattoria', name: 'Cliente Beta', status: 'active', website: '', contactName: '', email: '', phone: '', logoUrl: '', services: ['Sito', 'Hosting'], notes: '', createdAt: iso(-420) },
+    { id: 'c-maurizio', name: 'Cliente Gamma', status: 'active', website: 'clientegamma.it', contactName: '', email: '', phone: '', logoUrl: '', services: ['Figma', 'Sito', 'Hosting'], notes: '', createdAt: iso(-400) },
+    { id: 'c-uar', name: 'Cliente Delta', status: 'active', website: '', contactName: '', email: '', phone: '', logoUrl: '', services: ['Sito', 'Hosting'], notes: '', createdAt: iso(-180) },
+    { id: 'c-astra', name: 'Cliente Epsilon', status: 'in_progress', website: '', contactName: '', email: '', phone: '', logoUrl: '', services: ['Sito'], notes: '', createdAt: iso(-80) },
   ],
   members: [
     { id: 'm-edoardo', name: 'Edoardo', role: 'Team', active: true, createdAt: iso(-365) },
