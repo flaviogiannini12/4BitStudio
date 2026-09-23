@@ -40,7 +40,9 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
           <ClientLogo logoUrl={c.logoUrl} name={c.name}/>
           <div className="client-list-main">
             <div><h3>{c.name}</h3><span className={`status-chip client-${c.status}`}>{clientStatusLabel[c.status]}</span></div>
-            <p>{c.status === 'lead' ? [c.leadSector,c.leadSource,c.nextAction].filter(Boolean).join(' · ') || 'Lead da lavorare' : c.services.length ? c.services.join(' · ') : 'Nessun servizio inserito'}</p>
+            <p>{c.status === 'lead'
+              ? [c.leadSector,c.leadSource,c.nextAction].filter(Boolean).join(' · ') || 'Lead da lavorare'
+              : [c.yearAcquired ? String(c.yearAcquired) : '', c.website, c.services.length ? c.services.join(' · ') : ''].filter(Boolean).join(' · ') || 'Nessun dato inserito'}</p>
           </div>
           <div className="client-list-stat"><strong>{open.length}</strong><span>task aperte</span></div>
           <div className="client-next-payment"><small>{c.status === 'lead' ? 'Stato lead' : 'Prossimo pagamento'}</small><strong>{c.status === 'lead' ? (c.leadStage || 'Da lavorare') : payment ? countdownLabel(payment.dueDate) : '—'}</strong></div>
@@ -54,12 +56,19 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
 
 function ClientDetail({ client, data, actions, onBack }: { client: Client; data: StudioData; actions: Actions; onBack: () => void }) {
   const [changingLogo, setChangingLogo] = useState(false)
-  const tasks = data.tasks.filter(t => t.clientId === client.id && t.status !== 'done')
-  const payments = data.payments.filter(p => p.clientId === client.id).sort((a,b) => b.dueDate.localeCompare(a.dueDate))
-  const recurrences = data.recurrences.filter(r => r.clientId === client.id)
+  const tasks = (data.tasks ?? []).filter(t => t.clientId === client.id && t.status !== 'done')
+  const payments = (data.payments ?? []).filter(p => p.clientId === client.id).sort((a,b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
+  const recurrences = (data.recurrences ?? []).filter(r => r.clientId === client.id)
   const nextDue = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
-  const deadlines = data.deadlines.filter(d => d.clientId === client.id).sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-  const maintenance = data.maintenancePeriods.filter(m => m.clientId === client.id).sort((a,b) => b.periodTo.localeCompare(a.periodTo))
+  const deadlines = (data.deadlines ?? []).filter(d => d.clientId === client.id).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
+  const maintenance = (data.maintenancePeriods ?? []).filter(m => m.clientId === client.id).sort((a,b) => (b.periodTo ?? '').localeCompare(a.periodTo ?? ''))
+  const movements = (data.ledgerEntries ?? []).filter(m => m.clientId === client.id).sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
+  const compensations = (data.compensations ?? []).filter(x => x.clientId === client.id)
+  const received = movements.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((sum,x) => sum + x.amount, 0)
+  const receivable = movements.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((sum,x) => sum + x.amount, 0)
+  const costs = movements.filter(x => x.direction === 'expense').reduce((sum,x) => sum + x.amount, 0)
+  const teamFees = compensations.reduce((sum,x) => sum + x.amount, 0)
+  const margin = received - costs - teamFees
 
   async function setStatus(status: ClientStatus) {
     await actions.updateClient(client.id, { status })
@@ -116,6 +125,41 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>{client.status === 'lead' ? 'Stato lead' : 'Ricorrenze attive'}</small><strong>{client.status === 'lead' ? (client.leadStage || '—') : recurrences.filter(r => r.active).length}</strong></div>
       </div>
     </section>
+
+    <section className="section-block compact-block client-masterdata">
+      <div className="section-heading"><div><p className="eyebrow">Dati Excel</p><h2>Scheda cliente</h2></div></div>
+      <div className="client-master-grid">
+        <div><small>Anno acquisizione</small><strong>{client.yearAcquired ?? '—'}</strong></div>
+        <div><small>Stato</small><strong>{clientStatusLabel[client.status]}</strong></div>
+        <div><small>Dominio</small><strong>{client.website || '—'}</strong></div>
+        <div><small>Analytics</small><strong>{client.analyticsEnabled ? 'Sì' : 'No'}</strong></div>
+        <div><small>Referente</small><strong>{client.contactName || '—'}</strong></div>
+        <div><small>Email</small><strong>{client.email || '—'}</strong></div>
+        <div><small>Telefono</small><strong>{client.phone || '—'}</strong></div>
+        <div className="master-wide"><small>Servizi</small><strong>{client.services.length ? client.services.join(' · ') : '—'}</strong></div>
+        <div className="master-wide"><small>Note</small><strong>{client.notes || '—'}</strong></div>
+      </div>
+    </section>
+
+    {client.status !== 'lead' && <section className="section-block compact-block client-financial-block">
+      <div className="section-heading"><div><p className="eyebrow">Redditività</p><h2>Situazione economica</h2></div></div>
+      <div className="client-financial-grid">
+        <div><small>Incassato</small><strong>{money(received)}</strong></div>
+        <div><small>Da incassare</small><strong>{money(receivable)}</strong></div>
+        <div><small>Costi</small><strong>{money(costs)}</strong></div>
+        <div><small>Compensi team</small><strong>{money(teamFees)}</strong></div>
+        <div className="financial-margin"><small>Margine studio</small><strong>{money(margin)}</strong></div>
+      </div>
+      {movements.length > 0 && <div className="client-movement-list">
+        {movements.map(m => <div key={m.id}>
+          <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
+          <div><strong>{m.description || m.category}</strong><small>{m.category}{m.notes ? ' · ' + m.notes : ''}</small></div>
+          <span>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</span>
+          <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
+          <em>{m.status}</em>
+        </div>)}
+      </div>}
+    </section>}
 
     {client.status === 'lead' && <section className="section-block compact-block client-tasks-block">
       <div className="section-heading"><div><p className="eyebrow">Lead</p><h2>Informazioni commerciali</h2></div></div>
