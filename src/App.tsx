@@ -5,6 +5,7 @@ import { AuthScreen } from './components/AuthScreen'
 import { PageHeader } from './components/PageHeader'
 import { PaymentReminderModal } from './components/PaymentReminderModal'
 import { QuickCreateModal } from './components/QuickCreateModal'
+import { WorkspaceJoin } from './components/WorkspaceJoin'
 import { useAuth } from './hooks/useAuth'
 import { useStudio } from './hooks/useStudio'
 import { ClientsPage } from './pages/ClientsPage'
@@ -61,6 +62,7 @@ export default function App() {
 
   if (auth.loading) return <div className="center-loader"><LoaderCircle className="spin"/></div>
   if (auth.cloudEnabled && !auth.user) return <AuthScreen/>
+  if (auth.cloudEnabled && studio.needsWorkspace) return <WorkspaceJoin onJoin={studio.joinStudio}/>
 
   const reminder = studio.data.payments.find(p => p.id === reminderId) ?? null
   const reminderClient = reminder ? studio.data.clients.find(c => c.id === reminder.clientId) : undefined
