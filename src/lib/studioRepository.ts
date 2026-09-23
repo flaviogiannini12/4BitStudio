@@ -27,7 +27,7 @@ export async function joinWorkspace(inviteCode: string) {
 
 const fromClient = (r: any): Client => ({
   id: r.id, name: r.name, status: r.status, website: r.website ?? '', contactName: r.contact_name ?? '',
-  email: r.email ?? '', phone: r.phone ?? '', services: r.services ?? [], notes: r.notes ?? '', createdAt: r.created_at,
+  email: r.email ?? '', phone: r.phone ?? '', logoUrl: r.logo_url ?? '', services: r.services ?? [], notes: r.notes ?? '', createdAt: r.created_at,
 })
 const fromMember = (r: any): TeamMember => ({ id: r.id, name: r.name, role: r.role ?? '', active: r.active, createdAt: r.created_at })
 const fromProject = (r: any): Project => ({ id: r.id, clientId: r.client_id, name: r.name, status: r.status, deadline: r.deadline, description: r.description ?? '', createdAt: r.created_at })
@@ -70,7 +70,7 @@ async function remove(table: string, id: string) {
 
 export const cloudRepo = {
   async createClient(user: User, input: ClientInput) {
-    return fromClient(await insert('clients', { owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', services: input.services ?? [], notes: input.notes ?? '' }))
+    return fromClient(await insert('clients', { owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logo_url: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '' }))
   },
   async updateClient(id: string, input: Partial<Client>) {
     const payload: any = {}
@@ -80,6 +80,7 @@ export const cloudRepo = {
     if (input.contactName !== undefined) payload.contact_name = input.contactName
     if (input.email !== undefined) payload.email = input.email
     if (input.phone !== undefined) payload.phone = input.phone
+    if (input.logoUrl !== undefined) payload.logo_url = input.logoUrl
     if (input.services !== undefined) payload.services = input.services
     if (input.notes !== undefined) payload.notes = input.notes
     return fromClient(await update('clients', id, payload))
