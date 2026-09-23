@@ -7,14 +7,14 @@ import type { StudioData, Task, TaskStatus } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
-type Filter = 'open' | TaskStatus | 'all'
+type Filter = 'open' | 'done'
 
 export function TasksPage({ data, actions, onNew }: { data: StudioData; actions: Actions; onNew: () => void }) {
   const [filter, setFilter] = useState<Filter>('open')
   const today = todayISO()
 
   const tasks = useMemo(() => data.tasks
-    .filter(t => filter === 'all' ? true : filter === 'open' ? t.status !== 'done' : t.status === filter)
+    .filter(t => filter === 'open' ? t.status !== 'done' : t.status === 'done')
     .sort((a,b) => (a.dueDate ?? '9999-99-99').localeCompare(b.dueDate ?? '9999-99-99')),
   [data.tasks, filter])
 
@@ -47,12 +47,9 @@ export function TasksPage({ data, actions, onNew }: { data: StudioData; actions:
       <button className="primary-button" onClick={onNew}><Plus size={15}/> Nuova task</button>
     </div>
 
-    <div className="segmented task-filter">
-      {(['open','todo','doing','done','all'] as const).map(x =>
-        <button key={x} onClick={() => setFilter(x)} className={filter === x ? 'active' : ''}>
-          {x === 'open' ? 'Aperte' : x === 'all' ? 'Tutte' : taskStatusLabel[x]}
-        </button>
-      )}
+    <div className="segmented task-filter task-filter-two">
+      <button onClick={() => setFilter('open')} className={filter === 'open' ? 'active' : ''}>Aperte</button>
+      <button onClick={() => setFilter('done')} className={filter === 'done' ? 'active' : ''}>Completate</button>
     </div>
 
     <div className="task-calendar-panel">
