@@ -5,18 +5,30 @@ import type { StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
+type Tab = 'payments' | 'recurrences' | 'movements' | 'deadlines'
 
 export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onReminder }: { data: StudioData; actions: Actions; onNewPayment: () => void; onNewRecurrence: () => void; onReminder: (id: string) => void }) {
-  const [tab, setTab] = useState<'payments' | 'recurrences'>('payments')
+  const [tab, setTab] = useState<Tab>('payments')
   const [showPaid, setShowPaid] = useState(false)
-  const client = (id: string) => data.clients.find(c => c.id === id)?.name ?? 'Cliente'
+  const client = (id: string | null) => data.clients.find(c => c.id === id)?.name ?? '4Bit Studio'
   const payments = data.payments.filter(p => showPaid || p.status === 'pending').sort((a,b) => a.status === b.status ? a.dueDate.localeCompare(b.dueDate) : a.status === 'pending' ? -1 : 1)
+  const movements = [...data.ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
+  const deadlines = [...data.deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
 
   return <section className="section-block page-section">
-    <div className="section-heading responsive-heading"><div><p className="eyebrow">Scadenze, canoni e rinnovi</p><h2>Pagamenti</h2></div><div className="inline-actions"><button className="secondary-button" onClick={onNewRecurrence}><Repeat2 size={15}/> Nuova ricorrenza</button><button className="primary-button" onClick={onNewPayment}>Nuovo pagamento</button></div></div>
-    <div className="segmented payment-tabs"><button className={tab === 'payments' ? 'active' : ''} onClick={() => setTab('payments')}>Pagamenti</button><button className={tab === 'recurrences' ? 'active' : ''} onClick={() => setTab('recurrences')}>Ricorrenze</button></div>
+    <div className="section-heading responsive-heading">
+      <div><p className="eyebrow">Scadenze, canoni e rinnovi</p><h2>Pagamenti</h2></div>
+      <div className="inline-actions"><button className="secondary-button" onClick={onNewRecurrence}><Repeat2 size={15}/> Nuova ricorrenza</button><button className="primary-button" onClick={onNewPayment}>Nuovo pagamento</button></div>
+    </div>
 
-    {tab === 'payments' ? <>
+    <div className="segmented payment-tabs">
+      <button className={tab === 'payments' ? 'active' : ''} onClick={() => setTab('payments')}>Pagamenti</button>
+      <button className={tab === 'recurrences' ? 'active' : ''} onClick={() => setTab('recurrences')}>Ricorrenze</button>
+      <button className={tab === 'movements' ? 'active' : ''} onClick={() => setTab('movements')}>Movimenti</button>
+      <button className={tab === 'deadlines' ? 'active' : ''} onClick={() => setTab('deadlines')}>Scadenze</button>
+    </div>
+
+    {tab === 'payments' && <>
       <div className="list-toolbar"><p><strong>{data.payments.filter(p => p.status === 'pending').length}</strong> pagamenti aperti</p><label className="switch-label"><input type="checkbox" checked={showPaid} onChange={e => setShowPaid(e.target.checked)}/><span/>Mostra pagati</label></div>
       <div className="payment-list full-list">
         {payments.map(p => <article className={`payment-row tone-${p.status === 'paid' ? 'paid' : countdownTone(p.dueDate)}`} key={p.id}>
@@ -27,11 +39,40 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
           <div className="row-actions">{p.status === 'pending' ? <><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna pagato</button></> : <span className="paid-badge"><CheckCircle2 size={14}/> Incassato</span>}<button className="icon-button tiny" onClick={() => void actions.deletePayment(p.id)}><Trash2 size={13}/></button></div>
         </article>)}
       </div>
-    </> : <div className="recurrence-grid">
+    </>}
+
+    {tab === 'recurrences' && <div className="recurrence-grid">
       {data.recurrences.map(r => <article className={`recurrence-card ${r.active ? '' : 'inactive'}`} key={r.id}>
-        <div className="recurrence-icon"><CalendarClock size={20}/></div><div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3></div><strong>{money(r.amount)}</strong></div>
+        <div className="recurrence-icon"><CalendarClock size={20}/></div>
+        <div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3></div><strong>{money(r.amount)}</strong></div>
         <div className="recurrence-data"><div><small>Frequenza</small><strong>{r.intervalMonths === 1 ? 'Mensile' : r.intervalMonths === 3 ? 'Trimestrale' : r.intervalMonths === 6 ? 'Semestrale' : r.intervalMonths === 12 ? 'Annuale' : `Ogni ${r.intervalMonths} mesi`}</strong></div><div><small>Prossima</small><strong>{countdownLabel(r.nextDueDate)}</strong></div></div>
         <div className="card-actions"><button className="secondary-button" onClick={() => void actions.updateRecurrence(r.id, { active: !r.active })}>{r.active ? <><PauseCircle size={14}/> Pausa</> : <><PlayCircle size={14}/> Riattiva</>}</button><button className="icon-button tiny" onClick={() => void actions.deleteRecurrence(r.id)}><Trash2 size={13}/></button></div>
+      </article>)}
+    </div>}
+
+    {tab === 'movements' && <div className="ledger-wrap">
+      <div className="ledger-summary">
+        <div><small>Entrate incassate</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
+        <div><small>Da incassare</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
+        <div><small>Uscite</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
+      </div>
+      <div className="ledger-list">
+        {movements.map(m => <div className="ledger-row" key={m.id}>
+          <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
+          <div><strong>{m.description || m.category}</strong><small>{client(m.clientId)} · {m.category}{m.notes ? ' · ' + m.notes : ''}</small></div>
+          <time>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</time>
+          <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
+          <span className="status-chip">{m.status}</span>
+        </div>)}
+      </div>
+    </div>}
+
+    {tab === 'deadlines' && <div className="deadline-grid">
+      {deadlines.map(d => <article className={`deadline-card ${d.dueDate < new Date().toISOString().slice(0,10) ? 'overdue' : ''}`} key={d.id}>
+        <div><p>{client(d.clientId)}</p><h3>{d.service}</h3><span>{d.provider}</span></div>
+        <div><small>Scadenza</small><strong>{formatShortDate(d.dueDate)}</strong><span>{countdownLabel(d.dueDate)}</span></div>
+        <div><small>Costo</small><strong>{d.cost == null ? '—' : money(d.cost)}</strong><span>{d.status}</span></div>
+        {d.notes && <p className="deadline-note">{d.notes}</p>}
       </article>)}
     </div>}
   </section>
