@@ -1,0 +1,17 @@
+{
+  "name": "4Bit Studio",
+  "short_name": "4Bit Studio",
+  "start_url": "/#home",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/apple-touch-icon-v2.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
