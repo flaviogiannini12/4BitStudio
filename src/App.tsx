@@ -82,7 +82,7 @@ export default function App() {
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
     </main>
-    <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuovo</button>
+    <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuova attività</button>
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
     {reminder && <PaymentReminderModal payment={reminder} client={reminderClient} onRecord={() => studio.actions.recordReminder(reminder.id)} onClose={() => setReminderId(null)}/>} 
   </>
