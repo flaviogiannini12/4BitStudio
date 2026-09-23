@@ -11,6 +11,7 @@ export interface Client {
   contactName: string
   email: string
   phone: string
+  logoUrl: string
   services: string[]
   notes: string
   createdAt: string
@@ -93,6 +94,7 @@ export interface ClientInput {
   contactName?: string
   email?: string
   phone?: string
+  logoUrl?: string
   services?: string[]
   notes?: string
 }
