@@ -8,7 +8,7 @@ function pct(value: number) {
 
 export function StatsPage({ data }: { data: StudioData }) {
   const today = todayISO()
-  const activeClients = data.clients.filter(c => c.status !== 'archived')
+  const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead')
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const doneTasks = data.tasks.filter(t => t.status === 'done')
   const overdueTasks = openTasks.filter(t => t.dueDate && t.dueDate < today)
@@ -21,6 +21,10 @@ export function StatsPage({ data }: { data: StudioData }) {
   const collectedTotal = paid.reduce((sum,p) => sum + p.amount, 0)
   const annualRecurring = data.recurrences.filter(r => r.active).reduce((sum,r) => sum + r.amount * (12 / r.intervalMonths), 0)
   const completion = data.tasks.length ? doneTasks.length / data.tasks.length * 100 : 0
+  const leads = data.clients.filter(c => c.status === 'lead')
+  const ledgerIncome = data.ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0)
+  const ledgerExpenses = data.ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0)
+  const totalCompensations = data.compensations.reduce((s,x) => s+x.amount,0)
 
   const taskByMember = data.members.filter(m => m.active).map(member => ({
     label: member.name,
@@ -52,6 +56,9 @@ export function StatsPage({ data }: { data: StudioData }) {
       <Metric icon={CircleDollarSign} label="Da incassare" value={money(pendingTotal)} sub={pending.length + ' pagamenti aperti'}/>
       <Metric icon={AlertTriangle} label="Scaduto da incassare" value={money(overdueTotal)} sub={overduePayments.length + ' pagamenti scaduti'}/>
       <Metric icon={Repeat2} label="Ricorrente annualizzato" value={money(annualRecurring)} sub={data.recurrences.filter(r => r.active).length + ' ricorrenze attive'}/>
+      <Metric icon={UsersRound} label="Lead" value={String(leads.length)} sub={leads.filter(x => x.leadStage === 'Da contattare').length + ' da contattare'}/>
+      <Metric icon={CircleDollarSign} label="Saldo operativo" value={money(ledgerIncome - ledgerExpenses)} sub={money(ledgerExpenses) + ' di uscite'}/>
+      <Metric icon={CheckCircle2} label="Compensi team" value={money(totalCompensations)} sub={data.compensations.length + ' movimenti registrati'}/>
     </section>
 
     <div className="stats-wide-grid">
