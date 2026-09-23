@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowRight, KeyRound, LoaderCircle } from 'lucide-react'
+import { BRAND_LOGO } from '../lib/brand'
 
 export function WorkspaceJoin({ onJoin }: { onJoin: (code: string) => Promise<void> }) {
   const [code, setCode] = useState('')
@@ -22,8 +23,8 @@ export function WorkspaceJoin({ onJoin }: { onJoin: (code: string) => Promise<vo
   return (
     <main className="auth-wrap">
       <div className="workspace-join-card">
+        <img className="workspace-logo" src={BRAND_LOGO} alt="4Bit Studio"/>
         <div className="workspace-key"><KeyRound size={22}/></div>
-        <p className="eyebrow">4Bit Studio</p>
         <h1>Entra nel workspace.</h1>
         <p className="workspace-copy">Inserisci il codice interno una sola volta. Il tuo account verrà collegato allo spazio condiviso dello studio.</p>
         <form onSubmit={submit} className="form-stack">
