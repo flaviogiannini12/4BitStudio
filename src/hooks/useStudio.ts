@@ -18,8 +18,14 @@ function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
   const seed = cloneDemo()
   const source = value ?? {}
   const clients = (source.clients ?? []).map(client => ({
-    yearAcquired: null, analyticsEnabled: false, leadSector: '', leadSource: '', leadStage: '',
-    nextAction: '', lastContact: null, ...client,
+    ...client,
+    yearAcquired: client.yearAcquired ?? null,
+    analyticsEnabled: client.analyticsEnabled ?? false,
+    leadSector: client.leadSector ?? '',
+    leadSource: client.leadSource ?? '',
+    leadStage: client.leadStage ?? '',
+    nextAction: client.nextAction ?? '',
+    lastContact: client.lastContact ?? null,
   })) as StudioData['clients']
   return {
     clients,
