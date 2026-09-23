@@ -1,10 +1,11 @@
 import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
-import { Trash2 } from 'lucide-react'
+import { ImagePlus, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
   Client, Compensation, Deadline, LedgerEntry, MaintenancePeriod, Payment, Recurrence, StudioData, TeamMember,
 } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
+import { imageFileToDataUrl } from '../lib/image'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 type Kind = 'client' | 'payment' | 'recurrence' | 'ledger' | 'deadline' | 'compensation' | 'maintenance' | 'member'
@@ -27,6 +28,7 @@ export function RecordEditorModal({
 }) {
   const [saving,setSaving] = useState(false)
   const [error,setError] = useState<string | null>(null)
+  const [logoUrl,setLogoUrl] = useState(() => kind === 'client' ? ((record as Client | null)?.logoUrl ?? '') : '')
   const title = useMemo(() => ({
     client: record ? 'Modifica cliente' : 'Nuovo cliente',
     payment: record ? 'Modifica pagamento' : 'Nuovo pagamento',
@@ -75,7 +77,9 @@ export function RecordEditorModal({
           leadStage:s('leadStage'),
           nextAction:s('nextAction'),
           lastContact:nullable('lastContact'),
+          logoUrl,
         }
+        if (!record && !logoUrl) throw new Error('Inserisci il logo del cliente.')
         if (record) await actions.updateClient(record.id,payload)
         else await actions.createClient(payload)
       }
@@ -152,6 +156,20 @@ export function RecordEditorModal({
   return <Modal title={title} onClose={onClose} wide>
     <form className="modal-form editable-record-form" onSubmit={submit}>
       {kind === 'client' && <>
+        <label className="logo-upload-field">
+          <input type="file" accept="image/*" onChange={async e => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            try {
+              setError(null)
+              setLogoUrl(await imageFileToDataUrl(file))
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Logo non valido')
+            }
+          }}/>
+          <div className="logo-upload-preview">{logoUrl ? <img src={logoUrl} alt="Anteprima logo cliente"/> : <ImagePlus size={22}/>}</div>
+          <div><strong>{logoUrl ? 'Logo cliente' : 'Inserisci logo cliente'}</strong><span>{record ? 'Puoi sostituirlo caricando una nuova immagine' : 'Obbligatorio · PNG, JPG o WebP'}</span></div>
+        </label>
         <div className="field-grid two"><Field name="name" label="Nome" defaultValue={v('name')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'active'} options={[['active','Attivo'],['in_progress','In lavorazione'],['paused','In pausa'],['lead','Lead'],['archived','Archivio']]}/></div>
         <div className="field-grid two"><Field name="website" label="Dominio / sito" defaultValue={v('website')}/><Field name="yearAcquired" label="Anno acquisizione" type="number" defaultValue={v('yearAcquired')}/></div>
         <div className="field-grid two"><Field name="contactName" label="Referente" defaultValue={v('contactName')}/><Field name="email" label="Email" type="email" defaultValue={v('email')}/></div>
