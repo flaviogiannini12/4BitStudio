@@ -177,3 +177,12 @@
   .kind-grid-five{grid-template-columns:repeat(3,1fr)}
   .client-detail-actions{justify-content:flex-start}
 }
+
+.page-header-clean{padding-top:82px}
+.page-header-clean .page-eyebrow{margin:0 0 8px}
+.task-filter-two button{min-width:112px}
+@media(max-width:640px){
+  .page-header-clean{padding-top:20px}
+  .task-filter-two{width:100%}
+  .task-filter-two button{flex:1;min-width:0}
+}
