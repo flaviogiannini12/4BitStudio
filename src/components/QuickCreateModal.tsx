@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
 import { CalendarClock, CheckSquare2, CircleDollarSign, ImagePlus, UserPlus, UsersRound } from 'lucide-react'
 import { Modal } from './Modal'
-import type { StudioData } from '../types/studio'
+import type { ClientStatus, StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 import { todayISO } from '../lib/date'
 import { imageFileToDataUrl } from '../lib/image'
@@ -37,6 +37,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
         if (!logoUrl) throw new Error('Inserisci il logo del cliente.')
         await actions.createClient({
           name: val('name'),
+          status: (val('status') || 'active') as ClientStatus,
           website: val('website'),
           contactName: val('contactName'),
           email: val('email'),
@@ -44,6 +45,8 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
           logoUrl,
           services: val('services').split(',').map(x => x.trim()).filter(Boolean),
           notes: val('notes'),
+          yearAcquired: val('yearAcquired') ? Number(val('yearAcquired')) : null,
+          analyticsEnabled: fd.get('analyticsEnabled') === 'on',
         })
       } else if (kind === 'member') {
         await actions.createMember({ name: val('name'), role: val('role') || 'Team' })
@@ -109,9 +112,14 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
             <div className="logo-upload-preview">{logoUrl ? <img src={logoUrl} alt="Anteprima logo cliente"/> : <ImagePlus size={22}/>}</div>
             <div><strong>{logoUrl ? 'Logo inserito' : 'Inserisci logo cliente'}</strong><span>PNG, JPG o WebP · verrà ottimizzato automaticamente</span></div>
           </label>
-          <div className="field-grid two"><Field label="Nome cliente" name="name" required/><Field label="Sito" name="website" placeholder="es. cliente.it"/></div>
+          <div className="field-grid two"><Field label="Nome cliente" name="name" required/><Field label="Dominio / sito" name="website" placeholder="es. cliente.it"/></div>
+          <div className="field-grid two">
+            <Field label="Anno acquisizione" name="yearAcquired" type="number" min="2000" max="2100"/>
+            <Select name="status" label="Stato" options={[["active","Attivo"],["in_progress","In corso"],["paused","In pausa"]]}/>
+          </div>
           <div className="field-grid two"><Field label="Referente" name="contactName"/><Field label="Email" name="email" type="email"/></div>
-          <div className="field-grid two"><Field label="Telefono" name="phone"/><Field label="Servizi" name="services" placeholder="Sito, Hosting, Social"/></div>
+          <div className="field-grid two"><Field label="Telefono" name="phone"/><Field label="Servizi" name="services" placeholder="Figma, Sito web, Hosting"/></div>
+          <label className="checkbox-field"><input type="checkbox" name="analyticsEnabled"/><span>Monitoraggio Analytics attivo</span></label>
           <TextArea label="Note" name="notes"/>
         </>}
 
