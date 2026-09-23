@@ -98,7 +98,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
   }
 
   async function moveTask(taskId: string, dueDate: string | null) {
-    const target = sortTasks(filtered.filter(task => task.id !== taskId && task.dueDate === dueDate))
+    const target = sortTasks(data.tasks.filter(task => task.id !== taskId && task.dueDate === dueDate))
     await actions.reorderTasks([...target.map(task => task.id), taskId], dueDate)
   }
 
