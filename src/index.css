@@ -186,3 +186,47 @@
   .task-filter-two{width:100%}
   .task-filter-two button{flex:1;min-width:0}
 }
+
+/* Compact horizontal New Activity pill */
+.add-main{
+  width:auto!important;
+  min-width:0;
+  min-height:50px;
+  height:50px;
+  padding:0 21px!important;
+  border-radius:999px;
+  gap:10px;
+  font-size:15px;
+  font-weight:760;
+  letter-spacing:-.02em;
+  white-space:nowrap;
+  box-shadow:0 10px 24px rgba(0,0,0,.12);
+}
+.add-main span{display:inline-block!important}
+.add-main svg{flex:0 0 auto}
+
+.desktop-floating-add{
+  min-height:50px;
+  height:50px;
+  padding:0 22px;
+  border-radius:999px;
+  font-size:15px;
+  font-weight:760;
+  letter-spacing:-.02em;
+  white-space:nowrap;
+  box-shadow:0 12px 28px rgba(5,5,5,.18);
+}
+
+@media(max-width:640px){
+  .add-main{
+    width:auto!important;
+    min-width:0!important;
+    height:48px;
+    min-height:48px;
+    padding:0 18px!important;
+    border-radius:999px;
+    gap:9px;
+    font-size:14px;
+  }
+  .add-main span{display:inline-block!important}
+}
