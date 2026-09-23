@@ -4,8 +4,8 @@ import { clientStatusLabel } from '../lib/labels'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
-export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void }) {
-  const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead')
+export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
+  const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const pendingPayments = data.payments.filter(p => p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))
   const upcomingTasks = openTasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 6)
@@ -21,7 +21,29 @@ export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPa
         {activeClients.map(c => {
           const tasks = openTasks.filter(t => t.clientId === c.id)
           const next = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
-          return <button key={c.id} className="client-status-card" onClick={() => onClient(c.id)}>
+          return <button
+            key={c.id}
+            className="client-status-card draggable-client-card"
+            draggable
+            onDragStart={event => {
+              event.dataTransfer.setData('text/4bit-client', c.id)
+              event.dataTransfer.effectAllowed = 'move'
+            }}
+            onDragOver={event => {
+              if (event.dataTransfer.types.includes('text/4bit-client')) event.preventDefault()
+            }}
+            onDrop={event => {
+              event.preventDefault()
+              const draggedId = event.dataTransfer.getData('text/4bit-client')
+              if (!draggedId || draggedId === c.id) return
+              const ordered = activeClients.map(client => client.id).filter(id => id !== draggedId)
+              const targetIndex = ordered.indexOf(c.id)
+              const rect = event.currentTarget.getBoundingClientRect()
+              ordered.splice(event.clientX > rect.left + rect.width / 2 ? targetIndex + 1 : targetIndex, 0, draggedId)
+              void onReorderClients(ordered)
+            }}
+            onClick={() => onClient(c.id)}
+          >
             <div className="client-card-top"><span className={`status-dot status-${c.status}`}/><span>{clientStatusLabel[c.status]}</span><ArrowRight size={15}/></div>
             <div className="home-client-title"><ClientLogo logoUrl={c.logoUrl} name={c.name}/><h3>{c.name}</h3></div>
             <div className="client-task-count"><strong>{tasks.length}</strong><span>{tasks.length === 1 ? 'task aperta' : 'task aperte'}</span></div>
