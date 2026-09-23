@@ -10,10 +10,15 @@ type Tab = 'payments' | 'recurrences' | 'movements' | 'deadlines'
 export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onReminder }: { data: StudioData; actions: Actions; onNewPayment: () => void; onNewRecurrence: () => void; onReminder: (id: string) => void }) {
   const [tab, setTab] = useState<Tab>('payments')
   const [showPaid, setShowPaid] = useState(false)
-  const client = (id: string | null) => data.clients.find(c => c.id === id)?.name ?? '4Bit Studio'
-  const payments = data.payments.filter(p => showPaid || p.status === 'pending').sort((a,b) => a.status === b.status ? a.dueDate.localeCompare(b.dueDate) : a.status === 'pending' ? -1 : 1)
-  const movements = [...data.ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
-  const deadlines = [...data.deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
+  const clients = data.clients ?? []
+  const allPayments = data.payments ?? []
+  const recurrences = data.recurrences ?? []
+  const ledgerEntries = data.ledgerEntries ?? []
+  const allDeadlines = data.deadlines ?? []
+  const client = (id: string | null) => clients.find(c => c.id === id)?.name ?? '4Bit Studio'
+  const payments = allPayments.filter(p => showPaid || p.status === 'pending').sort((a,b) => a.status === b.status ? (a.dueDate ?? '').localeCompare(b.dueDate ?? '') : a.status === 'pending' ? -1 : 1)
+  const movements = [...ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
+  const deadlines = [...allDeadlines].sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
 
   return <section className="section-block page-section">
     <div className="section-heading responsive-heading">
@@ -29,7 +34,7 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
     </div>
 
     {tab === 'payments' && <>
-      <div className="list-toolbar"><p><strong>{data.payments.filter(p => p.status === 'pending').length}</strong> pagamenti aperti</p><label className="switch-label"><input type="checkbox" checked={showPaid} onChange={e => setShowPaid(e.target.checked)}/><span/>Mostra pagati</label></div>
+      <div className="list-toolbar"><p><strong>{allPayments.filter(p => p.status === 'pending').length}</strong> pagamenti aperti</p><label className="switch-label"><input type="checkbox" checked={showPaid} onChange={e => setShowPaid(e.target.checked)}/><span/>Mostra pagati</label></div>
       <div className="payment-list full-list">
         {payments.map(p => <article className={`payment-row tone-${p.status === 'paid' ? 'paid' : countdownTone(p.dueDate)}`} key={p.id}>
           <div className="countdown-box"><small>{p.status === 'paid' ? 'stato' : 'scadenza'}</small><strong>{p.status === 'paid' ? 'pagato' : countdownLabel(p.dueDate)}</strong></div>
@@ -42,7 +47,7 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
     </>}
 
     {tab === 'recurrences' && <div className="recurrence-grid">
-      {data.recurrences.map(r => <article className={`recurrence-card ${r.active ? '' : 'inactive'}`} key={r.id}>
+      {recurrences.map(r => <article className={`recurrence-card ${r.active ? '' : 'inactive'}`} key={r.id}>
         <div className="recurrence-icon"><CalendarClock size={20}/></div>
         <div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3></div><strong>{money(r.amount)}</strong></div>
         <div className="recurrence-data"><div><small>Frequenza</small><strong>{r.intervalMonths === 1 ? 'Mensile' : r.intervalMonths === 3 ? 'Trimestrale' : r.intervalMonths === 6 ? 'Semestrale' : r.intervalMonths === 12 ? 'Annuale' : `Ogni ${r.intervalMonths} mesi`}</strong></div><div><small>Prossima</small><strong>{countdownLabel(r.nextDueDate)}</strong></div></div>
@@ -52,9 +57,9 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
 
     {tab === 'movements' && <div className="ledger-wrap">
       <div className="ledger-summary">
-        <div><small>Entrate incassate</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
-        <div><small>Da incassare</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
-        <div><small>Uscite</small><strong>{money(data.ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
+        <div><small>Entrate incassate</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
+        <div><small>Da incassare</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
+        <div><small>Uscite</small><strong>{money(ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
       </div>
       <div className="ledger-list">
         {movements.map(m => <div className="ledger-row" key={m.id}>
