@@ -1,0 +1,9 @@
+create index if not exists team_members_owner_idx on public.team_members(owner_id);
+create index if not exists projects_client_idx on public.projects(client_id);
+create index if not exists tasks_client_idx on public.tasks(client_id);
+create index if not exists tasks_project_idx on public.tasks(project_id);
+create index if not exists tasks_assignee_fk_idx on public.tasks(assignee_id);
+create index if not exists recurrences_client_idx on public.recurrences(client_id);
+create index if not exists payments_client_idx on public.payments(client_id);
+create index if not exists payments_project_idx on public.payments(project_id);
+create index if not exists payments_recurrence_idx on public.payments(recurrence_id);
