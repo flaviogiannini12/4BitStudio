@@ -75,7 +75,8 @@ export function useStudio(user: User | null, ready: boolean) {
 
   useEffect(() => {
     if (!cloudEnabled || !supabase || !user) return
-    const channel = supabase.channel(`studio-${user.id}`)
+    const client = supabase
+    const channel = client.channel(`studio-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => void reload())
@@ -83,7 +84,7 @@ export function useStudio(user: User | null, ready: boolean) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'recurrences' }, () => void reload())
       .subscribe()
-    return () => { void supabase.removeChannel(channel) }
+    return () => { void client.removeChannel(channel) }
   }, [reload, user])
 
   async function joinStudio(code: string) {
