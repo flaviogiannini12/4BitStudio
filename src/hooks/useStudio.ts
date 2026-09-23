@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import { addMonths, todayISO } from '../lib/date'
 import { demoData } from '../lib/demo'
 import { cloudEnabled, supabase } from '../lib/supabase'
-import { cloudRepo, loadStudioData } from '../lib/studioRepository'
+import { cloudRepo, hasWorkspaceMembership, joinWorkspace, loadStudioData } from '../lib/studioRepository'
 import type {
   Client, ClientInput, Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
   StudioData, Task, TaskInput, TeamMember, TeamMemberInput,
@@ -26,6 +26,7 @@ export function useStudio(user: User | null, ready: boolean) {
   const [data, setData] = useState<StudioData>(() => cloudEnabled ? { clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [] } : readLocal())
   const [loading, setLoading] = useState(cloudEnabled)
   const [error, setError] = useState<string | null>(null)
+  const [needsWorkspace, setNeedsWorkspace] = useState(false)
 
   const saveLocal = useCallback((recipe: (current: StudioData) => StudioData) => {
     setData(current => {
@@ -43,6 +44,14 @@ export function useStudio(user: User | null, ready: boolean) {
     if (!user) return
     setLoading(true)
     try {
+      const member = await hasWorkspaceMembership()
+      if (!member) {
+        setNeedsWorkspace(true)
+        setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [] })
+        setError(null)
+        return
+      }
+      setNeedsWorkspace(false)
       let loaded = await loadStudioData(user)
       if (loaded.members.length === 0) {
         for (const name of ['Edoardo', 'Flavio', 'Francesco', 'Matteo']) {
@@ -76,6 +85,22 @@ export function useStudio(user: User | null, ready: boolean) {
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
   }, [reload, user])
+
+  async function joinStudio(code: string) {
+    if (!cloudEnabled || !user) return
+    setLoading(true)
+    try {
+      await joinWorkspace(code)
+      setNeedsWorkspace(false)
+      setError(null)
+      await reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Codice studio non valido')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function protect(action: () => Promise<void>) {
     try {
@@ -214,5 +239,5 @@ export function useStudio(user: User | null, ready: boolean) {
     },
   }), [data.payments, data.recurrences, reload, saveLocal, user])
 
-  return { data, loading, error, reload, actions, today: todayISO() }
+  return { data, loading, error, needsWorkspace, joinStudio, reload, actions, today: todayISO() }
 }
