@@ -1,15 +1,11 @@
-import { Cloud, HardDrive, LogOut, Plus } from 'lucide-react'
+import { LogOut, Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
-import { formatLongDate } from '../lib/date'
 import { cloudEnabled, supabase } from '../lib/supabase'
-import { BRAND_LOGO } from '../lib/brand'
 
 export function PageHeader({ title, eyebrow, onAdd, user }: { title: string; eyebrow?: string; onAdd: () => void; user: User | null }) {
   return (
-    <header className="page-header">
+    <header className="page-header page-header-clean">
       <div>
-        <div className="brand-line"><img className="brand-logo-header" src={BRAND_LOGO} alt="4Bit Studio"/><span className="sync-pill">{cloudEnabled ? <Cloud size={11}/> : <HardDrive size={11}/>} {cloudEnabled ? 'Sync' : 'Locale'}</span></div>
-        <p className="date-line">{formatLongDate()}</p>
         {eyebrow && <p className="page-eyebrow">{eyebrow}</p>}
         <h1>{title}</h1>
       </div>
