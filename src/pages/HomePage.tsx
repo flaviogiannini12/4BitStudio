@@ -5,7 +5,7 @@ import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
 export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void }) {
-  const activeClients = data.clients.filter(c => c.status !== 'archived')
+  const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead')
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const pendingPayments = data.payments.filter(p => p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))
   const upcomingTasks = openTasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 6)
