@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Archive, ArrowLeft, CalendarClock, Camera, Globe2, Mail, MoreHorizontal, Phone, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarClock, Camera, Globe2, Mail, MoreHorizontal, Pencil, Phone, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
 import { ClientLogo } from '../components/ClientLogo'
 import { ClientAccessSection } from '../components/ClientAccessSection'
+import { RecordEditorModal } from '../components/RecordEditorModal'
 import type { Client, ClientStatus, StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
@@ -56,6 +57,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
 
 function ClientDetail({ client, data, actions, onBack }: { client: Client; data: StudioData; actions: Actions; onBack: () => void }) {
   const [changingLogo, setChangingLogo] = useState(false)
+  const [editor, setEditor] = useState<{kind:'client'|'payment'|'recurrence'|'ledger'|'deadline'|'maintenance'; record:any} | null>(null)
   const tasks = (data.tasks ?? []).filter(t => t.clientId === client.id && t.status !== 'done')
   const payments = (data.payments ?? []).filter(p => p.clientId === client.id).sort((a,b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
   const recurrences = (data.recurrences ?? []).filter(r => r.clientId === client.id)
@@ -68,7 +70,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
   const receivable = movements.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((sum,x) => sum + x.amount, 0)
   const costs = movements.filter(x => x.direction === 'expense').reduce((sum,x) => sum + x.amount, 0)
   const teamFees = compensations.reduce((sum,x) => sum + x.amount, 0)
-  const margin = received - costs - teamFees
 
   async function setStatus(status: ClientStatus) {
     await actions.updateClient(client.id, { status })
@@ -112,6 +113,7 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
       </div>
 
       <div className="client-detail-actions">
+        <button className="primary-button" onClick={() => setEditor({kind:'client',record:client})}><Pencil size={14}/> Modifica dati</button>
         {client.status !== 'archived'
           ? <button className="secondary-button" onClick={() => void setStatus('archived')}><Archive size={14}/> Archivia</button>
           : <button className="secondary-button" onClick={() => void setStatus('active')}><RotateCcw size={14}/> Riattiva</button>}
@@ -148,16 +150,15 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>Da incassare</small><strong>{money(receivable)}</strong></div>
         <div><small>Costi</small><strong>{money(costs)}</strong></div>
         <div><small>Compensi team</small><strong>{money(teamFees)}</strong></div>
-        <div className="financial-margin"><small>Margine studio</small><strong>{money(margin)}</strong></div>
       </div>
       {movements.length > 0 && <div className="client-movement-list">
-        {movements.map(m => <div key={m.id}>
+        {movements.map(m => <button type="button" className="client-movement-edit" key={m.id} onClick={() => setEditor({kind:'ledger',record:m})}>
           <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
           <div><strong>{m.description || m.category}</strong><small>{m.category}{m.notes ? ' · ' + m.notes : ''}</small></div>
           <span>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</span>
           <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
           <em>{m.status}</em>
-        </div>)}
+        </button>)}
       </div>}
     </section>}
 
@@ -184,27 +185,27 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
     </section>
 
     <section className="section-block compact-block">
-      <div className="section-heading"><div><p className="eyebrow">Storico e prossime scadenze</p><h2>Pagamenti</h2></div></div>
+      <div className="section-heading"><div><p className="eyebrow">Storico e prossime scadenze</p><h2>Pagamenti</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'payment',record:null})}><Plus size={14}/> Aggiungi</button></div>
       <div className="client-payments">
-        {payments.slice(0,8).map(p => <div key={p.id}>
+        {payments.slice(0,8).map(p => <button type="button" className="client-payment-edit" key={p.id} onClick={() => setEditor({kind:'payment',record:p})}>
           <span className={`payment-dot ${p.status}`}/>
           <div><strong>{p.label}</strong><small>{formatShortDate(p.dueDate)}{p.recurrenceId ? ' · ricorrente' : ''}</small></div>
           <b>{money(p.amount)}</b>
           <span className={`status-chip ${p.status === 'paid' ? 'payment-paid' : 'payment-pending'}`}>{p.status === 'paid' ? 'Pagato' : countdownLabel(p.dueDate)}</span>
-        </div>)}
+        </button>)}
         {!payments.length && <div className="empty-inline">Nessun pagamento.</div>}
       </div>
     </section>
 
     <div className="client-detail-grid lower">
       <section className="section-block compact-block">
-        <div className="section-heading"><div><p className="eyebrow">Automatici</p><h2>Ricorrenze</h2></div><CalendarClock size={18} className="heading-icon"/></div>
+        <div className="section-heading"><div><p className="eyebrow">Automatici</p><h2>Ricorrenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'recurrence',record:null})}><Plus size={14}/> Aggiungi</button></div>
         <div className="simple-list">
-          {recurrences.map(r => <div className="simple-task" key={r.id}>
+          {recurrences.map(r => <button type="button" className="simple-task editable-simple-row" key={r.id} onClick={() => setEditor({kind:'recurrence',record:r})}>
             <span className={`status-dot ${r.active ? 'status-active' : 'status-paused'}`}/>
             <div><strong>{r.label}</strong><small>{r.intervalMonths === 1 ? 'Mensile' : `Ogni ${r.intervalMonths} mesi`}</small></div>
             <span>{money(r.amount)}</span>
-          </div>)}
+          </button>)}
           {!recurrences.length && <div className="empty-inline">Nessuna ricorrenza.</div>}
         </div>
       </section>
@@ -223,21 +224,30 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
 
     {(deadlines.length > 0 || maintenance.length > 0) && <div className="client-detail-grid lower">
       <section className="section-block compact-block">
-        <div className="section-heading"><div><p className="eyebrow">Hosting e servizi</p><h2>Scadenze</h2></div></div>
+        <div className="section-heading"><div><p className="eyebrow">Hosting e servizi</p><h2>Scadenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'deadline',record:null})}><Plus size={14}/> Aggiungi</button></div>
         <div className="simple-list">
-          {deadlines.map(d => <div className="simple-task" key={d.id}><span className={`status-dot ${d.status === 'SCADUTO' ? 'status-paused' : 'status-active'}`}/><div><strong>{d.service}</strong><small>{d.provider}{d.notes ? ' · ' + d.notes : ''}</small></div><span>{formatShortDate(d.dueDate)}</span></div>)}
+          {deadlines.map(d => <button type="button" className="simple-task editable-simple-row" key={d.id} onClick={() => setEditor({kind:'deadline',record:d})}><span className={`status-dot ${d.status === 'SCADUTO' ? 'status-paused' : 'status-active'}`}/><div><strong>{d.service}</strong><small>{d.provider}{d.notes ? ' · ' + d.notes : ''}</small></div><span>{formatShortDate(d.dueDate)}</span></button>)}
           {!deadlines.length && <div className="empty-inline">Nessuna scadenza.</div>}
         </div>
       </section>
       <section className="section-block compact-block">
-        <div className="section-heading"><div><p className="eyebrow">Storico</p><h2>Manutenzioni</h2></div></div>
+        <div className="section-heading"><div><p className="eyebrow">Storico</p><h2>Manutenzioni</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'maintenance',record:null})}><Plus size={14}/> Aggiungi</button></div>
         <div className="simple-list">
-          {maintenance.map(m => <div className="simple-task" key={m.id}><span className={`status-dot ${m.status === 'Pagato' ? 'status-active' : 'status-in_progress'}`}/><div><strong>{m.service}</strong><small>{m.periodicity} · {m.status}{m.notes ? ' · ' + m.notes : ''}</small></div><span>{money(m.amount)}</span></div>)}
+          {maintenance.map(m => <button type="button" className="simple-task editable-simple-row" key={m.id} onClick={() => setEditor({kind:'maintenance',record:m})}><span className={`status-dot ${m.status === 'Pagato' ? 'status-active' : 'status-in_progress'}`}/><div><strong>{m.service}</strong><small>{m.periodicity} · {m.status}{m.notes ? ' · ' + m.notes : ''}</small></div><span>{money(m.amount)}</span></button>)}
           {!maintenance.length && <div className="empty-inline">Nessuna manutenzione.</div>}
         </div>
       </section>
     </div>}
 
     {client.status !== 'lead' && <ClientAccessSection clientId={client.id}/>}
+
+    {editor && <RecordEditorModal
+      kind={editor.kind}
+      record={editor.record}
+      data={data}
+      actions={actions}
+      presetClientId={client.id}
+      onClose={() => setEditor(null)}
+    />}
   </div>
 }
