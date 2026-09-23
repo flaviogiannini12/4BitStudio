@@ -79,7 +79,7 @@ async function remove(table: string, id: string) {
 
 export const cloudRepo = {
   async createClient(user: User, input: ClientInput) {
-    return fromClient(await insert('clients', { owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logo_url: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '' }))
+    return fromClient(await insert('clients', { owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logo_url: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', year_acquired: input.yearAcquired ?? null, analytics_enabled: input.analyticsEnabled ?? false, lead_sector: input.leadSector ?? '', lead_source: input.leadSource ?? '', lead_stage: input.leadStage ?? '', next_action: input.nextAction ?? '', last_contact: input.lastContact ?? null }))
   },
   async updateClient(id: string, input: Partial<Client>) {
     const payload: any = {}
@@ -92,6 +92,13 @@ export const cloudRepo = {
     if (input.logoUrl !== undefined) payload.logo_url = input.logoUrl
     if (input.services !== undefined) payload.services = input.services
     if (input.notes !== undefined) payload.notes = input.notes
+    if (input.yearAcquired !== undefined) payload.year_acquired = input.yearAcquired
+    if (input.analyticsEnabled !== undefined) payload.analytics_enabled = input.analyticsEnabled
+    if (input.leadSector !== undefined) payload.lead_sector = input.leadSector
+    if (input.leadSource !== undefined) payload.lead_source = input.leadSource
+    if (input.leadStage !== undefined) payload.lead_stage = input.leadStage
+    if (input.nextAction !== undefined) payload.next_action = input.nextAction
+    if (input.lastContact !== undefined) payload.last_contact = input.lastContact
     return fromClient(await update('clients', id, payload))
   },
   deleteClient: (id: string) => remove('clients', id),
