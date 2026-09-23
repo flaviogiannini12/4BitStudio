@@ -5,7 +5,8 @@ import { demoData } from '../lib/demo'
 import { cloudEnabled, supabase } from '../lib/supabase'
 import { cloudRepo, hasWorkspaceMembership, joinWorkspace, loadStudioData } from '../lib/studioRepository'
 import type {
-  Client, ClientInput, Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
+  Client, ClientInput, Compensation, CompensationInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
+  Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
   StudioData, Task, TaskInput, TeamMember, TeamMemberInput,
 } from '../types/studio'
 
@@ -26,12 +27,13 @@ function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
     leadStage: client.leadStage ?? '',
     nextAction: client.nextAction ?? '',
     lastContact: client.lastContact ?? null,
+    sortOrder: client.sortOrder ?? 0,
   })) as StudioData['clients']
   return {
     clients,
     members: source.members ?? [],
     projects: source.projects ?? [],
-    tasks: source.tasks ?? [],
+    tasks: (source.tasks ?? []).map(task => ({ ...task, sortOrder: task.sortOrder ?? 0 })),
     recurrences: source.recurrences ?? [],
     payments: source.payments ?? [],
     ledgerEntries: source.ledgerEntries ?? [],
@@ -182,7 +184,7 @@ export function useStudio(user: User | null, ready: boolean) {
   const actions = useMemo(() => ({
     async createClient(input: ClientInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createClient(user, input); await reload() })
-      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logoUrl: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', yearAcquired: input.yearAcquired ?? null, analyticsEnabled: input.analyticsEnabled ?? false, leadSector: input.leadSector ?? '', leadSource: input.leadSource ?? '', leadStage: input.leadStage ?? '', nextAction: input.nextAction ?? '', lastContact: input.lastContact ?? null, createdAt: new Date().toISOString() }
+      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logoUrl: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', yearAcquired: input.yearAcquired ?? null, analyticsEnabled: input.analyticsEnabled ?? false, leadSector: input.leadSector ?? '', leadSource: input.leadSource ?? '', leadStage: input.leadStage ?? '', nextAction: input.nextAction ?? '', lastContact: input.lastContact ?? null, sortOrder: input.sortOrder ?? Date.now(), createdAt: new Date().toISOString() }
       saveLocal(current => ({ ...current, clients: [...current.clients, value] }))
     },
     async updateClient(clientId: string, input: Partial<Client>) {
@@ -217,7 +219,7 @@ export function useStudio(user: User | null, ready: boolean) {
     },
     async createTask(input: TaskInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createTask(user, input); await reload() })
-      const value: Task = { id: id('task'), title: input.title, clientId: input.clientId ?? null, projectId: input.projectId ?? null, assigneeId: input.assigneeId ?? null, dueDate: input.dueDate ?? null, status: input.status ?? 'todo', description: input.description ?? '', checklist: input.checklist ?? [], createdAt: new Date().toISOString(), completedAt: null }
+      const value: Task = { id: id('task'), title: input.title, clientId: input.clientId ?? null, projectId: input.projectId ?? null, assigneeId: input.assigneeId ?? null, dueDate: input.dueDate ?? null, status: input.status ?? 'todo', description: input.description ?? '', checklist: input.checklist ?? [], createdAt: new Date().toISOString(), completedAt: null, sortOrder: input.sortOrder ?? Date.now() }
       saveLocal(current => ({ ...current, tasks: [...current.tasks, value] }))
     },
     async updateTask(taskId: string, input: Partial<Task>) {
@@ -299,6 +301,87 @@ export function useStudio(user: User | null, ready: boolean) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteRecurrence(recurrenceId); await reload() })
       saveLocal(current => ({ ...current, recurrences: current.recurrences.filter(x => x.id !== recurrenceId) }))
     },
+
+    async createLedger(input: LedgerEntryInput) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createLedger(input); await reload() })
+      const value: LedgerEntry = { id:id('ledger'), entryDate:input.entryDate ?? null, direction:input.direction, clientId:input.clientId ?? null, description:input.description, amount:input.amount, status:input.status ?? '', category:input.category ?? '', notes:input.notes ?? '' }
+      saveLocal(current => ({ ...current, ledgerEntries:[...current.ledgerEntries,value] }))
+    },
+    async updateLedger(entryId: string, input: Partial<LedgerEntry>) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateLedger(entryId,input); await reload() })
+      saveLocal(current => ({ ...current, ledgerEntries:current.ledgerEntries.map(x => x.id === entryId ? {...x,...input} : x) }))
+    },
+    async deleteLedger(entryId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteLedger(entryId); await reload() })
+      saveLocal(current => ({ ...current, ledgerEntries:current.ledgerEntries.filter(x => x.id !== entryId) }))
+    },
+
+    async createCompensation(input: CompensationInput) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createCompensation(input); await reload() })
+      const value: Compensation = { id:id('comp'), entryDate:input.entryDate ?? null, memberId:input.memberId ?? null, memberName:input.memberName, clientId:input.clientId ?? null, description:input.description, amount:input.amount, status:input.status ?? '', notes:input.notes ?? '' }
+      saveLocal(current => ({ ...current, compensations:[...current.compensations,value] }))
+    },
+    async updateCompensation(compId: string, input: Partial<Compensation>) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateCompensation(compId,input); await reload() })
+      saveLocal(current => ({ ...current, compensations:current.compensations.map(x => x.id === compId ? {...x,...input} : x) }))
+    },
+    async deleteCompensation(compId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteCompensation(compId); await reload() })
+      saveLocal(current => ({ ...current, compensations:current.compensations.filter(x => x.id !== compId) }))
+    },
+
+    async createDeadline(input: DeadlineInput) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createDeadline(input); await reload() })
+      const value: Deadline = { id:id('deadline'), clientId:input.clientId ?? null, service:input.service, provider:input.provider ?? '', dueDate:input.dueDate, cost:input.cost ?? null, status:input.status ?? '', notes:input.notes ?? '' }
+      saveLocal(current => ({ ...current, deadlines:[...current.deadlines,value] }))
+    },
+    async updateDeadline(deadlineId: string, input: Partial<Deadline>) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateDeadline(deadlineId,input); await reload() })
+      saveLocal(current => ({ ...current, deadlines:current.deadlines.map(x => x.id === deadlineId ? {...x,...input} : x) }))
+    },
+    async deleteDeadline(deadlineId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteDeadline(deadlineId); await reload() })
+      saveLocal(current => ({ ...current, deadlines:current.deadlines.filter(x => x.id !== deadlineId) }))
+    },
+
+    async createMaintenance(input: MaintenancePeriodInput) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createMaintenance(input); await reload() })
+      const value: MaintenancePeriod = { id:id('maintenance'), clientId:input.clientId ?? null, service:input.service, periodicity:input.periodicity ?? '', amount:input.amount, periodFrom:input.periodFrom, periodTo:input.periodTo, status:input.status ?? '', notes:input.notes ?? '' }
+      saveLocal(current => ({ ...current, maintenancePeriods:[...current.maintenancePeriods,value] }))
+    },
+    async updateMaintenance(maintenanceId: string, input: Partial<MaintenancePeriod>) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateMaintenance(maintenanceId,input); await reload() })
+      saveLocal(current => ({ ...current, maintenancePeriods:current.maintenancePeriods.map(x => x.id === maintenanceId ? {...x,...input} : x) }))
+    },
+    async deleteMaintenance(maintenanceId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteMaintenance(maintenanceId); await reload() })
+      saveLocal(current => ({ ...current, maintenancePeriods:current.maintenancePeriods.filter(x => x.id !== maintenanceId) }))
+    },
+
+    async reorderClients(ids: string[]) {
+      const base = Date.now()
+      if (cloudEnabled && user) return protect(async () => {
+        await Promise.all(ids.map((clientId,index) => cloudRepo.updateClient(clientId,{sortOrder:base+index})))
+        await reload()
+      })
+      saveLocal(current => ({ ...current, clients:current.clients.map(client => {
+        const index = ids.indexOf(client.id)
+        return index >= 0 ? {...client,sortOrder:base+index} : client
+      }) }))
+    },
+
+    async reorderTasks(ids: string[], dueDate?: string | null) {
+      const base = Date.now()
+      if (cloudEnabled && user) return protect(async () => {
+        await Promise.all(ids.map((taskId,index) => cloudRepo.updateTask(taskId,{sortOrder:base+index, ...(dueDate !== undefined ? {dueDate} : {})})))
+        await reload()
+      })
+      saveLocal(current => ({ ...current, tasks:current.tasks.map(task => {
+        const index = ids.indexOf(task.id)
+        return index >= 0 ? {...task,sortOrder:base+index, ...(dueDate !== undefined ? {dueDate} : {})} : task
+      }) }))
+    },
+
     resetLocalDemo() {
       if (cloudEnabled) return
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cloneDemo()))
