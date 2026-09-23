@@ -1,4 +1,4 @@
-export type ClientStatus = 'active' | 'in_progress' | 'paused' | 'archived'
+export type ClientStatus = 'active' | 'in_progress' | 'paused' | 'archived' | 'lead'
 export type ProjectStatus = 'planning' | 'in_progress' | 'review' | 'done'
 export type TaskStatus = 'todo' | 'doing' | 'done'
 export type PaymentStatus = 'pending' | 'paid'
@@ -14,6 +14,13 @@ export interface Client {
   logoUrl: string
   services: string[]
   notes: string
+  yearAcquired: number | null
+  analyticsEnabled: boolean
+  leadSector: string
+  leadSource: string
+  leadStage: string
+  nextAction: string
+  lastContact: string | null
   createdAt: string
 }
 
@@ -78,6 +85,65 @@ export interface Payment {
   createdAt: string
 }
 
+export interface LedgerEntry {
+  id: string
+  entryDate: string | null
+  direction: 'income' | 'expense'
+  clientId: string | null
+  description: string
+  amount: number
+  status: string
+  category: string
+  notes: string
+}
+
+export interface Compensation {
+  id: string
+  entryDate: string | null
+  memberId: string | null
+  memberName: string
+  clientId: string | null
+  description: string
+  amount: number
+  status: string
+  notes: string
+}
+
+export interface Deadline {
+  id: string
+  clientId: string | null
+  service: string
+  provider: string
+  dueDate: string
+  cost: number | null
+  status: string
+  notes: string
+}
+
+export interface MaintenancePeriod {
+  id: string
+  clientId: string | null
+  service: string
+  periodicity: string
+  amount: number
+  periodFrom: string
+  periodTo: string
+  status: string
+  notes: string
+}
+
+export interface AccessCredential {
+  id: string
+  clientId: string | null
+  category: string
+  service: string
+  scopeLabel: string
+  username: string
+  password: string
+  notes: string
+  createdAt: string
+}
+
 export interface StudioData {
   clients: Client[]
   members: TeamMember[]
@@ -85,6 +151,10 @@ export interface StudioData {
   tasks: Task[]
   recurrences: Recurrence[]
   payments: Payment[]
+  ledgerEntries: LedgerEntry[]
+  compensations: Compensation[]
+  deadlines: Deadline[]
+  maintenancePeriods: MaintenancePeriod[]
 }
 
 export interface ClientInput {
@@ -97,6 +167,13 @@ export interface ClientInput {
   logoUrl?: string
   services?: string[]
   notes?: string
+  yearAcquired?: number | null
+  analyticsEnabled?: boolean
+  leadSector?: string
+  leadSource?: string
+  leadStage?: string
+  nextAction?: string
+  lastContact?: string | null
 }
 
 export interface ProjectInput {
