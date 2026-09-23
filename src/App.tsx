@@ -74,7 +74,7 @@ export default function App() {
       <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user}/>
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
       {studio.loading ? <LoadingSkeleton/> : <>
-        {page === 'home' && <HomePage data={studio.data} onClient={openClient} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)}/>} 
+        {page === 'home' && <HomePage data={studio.data} onClient={openClient} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')}/>} 
         {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onNewPayment={() => setCreateKind('payment')} onNewRecurrence={() => setCreateKind('recurrence')} onReminder={setReminderId}/>} 
