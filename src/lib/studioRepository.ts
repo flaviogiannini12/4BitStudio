@@ -10,6 +10,21 @@ function requireCloud() {
   return supabase
 }
 
+export async function hasWorkspaceMembership() {
+  const { data, error } = await requireCloud()
+    .from('workspace_members')
+    .select('workspace_id')
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return Boolean(data?.workspace_id)
+}
+
+export async function joinWorkspace(inviteCode: string) {
+  const { error } = await requireCloud().rpc('join_4bit_workspace', { invite_code: inviteCode })
+  if (error) throw error
+}
+
 const fromClient = (r: any): Client => ({
   id: r.id, name: r.name, status: r.status, website: r.website ?? '', contactName: r.contact_name ?? '',
   email: r.email ?? '', phone: r.phone ?? '', services: r.services ?? [], notes: r.notes ?? '', createdAt: r.created_at,
