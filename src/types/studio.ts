@@ -21,6 +21,7 @@ export interface Client {
   leadStage: string
   nextAction: string
   lastContact: string | null
+  sortOrder: number
   createdAt: string
 }
 
@@ -54,6 +55,7 @@ export interface Task {
   checklist: { id: string; text: string; done: boolean }[]
   createdAt: string
   completedAt: string | null
+  sortOrder: number
 }
 
 export interface Recurrence {
@@ -174,6 +176,7 @@ export interface ClientInput {
   leadStage?: string
   nextAction?: string
   lastContact?: string | null
+  sortOrder?: number
 }
 
 export interface ProjectInput {
@@ -193,6 +196,7 @@ export interface TaskInput {
   status?: TaskStatus
   description?: string
   checklist?: { id: string; text: string; done: boolean }[]
+  sortOrder?: number
 }
 
 export interface PaymentInput {
@@ -218,4 +222,48 @@ export interface RecurrenceInput {
 export interface TeamMemberInput {
   name: string
   role?: string
+}
+
+
+export interface LedgerEntryInput {
+  entryDate?: string | null
+  direction: 'income' | 'expense'
+  clientId?: string | null
+  description: string
+  amount: number
+  status?: string
+  category?: string
+  notes?: string
+}
+
+export interface CompensationInput {
+  entryDate?: string | null
+  memberId?: string | null
+  memberName: string
+  clientId?: string | null
+  description: string
+  amount: number
+  status?: string
+  notes?: string
+}
+
+export interface DeadlineInput {
+  clientId?: string | null
+  service: string
+  provider?: string
+  dueDate: string
+  cost?: number | null
+  status?: string
+  notes?: string
+}
+
+export interface MaintenancePeriodInput {
+  clientId?: string | null
+  service: string
+  periodicity?: string
+  amount: number
+  periodFrom: string
+  periodTo: string
+  status?: string
+  notes?: string
 }
