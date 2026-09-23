@@ -2,6 +2,7 @@ import { ArrowRight, CalendarClock, CheckCircle2, Clock3, UserRound } from 'luci
 import { countdownLabel, countdownTone, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel } from '../lib/labels'
 import type { StudioData } from '../types/studio'
+import { ClientLogo } from '../components/ClientLogo'
 
 export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived')
@@ -22,7 +23,7 @@ export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPa
           const next = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
           return <button key={c.id} className="client-status-card" onClick={() => onClient(c.id)}>
             <div className="client-card-top"><span className={`status-dot status-${c.status}`}/><span>{clientStatusLabel[c.status]}</span><ArrowRight size={15}/></div>
-            <h3>{c.name}</h3>
+            <div className="home-client-title"><ClientLogo logoUrl={c.logoUrl} name={c.name}/><h3>{c.name}</h3></div>
             <div className="client-task-count"><strong>{tasks.length}</strong><span>{tasks.length === 1 ? 'task aperta' : 'task aperte'}</span></div>
             <div className="client-next">{next ? <><Clock3 size={13}/><span>{next.title}</span><b>{formatShortDate(next.dueDate)}</b></> : <><CheckCircle2 size={13}/><span>Nessuna scadenza aperta</span></>}</div>
           </button>
