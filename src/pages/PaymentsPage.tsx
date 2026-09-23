@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { CalendarClock, CheckCircle2, PauseCircle, PlayCircle, Repeat2, Trash2 } from 'lucide-react'
+import { CalendarClock, CheckCircle2, PauseCircle, Pencil, PlayCircle, Plus, Repeat2 } from 'lucide-react'
 import { countdownLabel, countdownTone, formatShortDate, money } from '../lib/date'
 import type { StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
+import { RecordEditorModal } from '../components/RecordEditorModal'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 type Tab = 'payments' | 'recurrences' | 'movements' | 'deadlines'
@@ -10,6 +11,7 @@ type Tab = 'payments' | 'recurrences' | 'movements' | 'deadlines'
 export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onReminder }: { data: StudioData; actions: Actions; onNewPayment: () => void; onNewRecurrence: () => void; onReminder: (id: string) => void }) {
   const [tab, setTab] = useState<Tab>('payments')
   const [showPaid, setShowPaid] = useState(false)
+  const [editor, setEditor] = useState<{kind:'payment'|'recurrence'|'ledger'|'deadline'; record:any} | null>(null)
   const clients = data.clients ?? []
   const allPayments = data.payments ?? []
   const recurrences = data.recurrences ?? []
@@ -23,7 +25,12 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
   return <section className="section-block page-section">
     <div className="section-heading responsive-heading">
       <div><p className="eyebrow">Scadenze, canoni e rinnovi</p><h2>Pagamenti</h2></div>
-      <div className="inline-actions"><button className="secondary-button" onClick={onNewRecurrence}><Repeat2 size={15}/> Nuova ricorrenza</button><button className="primary-button" onClick={onNewPayment}>Nuovo pagamento</button></div>
+      <div className="inline-actions">
+        {tab === 'payments' && <button className="primary-button" onClick={() => setEditor({kind:'payment',record:null})}><Plus size={15}/> Nuovo pagamento</button>}
+        {tab === 'recurrences' && <button className="primary-button" onClick={() => setEditor({kind:'recurrence',record:null})}><Repeat2 size={15}/> Nuova ricorrenza</button>}
+        {tab === 'movements' && <button className="primary-button" onClick={() => setEditor({kind:'ledger',record:null})}><Plus size={15}/> Nuovo movimento</button>}
+        {tab === 'deadlines' && <button className="primary-button" onClick={() => setEditor({kind:'deadline',record:null})}><Plus size={15}/> Nuova scadenza</button>}
+      </div>
     </div>
 
     <div className="segmented payment-tabs">
@@ -41,7 +48,10 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
           <div className="payment-main"><h3>{client(p.clientId)}</h3><p>{p.label}</p><small>{p.recurrenceId ? 'Ricorrente' : 'Una tantum'}{p.reminderCount ? ` · ${p.reminderCount} solleciti` : ''}</small></div>
           <div className="payment-date"><small>Data</small><strong>{formatShortDate(p.dueDate)}</strong></div>
           <div className="payment-amount">{money(p.amount)}</div>
-          <div className="row-actions">{p.status === 'pending' ? <><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna pagato</button></> : <span className="paid-badge"><CheckCircle2 size={14}/> Incassato</span>}<button className="icon-button tiny" onClick={() => void actions.deletePayment(p.id)}><Trash2 size={13}/></button></div>
+          <div className="row-actions">
+            {p.status === 'pending' ? <><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna pagato</button></> : <span className="paid-badge"><CheckCircle2 size={14}/> Incassato</span>}
+            <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'payment',record:p})}><Pencil size={13}/></button>
+          </div>
         </article>)}
       </div>
     </>}
@@ -51,7 +61,7 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
         <div className="recurrence-icon"><CalendarClock size={20}/></div>
         <div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3></div><strong>{money(r.amount)}</strong></div>
         <div className="recurrence-data"><div><small>Frequenza</small><strong>{r.intervalMonths === 1 ? 'Mensile' : r.intervalMonths === 3 ? 'Trimestrale' : r.intervalMonths === 6 ? 'Semestrale' : r.intervalMonths === 12 ? 'Annuale' : `Ogni ${r.intervalMonths} mesi`}</strong></div><div><small>Prossima</small><strong>{countdownLabel(r.nextDueDate)}</strong></div></div>
-        <div className="card-actions"><button className="secondary-button" onClick={() => void actions.updateRecurrence(r.id, { active: !r.active })}>{r.active ? <><PauseCircle size={14}/> Pausa</> : <><PlayCircle size={14}/> Riattiva</>}</button><button className="icon-button tiny" onClick={() => void actions.deleteRecurrence(r.id)}><Trash2 size={13}/></button></div>
+        <div className="card-actions"><button className="secondary-button" onClick={() => void actions.updateRecurrence(r.id, { active: !r.active })}>{r.active ? <><PauseCircle size={14}/> Pausa</> : <><PlayCircle size={14}/> Riattiva</>}</button><button className="icon-button tiny" onClick={() => setEditor({kind:'recurrence',record:r})}><Pencil size={13}/></button></div>
       </article>)}
     </div>}
 
@@ -62,23 +72,25 @@ export function PaymentsPage({ data, actions, onNewPayment, onNewRecurrence, onR
         <div><small>Uscite</small><strong>{money(ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
       </div>
       <div className="ledger-list">
-        {movements.map(m => <div className="ledger-row" key={m.id}>
+        {movements.map(m => <button type="button" className="ledger-row ledger-row-edit" key={m.id} onClick={() => setEditor({kind:'ledger',record:m})}>
           <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
           <div><strong>{m.description || m.category}</strong><small>{client(m.clientId)} · {m.category}{m.notes ? ' · ' + m.notes : ''}</small></div>
           <time>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</time>
           <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
           <span className="status-chip">{m.status}</span>
-        </div>)}
+        </button>)}
       </div>
     </div>}
 
     {tab === 'deadlines' && <div className="deadline-grid">
-      {deadlines.map(d => <article className={`deadline-card ${d.dueDate < new Date().toISOString().slice(0,10) ? 'overdue' : ''}`} key={d.id}>
+      {deadlines.map(d => <button type="button" className={`deadline-card deadline-card-edit ${d.dueDate < new Date().toISOString().slice(0,10) ? 'overdue' : ''}`} key={d.id} onClick={() => setEditor({kind:'deadline',record:d})}>
         <div><p>{client(d.clientId)}</p><h3>{d.service}</h3><span>{d.provider}</span></div>
         <div><small>Scadenza</small><strong>{formatShortDate(d.dueDate)}</strong><span>{countdownLabel(d.dueDate)}</span></div>
         <div><small>Costo</small><strong>{d.cost == null ? '—' : money(d.cost)}</strong><span>{d.status}</span></div>
         {d.notes && <p className="deadline-note">{d.notes}</p>}
-      </article>)}
+      </button>)}
     </div>}
+
+    {editor && <RecordEditorModal kind={editor.kind} record={editor.record} data={data} actions={actions} onClose={() => setEditor(null)}/>}
   </section>
 }
