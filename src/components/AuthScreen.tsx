@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowRight, Check, LoaderCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { BRAND_LOGO } from '../lib/brand'
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -32,7 +33,7 @@ export function AuthScreen() {
     <main className="auth-wrap">
       <div className="auth-shell">
         <section className="auth-brand">
-          <div className="brand-word">4Bit Studio</div>
+          <img className="auth-logo" src={BRAND_LOGO} alt="4Bit Studio"/>
           <div>
             <p className="auth-kicker">Studio management, without the noise.</p>
             <h1>Clienti, task e scadenze. Tutto nel posto giusto.</h1>
@@ -46,7 +47,7 @@ export function AuthScreen() {
         </section>
         <section className="auth-form-wrap">
           <div className="auth-form">
-            <div className="mobile-brand">4Bit Studio</div>
+            <img className="mobile-brand-logo" src={BRAND_LOGO} alt="4Bit Studio"/>
             <p className="muted-label">{mode === 'login' ? 'Bentornato' : 'Nuovo account'}</p>
             <h2>{mode === 'login' ? 'Accedi' : 'Crea lo spazio'}</h2>
             <p className="form-copy">Lo stesso gestionale su computer, telefono e tablet.</p>
