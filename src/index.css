@@ -376,3 +376,370 @@
   .client-master-grid .master-wide{grid-column:1/-1}
   .client-financial-grid{grid-template-columns:1fr 1fr}
 }
+
+
+/* =========================================================
+   v0.9 — Editable manager + FlaToDo-style operational planner
+   ========================================================= */
+
+/* Home client-card reorder */
+.draggable-client-card{cursor:grab}
+.draggable-client-card:active{cursor:grabbing;opacity:.74;transform:scale(.985)}
+.draggable-client-card[draggable="true"]{user-select:none}
+
+/* Client economics: no "Margine studio" — four factual values only */
+.client-financial-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.client-movement-edit,.client-payment-edit,.editable-simple-row{
+  width:100%;
+  text-align:left;
+  border:0;
+  color:inherit;
+}
+.client-movement-edit{
+  display:grid;
+  grid-template-columns:30px minmax(180px,1fr) 100px 90px 80px;
+  align-items:center;
+  gap:9px;
+  padding:9px 10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.48);
+  transition:.16s ease;
+}
+.client-movement-edit:hover,.client-payment-edit:hover,.editable-simple-row:hover{background:#fff;transform:translateY(-1px)}
+.client-payment-edit{
+  display:grid;
+  grid-template-columns:8px minmax(160px,1fr) 90px 125px;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:15px;
+  background:rgba(255,255,255,.58);
+}
+.editable-simple-row{display:flex}
+
+/* General editable lists */
+.ledger-row-edit,.deadline-card-edit,.compensation-history-row{cursor:pointer;text-align:left;color:inherit}
+.ledger-row-edit:hover,.deadline-card-edit:hover,.compensation-history-row:hover{background:#fff;transform:translateY(-1px)}
+.compensation-history-row{
+  display:grid;
+  grid-template-columns:1fr auto 80px;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:9px 10px;
+  border-radius:13px;
+  background:rgba(255,255,255,.48);
+}
+.compensation-history-row strong,.compensation-history-row small{display:block}
+.compensation-history-row strong{font-size:10px}
+.compensation-history-row small{margin-top:2px;color:rgba(5,5,5,.34);font-size:8px}
+.compensation-history-row b{font-size:10px}
+.compensation-history-row span{text-align:right;color:var(--green);font-size:8px}
+.editor-save-group{display:flex;gap:8px}
+
+/* Task planner shell */
+.todo-planner-page{display:grid;gap:16px}
+.todo-planner-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:0 4px}
+.todo-planner-head h2{margin:3px 0 0;font-size:28px;letter-spacing:-.055em}
+.todo-new-task{border-radius:999px!important;padding-inline:19px!important}
+.todo-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.todo-toolbar .task-filter{margin:0}
+.todo-filter-select{
+  display:flex;
+  min-height:40px;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:rgba(255,255,255,.62);
+  padding:5px 9px 5px 11px;
+  box-shadow:0 8px 28px rgba(33,39,55,.04);
+}
+.todo-filter-select>span{color:rgba(5,5,5,.29);font-size:8px;font-weight:850;text-transform:uppercase;letter-spacing:.09em}
+.todo-filter-select select{
+  max-width:180px;
+  border:0;
+  background:transparent;
+  outline:0;
+  color:rgba(5,5,5,.66);
+  font-size:10px;
+  font-weight:750;
+}
+.todo-planner-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 350px;
+  align-items:start;
+  gap:24px;
+}
+.todo-calendar-main{min-width:0}
+.todo-calendar-panel{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:30px;
+  background:rgba(255,255,255,.52);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(28px) saturate(155%);
+  -webkit-backdrop-filter:blur(28px) saturate(155%);
+}
+.todo-day-row{
+  display:flex;
+  gap:clamp(14px,3vw,32px);
+  min-height:126px;
+  padding:clamp(16px,2.4vw,26px);
+  border-top:1px solid var(--hair);
+  transition:background .2s ease;
+}
+.todo-day-row:first-child{border-top:0}
+.todo-day-row:hover{background:rgba(255,255,255,.2)}
+.todo-day-row.is-today{background:rgba(255,255,255,.34)}
+.todo-day-row.is-empty{min-height:88px;padding-block:10px;align-items:center}
+.todo-day-date{width:112px;flex:0 0 auto}
+.todo-day-number{font-size:40px;font-weight:650;line-height:.95;letter-spacing:-.07em}
+.todo-day-number.today{
+  display:grid;
+  width:54px;
+  height:54px;
+  place-items:center;
+  border-radius:18px;
+  background:var(--brand);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(242,86,35,.2);
+}
+.todo-day-date p{margin:9px 0 0;color:rgba(5,5,5,.36);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+.todo-day-date span{display:block;margin-top:2px;color:rgba(5,5,5,.56);font-size:11px;font-weight:650;text-transform:capitalize}
+.todo-day-date b{display:inline-flex;margin-top:9px;padding:5px 8px;border-radius:999px;background:var(--brand);color:#fff;font-size:8px;font-weight:850;text-transform:uppercase;letter-spacing:.09em}
+.todo-day-body{min-width:0;flex:1}
+.todo-task-stack{display:grid;gap:8px}
+.todo-add-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:9px;
+  padding:8px 9px;
+  border-radius:13px;
+  background:transparent;
+  color:rgba(5,5,5,.31);
+  font-size:11px;
+  font-weight:700;
+  transition:.16s ease;
+}
+.todo-add-row:hover{background:rgba(242,86,35,.08);color:var(--brand)}
+
+/* Task card — closely follows FlaToDo */
+.todo-task-card{
+  position:relative;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  min-height:66px;
+  padding:11px 11px 11px 10px;
+  border:1px solid rgba(255,255,255,.86);
+  border-radius:18px;
+  background:rgba(255,255,255,.76);
+  box-shadow:0 4px 18px rgba(33,39,55,.035);
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease,opacity .18s ease;
+}
+.todo-task-card:hover{transform:translateY(-1px);background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(33,39,55,.07)}
+.todo-task-card:active{opacity:.72}
+.todo-task-card.is-done{opacity:.58}
+.todo-task-card.is-done h3{text-decoration:line-through}
+.todo-task-check{
+  position:relative;
+  display:grid;
+  width:28px;
+  height:28px;
+  flex:0 0 auto;
+  place-items:center;
+  border-radius:50%;
+  background:transparent;
+  color:#fff;
+  transition:.18s ease;
+}
+.todo-task-check span{width:17px;height:17px;border:1.5px solid rgba(5,5,5,.24);border-radius:50%;transition:.18s ease}
+.todo-task-check:hover{background:rgba(5,5,5,.045)}
+.todo-task-check:hover span{border-color:var(--brand);box-shadow:inset 0 0 0 4px white;background:var(--brand)}
+.todo-task-card.is-done .todo-task-check{background:var(--brand)}
+.todo-task-content{min-width:0;flex:1;background:transparent;text-align:left;color:inherit}
+.todo-task-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.todo-task-topline h3{
+  min-width:0;
+  flex:1;
+  margin:1px 0 0;
+  font-size:14px;
+  font-weight:650;
+  line-height:1.25;
+  letter-spacing:-.018em;
+  overflow-wrap:anywhere;
+}
+.todo-assignee{
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:6px;
+  min-height:29px;
+  padding:3px 9px 3px 4px;
+  border-radius:999px;
+  background:#050505;
+  color:#fff;
+  font-size:9px;
+  font-weight:780;
+}
+.todo-assignee>span{display:grid;width:21px;height:21px;place-items:center;border-radius:50%;background:var(--brand);font-size:8px}
+.todo-assignee.unassigned{background:rgba(5,5,5,.07);color:rgba(5,5,5,.45)}
+.todo-assignee.unassigned>span{background:rgba(5,5,5,.08);color:rgba(5,5,5,.45)}
+.todo-task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:7px}
+.task-internal-chip,.task-status-inline{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:720;
+}
+.task-internal-chip{background:#050505;color:#fff}
+.task-status-inline{background:rgba(5,5,5,.05);color:rgba(5,5,5,.42)}
+.task-status-inline.doing{background:rgba(242,86,35,.10);color:#B83D16}
+.task-status-inline.done{background:rgba(35,138,88,.10);color:var(--green)}
+.todo-task-content>p{
+  margin:7px 0 0;
+  color:rgba(5,5,5,.48);
+  font-size:10px;
+  font-weight:500;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
+.todo-task-side{display:flex;flex:0 0 auto;align-items:center;align-self:center;color:rgba(5,5,5,.13)}
+.todo-grip{cursor:grab}
+.todo-task-card:hover .todo-grip{color:rgba(5,5,5,.30)}
+
+/* Overdue */
+.todo-overdue-panel{
+  margin-bottom:18px;
+  padding:20px;
+  border:1px solid rgba(232,93,104,.18);
+  border-radius:26px;
+  background:linear-gradient(145deg,rgba(255,246,244,.88),rgba(255,255,255,.55));
+}
+.todo-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.todo-section-title h3{margin:3px 0 0;font-size:20px;letter-spacing:-.04em}
+.todo-section-title>span{display:grid;min-width:30px;height:30px;place-items:center;border-radius:999px;background:rgba(232,93,104,.1);color:#AA323B;font-size:10px;font-weight:800}
+
+/* Backlog right column like FlaToDo */
+.todo-backlog{
+  position:sticky;
+  top:88px;
+  max-height:calc(100dvh - 112px);
+  overflow:auto;
+  border:1px solid var(--border);
+  border-radius:28px;
+  background:rgba(255,255,255,.54);
+  padding:16px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(25px) saturate(155%);
+}
+.todo-backlog-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.todo-backlog-head>div{display:flex;align-items:center;gap:9px}
+.todo-backlog-head p,.todo-backlog-head span{margin:0}
+.todo-backlog-head p{font-size:12px;font-weight:760}
+.todo-backlog-head span{display:block;margin-top:2px;color:rgba(5,5,5,.34);font-size:8px}
+.todo-backlog-head>b{display:grid;min-width:28px;height:28px;place-items:center;border-radius:999px;background:var(--brand);color:#fff;font-size:9px}
+.todo-backlog-list{display:grid;gap:8px}
+.todo-backlog .todo-task-card{display:block;padding:11px}
+.todo-backlog .todo-task-check{position:absolute;left:10px;top:11px}
+.todo-backlog .todo-task-content{display:block;padding-left:37px}
+.todo-backlog .todo-task-topline{display:block}
+.todo-backlog .todo-assignee{margin-top:8px}
+.todo-backlog .todo-task-side{position:absolute;right:9px;top:10px}
+.todo-backlog-add{
+  display:flex;
+  width:100%;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-top:10px;
+  min-height:40px;
+  border-radius:14px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.45);
+  font-size:10px;
+  font-weight:750;
+}
+.todo-backlog-add:hover{background:var(--brand);color:#fff}
+
+/* Planner controls borrowed from FlaToDo */
+.planner-toggle{display:inline-flex;min-height:40px;align-items:center;gap:8px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.62);padding:5px 11px 5px 7px;color:rgba(5,5,5,.48);font-size:10px;font-weight:750;cursor:pointer}
+.planner-toggle input{position:absolute;width:1px;height:1px;opacity:0}
+.planner-switch{display:flex;width:34px;height:22px;align-items:center;border-radius:999px;background:rgba(5,5,5,.10);padding:3px;transition:.18s}
+.planner-switch span{width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.14);transition:.18s}
+.planner-toggle input:checked + .planner-switch{background:var(--brand)}
+.planner-toggle input:checked + .planner-switch span{transform:translateX(12px)}
+.date-jump{display:inline-flex;min-height:40px;align-items:center;gap:8px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.62);padding:5px 7px 5px 11px;color:rgba(5,5,5,.45)}
+.date-jump input{min-width:120px;border:0;background:transparent;outline:0;color:rgba(5,5,5,.64);font-size:10px;font-weight:700}
+.date-jump button{display:grid;width:30px;height:30px;place-items:center;border-radius:10px;background:rgba(5,5,5,.055);color:rgba(5,5,5,.45)}
+.date-jump button:hover{background:var(--brand);color:#fff}
+.day-row-found{animation:fourbitDayFound 1.35s cubic-bezier(.22,.9,.3,1)}
+@keyframes fourbitDayFound{0%{background:rgba(242,86,35,.20)}100%{background:rgba(255,255,255,.2)}}
+
+/* Task editor */
+.task-editor-backdrop{position:fixed;z-index:110;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+.task-editor-scrim{position:absolute;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(8px)}
+.task-editor-panel{
+  position:relative;
+  z-index:1;
+  width:min(620px,100%);
+  max-height:92dvh;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:32px;
+  background:rgba(246,243,241,.96);
+  padding:24px;
+  box-shadow:0 30px 110px rgba(0,0,0,.24);
+  backdrop-filter:blur(30px);
+}
+.task-editor-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+.task-editor-head h2{margin:3px 0 0;font-size:24px;letter-spacing:-.04em}
+.task-editor-body{display:grid;gap:12px}
+.task-editor-title{min-height:70px;resize:none;font-size:19px;font-weight:650;letter-spacing:-.025em}
+.task-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.task-editor-setting{padding:9px 12px}
+.task-editor-setting>div{min-width:0;flex:1}
+.task-editor-setting input,.task-editor-setting select{width:100%;border:0;background:transparent;outline:0;font-size:11px;font-weight:700}
+.task-setting-icon{color:rgba(5,5,5,.34)}
+.task-editor-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--hair)}
+.task-editor-actions>div{display:flex;gap:8px}
+
+@media(max-width:1100px){
+  .todo-planner-grid{grid-template-columns:minmax(0,1fr) 300px}
+}
+@media(max-width:900px){
+  .todo-planner-grid{grid-template-columns:1fr}
+  .todo-backlog{position:static;max-height:none}
+  .todo-toolbar{align-items:stretch}
+  .todo-filter-select{flex:1}
+}
+@media(max-width:640px){
+  .todo-planner-head{align-items:center}
+  .todo-planner-head h2{font-size:24px}
+  .todo-toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .todo-toolbar .task-filter{grid-column:1/-1;width:100%}
+  .todo-toolbar .planner-toggle,.todo-toolbar .date-jump{grid-column:1/-1}
+  .todo-filter-select select{max-width:120px}
+  .todo-day-row{display:block;min-height:116px;padding:15px}
+  .todo-day-date{display:flex;width:auto;align-items:center;gap:10px;margin-bottom:12px}
+  .todo-day-number{font-size:31px}
+  .todo-day-number.today{width:46px;height:46px;border-radius:15px;font-size:32px}
+  .todo-day-date p{margin:0}
+  .todo-day-date b{margin:0 0 0 auto}
+  .todo-task-topline{display:block}
+  .todo-assignee{margin-top:7px}
+  .todo-grip{display:none}
+  .task-editor-backdrop{align-items:flex-end;padding:0}
+  .task-editor-panel{max-height:94dvh;border-radius:30px 30px 0 0;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+  .task-editor-grid{grid-template-columns:1fr}
+  .client-financial-grid{grid-template-columns:1fr 1fr!important}
+  .client-movement-edit{grid-template-columns:28px 1fr auto}
+  .client-movement-edit>span:nth-of-type(2),.client-movement-edit em{display:none}
+  .client-payment-edit{grid-template-columns:7px 1fr auto}
+  .client-payment-edit .status-chip{display:none}
+}
