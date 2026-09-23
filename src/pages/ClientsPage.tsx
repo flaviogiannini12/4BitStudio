@@ -4,20 +4,21 @@ import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
 import { ClientLogo } from '../components/ClientLogo'
+import { ClientAccessSection } from '../components/ClientAccessSection'
 import type { Client, ClientStatus, StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 
 export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { data: StudioData; actions: Actions; selectedId: string | null; onSelect: (id: string | null) => void; onNew: () => void }) {
-  const [tab, setTab] = useState<'active' | 'archive'>('active')
+  const [tab, setTab] = useState<'active' | 'lead' | 'archive'>('active')
   const selected = data.clients.find(c => c.id === selectedId) ?? null
 
   if (selected) {
     return <ClientDetail client={selected} data={data} actions={actions} onBack={() => onSelect(null)} />
   }
 
-  const list = data.clients.filter(c => tab === 'archive' ? c.status === 'archived' : c.status !== 'archived')
+  const list = data.clients.filter(c => tab === 'archive' ? c.status === 'archived' : tab === 'lead' ? c.status === 'lead' : c.status !== 'archived' && c.status !== 'lead')
 
   return <section className="section-block page-section">
     <div className="section-heading responsive-heading">
@@ -27,6 +28,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
 
     <div className="segmented client-tabs">
       <button className={tab === 'active' ? 'active' : ''} onClick={() => setTab('active')}>Attivi</button>
+      <button className={tab === 'lead' ? 'active' : ''} onClick={() => setTab('lead')}>Lead</button>
       <button className={tab === 'archive' ? 'active' : ''} onClick={() => setTab('archive')}>Archivio</button>
     </div>
 
@@ -38,14 +40,14 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
           <ClientLogo logoUrl={c.logoUrl} name={c.name}/>
           <div className="client-list-main">
             <div><h3>{c.name}</h3><span className={`status-chip client-${c.status}`}>{clientStatusLabel[c.status]}</span></div>
-            <p>{c.services.length ? c.services.join(' · ') : 'Nessun servizio inserito'}</p>
+            <p>{c.status === 'lead' ? [c.leadSector,c.leadSource,c.nextAction].filter(Boolean).join(' · ') || 'Lead da lavorare' : c.services.length ? c.services.join(' · ') : 'Nessun servizio inserito'}</p>
           </div>
           <div className="client-list-stat"><strong>{open.length}</strong><span>task aperte</span></div>
-          <div className="client-next-payment"><small>Prossimo pagamento</small><strong>{payment ? countdownLabel(payment.dueDate) : '—'}</strong></div>
+          <div className="client-next-payment"><small>{c.status === 'lead' ? 'Stato lead' : 'Prossimo pagamento'}</small><strong>{c.status === 'lead' ? (c.leadStage || 'Da lavorare') : payment ? countdownLabel(payment.dueDate) : '—'}</strong></div>
           <MoreHorizontal size={17}/>
         </button>
       })}
-      {list.length === 0 && <div className="empty-page-mini">{tab === 'archive' ? 'Archivio vuoto.' : 'Nessun cliente attivo.'}</div>}
+      {list.length === 0 && <div className="empty-page-mini">{tab === 'archive' ? 'Archivio vuoto.' : tab === 'lead' ? 'Nessun lead.' : 'Nessun cliente attivo.'}</div>}
     </div>
   </section>
 }
@@ -56,6 +58,8 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
   const payments = data.payments.filter(p => p.clientId === client.id).sort((a,b) => b.dueDate.localeCompare(a.dueDate))
   const recurrences = data.recurrences.filter(r => r.clientId === client.id)
   const nextDue = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
+  const deadlines = data.deadlines.filter(d => d.clientId === client.id).sort((a,b) => a.dueDate.localeCompare(b.dueDate))
+  const maintenance = data.maintenancePeriods.filter(m => m.clientId === client.id).sort((a,b) => b.periodTo.localeCompare(a.periodTo))
 
   async function setStatus(status: ClientStatus) {
     await actions.updateClient(client.id, { status })
@@ -94,7 +98,7 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div>
           <div className="client-title-status"><span className={`status-dot status-${client.status}`}/>{clientStatusLabel[client.status]}</div>
           <h2>{client.name}</h2>
-          <p>{client.services.join(' · ') || 'Nessun servizio inserito'}{changingLogo ? ' · aggiornamento logo…' : ''}</p>
+          <p>{client.status === 'lead' ? [client.leadSector, client.leadSource, client.nextAction].filter(Boolean).join(' · ') || 'Lead da lavorare' : client.services.join(' · ') || 'Nessun servizio inserito'}{changingLogo ? ' · aggiornamento logo…' : ''}</p>
         </div>
       </div>
 
@@ -109,9 +113,19 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>Task aperte</small><strong>{tasks.length}</strong></div>
         <div><small>Prossima deadline</small><strong>{nextDue ? formatShortDate(nextDue.dueDate) : '—'}</strong></div>
         <div><small>Pagamenti aperti</small><strong>{payments.filter(p => p.status === 'pending').length}</strong></div>
-        <div><small>Ricorrenze attive</small><strong>{recurrences.filter(r => r.active).length}</strong></div>
+        <div><small>{client.status === 'lead' ? 'Stato lead' : 'Ricorrenze attive'}</small><strong>{client.status === 'lead' ? (client.leadStage || '—') : recurrences.filter(r => r.active).length}</strong></div>
       </div>
     </section>
+
+    {client.status === 'lead' && <section className="section-block compact-block client-tasks-block">
+      <div className="section-heading"><div><p className="eyebrow">Lead</p><h2>Informazioni commerciali</h2></div></div>
+      <div className="lead-detail-grid">
+        <div><small>Settore</small><strong>{client.leadSector || '—'}</strong></div>
+        <div><small>Fonte</small><strong>{client.leadSource || '—'}</strong></div>
+        <div><small>Stato</small><strong>{client.leadStage || '—'}</strong></div>
+        <div><small>Prossima azione</small><strong>{client.nextAction || '—'}</strong></div>
+      </div>
+    </section>}
 
     <section className="section-block compact-block client-tasks-block">
       <div className="section-heading"><div><p className="eyebrow">Adesso</p><h2>Task aperte</h2></div></div>
@@ -162,5 +176,24 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         {client.notes && <p className="client-notes">{client.notes}</p>}
       </section>
     </div>
+
+    {(deadlines.length > 0 || maintenance.length > 0) && <div className="client-detail-grid lower">
+      <section className="section-block compact-block">
+        <div className="section-heading"><div><p className="eyebrow">Hosting e servizi</p><h2>Scadenze</h2></div></div>
+        <div className="simple-list">
+          {deadlines.map(d => <div className="simple-task" key={d.id}><span className={`status-dot ${d.status === 'SCADUTO' ? 'status-paused' : 'status-active'}`}/><div><strong>{d.service}</strong><small>{d.provider}{d.notes ? ' · ' + d.notes : ''}</small></div><span>{formatShortDate(d.dueDate)}</span></div>)}
+          {!deadlines.length && <div className="empty-inline">Nessuna scadenza.</div>}
+        </div>
+      </section>
+      <section className="section-block compact-block">
+        <div className="section-heading"><div><p className="eyebrow">Storico</p><h2>Manutenzioni</h2></div></div>
+        <div className="simple-list">
+          {maintenance.map(m => <div className="simple-task" key={m.id}><span className={`status-dot ${m.status === 'Pagato' ? 'status-active' : 'status-in_progress'}`}/><div><strong>{m.service}</strong><small>{m.periodicity} · {m.status}{m.notes ? ' · ' + m.notes : ''}</small></div><span>{money(m.amount)}</span></div>)}
+          {!maintenance.length && <div className="empty-inline">Nessuna manutenzione.</div>}
+        </div>
+      </section>
+    </div>}
+
+    {client.status !== 'lead' && <ClientAccessSection clientId={client.id}/>}
   </div>
 }
