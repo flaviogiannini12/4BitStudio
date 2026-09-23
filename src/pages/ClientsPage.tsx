@@ -11,8 +11,9 @@ import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 
-export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { data: StudioData; actions: Actions; selectedId: string | null; onSelect: (id: string | null) => void; onNew: () => void }) {
+export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew }: { data: StudioData; actions: Actions; selectedId: string | null; onSelect: (id: string | null) => void; onNew: () => void }) {
   const [tab, setTab] = useState<'active' | 'lead' | 'archive'>('active')
+  const [creating, setCreating] = useState(false)
   const selected = data.clients.find(c => c.id === selectedId) ?? null
 
   if (selected) {
@@ -24,7 +25,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
   return <section className="section-block page-section">
     <div className="section-heading responsive-heading">
       <div><p className="eyebrow">Un cliente, un solo fascicolo</p><h2>Clienti</h2></div>
-      <button className="primary-button" onClick={onNew}><Plus size={15}/> Nuovo cliente</button>
+      <button className="primary-button" onClick={() => setCreating(true)}><Plus size={15}/> Nuovo cliente</button>
     </div>
 
     <div className="segmented client-tabs">
@@ -52,6 +53,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew }: { da
       })}
       {list.length === 0 && <div className="empty-page-mini">{tab === 'archive' ? 'Archivio vuoto.' : tab === 'lead' ? 'Nessun lead.' : 'Nessun cliente attivo.'}</div>}
     </div>
+    {creating && <RecordEditorModal kind="client" record={null} data={data} actions={actions} onClose={() => setCreating(false)}/>}
   </section>
 }
 
