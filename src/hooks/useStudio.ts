@@ -151,6 +151,10 @@ export function useStudio(user: User | null, ready: boolean) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'recurrences' }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger_entries' }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'compensations' }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deadlines' }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_periods' }, () => void reload())
       .subscribe()
     return () => { void client.removeChannel(channel) }
   }, [reload, user])
