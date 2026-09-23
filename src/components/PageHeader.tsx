@@ -11,7 +11,7 @@ export function PageHeader({ title, eyebrow, onAdd, user }: { title: string; eye
       </div>
       <div className="header-actions">
         {cloudEnabled && user && <button className="icon-button" title="Esci" onClick={() => void supabase?.auth.signOut()}><LogOut size={17}/></button>}
-        <button className="primary-button add-main" onClick={onAdd}><Plus size={17}/><span>Nuovo</span></button>
+        <button className="primary-button add-main" onClick={onAdd}><Plus size={18}/><span>Nuova attività</span></button>
       </div>
     </header>
   )
