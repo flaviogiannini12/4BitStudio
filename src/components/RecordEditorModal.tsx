@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
@@ -226,7 +226,7 @@ export function RecordEditorModal({
   </Modal>
 }
 
-function Field(props: React.InputHTMLAttributes<HTMLInputElement> & {name:string;label:string}) {
+function Field(props: InputHTMLAttributes<HTMLInputElement> & {name:string;label:string}) {
   const {label,...rest}=props
   return <label className="form-field"><span>{label}</span><input className="field" {...rest}/></label>
 }
