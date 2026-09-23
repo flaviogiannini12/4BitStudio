@@ -116,7 +116,7 @@ export function useStudio(user: User | null, ready: boolean) {
   const actions = useMemo(() => ({
     async createClient(input: ClientInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createClient(user, input); await reload() })
-      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', services: input.services ?? [], notes: input.notes ?? '', createdAt: new Date().toISOString() }
+      const value: Client = { id: id('client'), name: input.name, status: input.status ?? 'active', website: input.website ?? '', contactName: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logoUrl: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', createdAt: new Date().toISOString() }
       saveLocal(current => ({ ...current, clients: [...current.clients, value] }))
     },
     async updateClient(clientId: string, input: Partial<Client>) {
@@ -125,7 +125,7 @@ export function useStudio(user: User | null, ready: boolean) {
     },
     async deleteClient(clientId: string) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteClient(clientId); await reload() })
-      saveLocal(current => ({ ...current, clients: current.clients.filter(x => x.id !== clientId) }))
+      saveLocal(current => ({ ...current, clients: current.clients.filter(x => x.id !== clientId), projects: current.projects.filter(x => x.clientId !== clientId), tasks: current.tasks.filter(x => x.clientId !== clientId), payments: current.payments.filter(x => x.clientId !== clientId), recurrences: current.recurrences.filter(x => x.clientId !== clientId) }))
     },
     async createMember(input: TeamMemberInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createMember(user, input); await reload() })
