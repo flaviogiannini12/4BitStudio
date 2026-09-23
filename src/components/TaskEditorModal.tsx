@@ -146,7 +146,7 @@ export function TaskEditorModal({
 
           <label className="form-field">
             <span>Stato</span>
-            <select className="field" value={draft.status} onChange={e => setDraft({...draft,status:e.target.value})}>
+            <select className="field" value={draft.status} onChange={e => setDraft({...draft,status:e.target.value as Task['status']})}>
               <option value="todo">Da fare</option>
               <option value="doing">In corso</option>
               <option value="done">Completata</option>
