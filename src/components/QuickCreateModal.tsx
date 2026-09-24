@@ -22,7 +22,16 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState('')
-  const activeClients = useMemo(() => data.clients.filter(c => c.status !== 'archived'), [data.clients])
+  const activeClients = useMemo(
+    () => [...data.clients]
+      .filter(c => c.status !== 'archived' && c.status !== 'lead')
+      .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [data.clients],
+  )
+  const defaultFlavioId = useMemo(
+    () => data.members.find(member => member.active && member.name.trim().toLowerCase() === 'flavio')?.id ?? '',
+    [data.members],
+  )
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -127,7 +136,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
 
         {kind === 'task' && <>
           <Field label="Task" name="title" required/>
-          <div className="field-grid two"><SelectClient data={activeClients} allowEmpty/><Select name="assigneeId" label="Assegnata a" options={data.members.filter(x => x.active).map(x => [x.id, x.name])} allowEmpty/></div>
+          <div className="field-grid two"><SelectClient data={activeClients} allowEmpty/><Select name="assigneeId" label="Assegnata a" options={data.members.filter(x => x.active).map(x => [x.id, x.name])} allowEmpty defaultValue={defaultFlavioId}/></div>
           <Field label="Scadenza" name="dueDate" type="date"/>
           <TextArea label="Descrizione" name="description"/>
         </>}
@@ -165,6 +174,6 @@ function SelectClient({ data, allowEmpty = false }: { data: StudioData['clients'
   return <Select name="clientId" label="Cliente" options={data.map(x => [x.id, x.name])} allowEmpty={allowEmpty}/>
 }
 
-function Select({ label, name, options, allowEmpty = false }: { label: string; name: string; options: string[][]; allowEmpty?: boolean }) {
-  return <label className="form-field"><span>{label}</span><select className="field" name={name} defaultValue="">{allowEmpty && <option value="">Nessuno</option>}{!allowEmpty && <option value="" disabled>Seleziona…</option>}{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>
+function Select({ label, name, options, allowEmpty = false, defaultValue = '' }: { label: string; name: string; options: string[][]; allowEmpty?: boolean; defaultValue?: string }) {
+  return <label className="form-field"><span>{label}</span><select className="field" name={name} defaultValue={defaultValue}>{allowEmpty && <option value="">Nessuno</option>}{!allowEmpty && <option value="" disabled>Seleziona…</option>}{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>
 }
