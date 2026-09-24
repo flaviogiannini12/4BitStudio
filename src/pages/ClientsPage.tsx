@@ -191,9 +191,7 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>Anno acquisizione</small><strong>{client.yearAcquired ?? '—'}</strong></div>
         <div><small>Stato</small><strong>{clientStatusLabel[client.status]}</strong></div>
         <div><small>Dominio</small><strong>{client.website || '—'}</strong></div>
-        <div><small>Referente</small><strong>{client.contactName || '—'}</strong></div>
-        <div><small>Email</small><strong>{client.email || '—'}</strong></div>
-        <div><small>Telefono</small><strong>{client.phone || '—'}</strong></div>
+        <div><small>Contatto</small><strong>{client.contactName || client.email || client.phone || '—'}</strong></div>
         <div className="master-wide"><small>Servizi</small><strong>{client.services.length ? client.services.join(' · ') : '—'}</strong></div>
         <div className="master-wide"><small>Note</small><strong>{client.notes || '—'}</strong></div>
       </div>
