@@ -290,7 +290,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
         </>}
       </div>
 
-      <div className="todo-planner-grid">
+      {statusFilter === 'open' ? <div className="todo-planner-grid">
         <main className="todo-calendar-main">
           {statusFilter === 'open' && overdue.length > 0 && <section className="todo-overdue-panel">
             <div className="todo-section-title"><div><p className="eyebrow">Da recuperare</p><h3>Scadute</h3></div><span>{overdue.length}</span></div>
@@ -351,7 +351,16 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
           <div className="todo-backlog-list">{backlog.map(task => taskCard(task,null))}</div>
           <button className="todo-backlog-add" onClick={() => openCreate(null)}><Plus size={15}/> Nuova attività senza data</button>
         </aside>
-      </div>
+      </div> : <section className="todo-completed-panel">
+        <div className="todo-completed-head">
+          <h3>Task completate</h3>
+          <span>{completedTasks.length}</span>
+        </div>
+        <div className="todo-completed-list">
+          {completedTasks.map(completedTaskCard)}
+          {!completedTasks.length && <div className="empty-page-mini">Nessuna task completata con questi filtri.</div>}
+        </div>
+      </section>}
     </section>
 
     <TaskEditorModal
