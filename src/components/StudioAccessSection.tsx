@@ -26,7 +26,12 @@ export function StudioAccessSection() {
     else setRows(data ?? [])
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    const refresh = () => { void load() }
+    window.addEventListener('4bit:access-refresh', refresh)
+    return () => window.removeEventListener('4bit:access-refresh', refresh)
+  }, [])
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
