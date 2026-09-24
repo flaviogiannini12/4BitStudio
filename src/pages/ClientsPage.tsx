@@ -20,6 +20,10 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
     return <ClientDetail client={selected} data={data} actions={actions} onBack={() => onSelect(null)} />
   }
 
+  const activeCount = data.clients.filter(client => client.status !== 'archived' && client.status !== 'lead').length
+  const leadCount = data.clients.filter(client => client.status === 'lead').length
+  const archiveCount = data.clients.filter(client => client.status === 'archived').length
+
   const list = data.clients
     .filter(c => tab === 'archive' ? c.status === 'archived' : tab === 'lead' ? c.status === 'lead' : c.status !== 'archived' && c.status !== 'lead')
     .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
@@ -52,9 +56,9 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
     </div>
 
     <div className="segmented client-tabs">
-      <button className={tab === 'active' ? 'active' : ''} onClick={() => setTab('active')}>Attivi</button>
-      <button className={tab === 'lead' ? 'active' : ''} onClick={() => setTab('lead')}>Lead</button>
-      <button className={tab === 'archive' ? 'active' : ''} onClick={() => setTab('archive')}>Archivio</button>
+      <button className={tab === 'active' ? 'active' : ''} onClick={() => setTab('active')}>Attivi <span className="filter-count">{activeCount}</span></button>
+      <button className={tab === 'lead' ? 'active' : ''} onClick={() => setTab('lead')}>Lead <span className="filter-count">{leadCount}</span></button>
+      <button className={tab === 'archive' ? 'active' : ''} onClick={() => setTab('archive')}>Archivio <span className="filter-count">{archiveCount}</span></button>
     </div>
 
     <div className="clients-list">
