@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
-import { ImagePlus, Trash2 } from 'lucide-react'
+import { ImagePlus, Trash2, X } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
   Client, Compensation, Deadline, LedgerEntry, MaintenancePeriod, Payment, Recurrence, StudioData, TeamMember,
@@ -79,7 +79,6 @@ export function RecordEditorModal({
           lastContact:nullable('lastContact'),
           logoUrl,
         }
-        if (!record && !logoUrl) throw new Error('Inserisci il logo del cliente.')
         if (record) await actions.updateClient(record.id,payload)
         else await actions.createClient(payload)
       }
@@ -168,7 +167,8 @@ export function RecordEditorModal({
             }
           }}/>
           <div className="logo-upload-preview">{logoUrl ? <img src={logoUrl} alt="Anteprima logo cliente"/> : <ImagePlus size={22}/>}</div>
-          <div><strong>{logoUrl ? 'Logo cliente' : 'Inserisci logo cliente'}</strong><span>{record ? 'Puoi sostituirlo caricando una nuova immagine' : 'Obbligatorio · PNG, JPG o WebP'}</span></div>
+          <div><strong>{logoUrl ? 'Logo cliente' : 'Logo cliente (facoltativo)'}</strong><span>{logoUrl ? 'Puoi sostituirlo oppure rimuoverlo' : 'PNG, JPG o WebP'}</span></div>
+          {logoUrl && <button type="button" className="logo-remove-button" title="Rimuovi logo" onClick={event => { event.preventDefault(); event.stopPropagation(); setLogoUrl('') }}><X size={14}/></button>}
         </label>
         <div className="field-grid two"><Field name="name" label="Nome" defaultValue={v('name')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'active'} options={[['active','Attivo'],['in_progress','In lavorazione'],['paused','In pausa'],['lead','Lead'],['archived','Archivio']]}/></div>
         <div className="field-grid two"><Field name="website" label="Dominio / sito" defaultValue={v('website')}/><Field name="yearAcquired" label="Anno acquisizione" type="number" defaultValue={v('yearAcquired')}/></div>
