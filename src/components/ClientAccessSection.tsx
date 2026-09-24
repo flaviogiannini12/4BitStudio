@@ -34,7 +34,12 @@ export function ClientAccessSection({ clientId }: { clientId: string }) {
     setLoading(false)
   }
 
-  useEffect(() => { void load() }, [clientId])
+  useEffect(() => {
+    void load()
+    const refresh = () => { void load() }
+    window.addEventListener('4bit:access-refresh', refresh)
+    return () => window.removeEventListener('4bit:access-refresh', refresh)
+  }, [clientId])
 
   function openNew() {
     setEditing(null)
