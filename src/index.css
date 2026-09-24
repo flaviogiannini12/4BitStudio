@@ -1634,3 +1634,245 @@
     transform:none;
   }
 }
+
+
+/* =========================================================
+   CLEAN SECTION HEADERS + TEAM COLORS + PAYMENTS FIX
+   ========================================================= */
+
+/* Remove all superfluous uppercase micro-headings throughout the manager. */
+.eyebrow,
+.page-eyebrow{
+  display:none!important;
+}
+.section-heading>div>h2:first-child,
+.section-heading>h2{
+  margin-top:0;
+}
+
+/* One consistent color identity per team member. */
+.member-flavio{
+  --member-color:#D8FF3E;
+  --member-ink:#050505;
+}
+.member-edoardo{
+  --member-color:#F25A2A;
+  --member-ink:#fff;
+}
+.member-francesco{
+  --member-color:#3F67FF;
+  --member-ink:#fff;
+}
+.member-matteo{
+  --member-color:#9D87F5;
+  --member-ink:#fff;
+}
+.member-tone-0{
+  --member-color:#00A884;
+  --member-ink:#fff;
+}
+.member-tone-1{
+  --member-color:#FF8A00;
+  --member-ink:#fff;
+}
+.member-tone-2{
+  --member-color:#EE5AA7;
+  --member-ink:#fff;
+}
+.member-tone-3{
+  --member-color:#6B58D9;
+  --member-ink:#fff;
+}
+
+/* Home team card */
+.team-load-list>div[class*="member-"] .avatar-mini{
+  background:var(--member-color);
+  color:var(--member-ink);
+}
+.team-load-list>div[class*="member-"] .load-bar span{
+  background:var(--member-color);
+}
+
+/* Team page */
+.team-card[class*="member-"]{
+  box-shadow:inset 0 3px 0 var(--member-color), 0 10px 32px rgba(33,39,55,.04);
+}
+.team-avatar[class*="member-"]{
+  background:var(--member-color);
+  color:var(--member-ink);
+}
+.compensation-card[class*="member-"]{
+  box-shadow:inset 0 2px 0 var(--member-color);
+}
+
+/* Statistics */
+.stats-bar-row[class*="member-"] .stats-track span{
+  background:var(--member-color);
+}
+.stats-bar-row[class*="member-"] .stats-bar-head strong{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+.stats-bar-row[class*="member-"] .stats-bar-head strong::before{
+  content:'';
+  width:8px;
+  height:8px;
+  flex:0 0 auto;
+  border-radius:50%;
+  background:var(--member-color);
+}
+
+/* Requested Home hierarchy */
+.home-priority-row{
+  order:1;
+}
+.home-stack>.client-control{
+  order:2;
+}
+.home-stack>.payments-focus{
+  order:3;
+}
+.home-stack>.recurrences-preview{
+  order:4;
+}
+
+/* Payments page: stable sizing on every screen */
+.page-section:has(.payment-tabs){
+  min-width:0;
+  overflow:hidden;
+}
+.payment-tabs{
+  width:100%;
+  max-width:100%;
+}
+.payment-list.full-list{
+  min-width:0;
+}
+.payment-list.full-list .payment-row{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  grid-template-columns:140px minmax(0,1fr) auto auto;
+}
+.payment-list.full-list .payment-main{
+  min-width:0;
+}
+.payment-list.full-list .payment-main h3,
+.payment-list.full-list .payment-main p,
+.payment-list.full-list .payment-main small{
+  overflow-wrap:anywhere;
+}
+.payment-list.full-list .row-actions{
+  min-width:0;
+  white-space:nowrap;
+}
+
+/* Mobile payments: no horizontal clipping, all tabs visible. */
+@media(max-width:760px){
+  .page-section:has(.payment-tabs){
+    overflow:visible;
+  }
+  .payment-tabs{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:3px;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0 0 14px!important;
+    padding:4px!important;
+    overflow:visible!important;
+    border-radius:16px!important;
+    background:rgba(5,5,5,.045)!important;
+  }
+  .payment-tabs button{
+    min-width:0!important;
+    min-height:39px!important;
+    padding:6px 3px!important;
+    border-radius:12px!important;
+    background:transparent!important;
+    font-size:8.5px!important;
+    line-height:1.05;
+    white-space:nowrap;
+  }
+  .payment-tabs button.active{
+    background:#fff!important;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+  }
+  .list-toolbar{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    width:100%;
+    margin:4px 0 12px!important;
+  }
+  .list-toolbar p{
+    margin:0;
+    min-width:0;
+    font-size:12px;
+  }
+  .switch-label{
+    flex:0 0 auto;
+    white-space:nowrap;
+    font-size:9px;
+  }
+  .payment-list.full-list{
+    width:100%;
+    gap:8px;
+  }
+  .payment-list.full-list .payment-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    width:100%;
+    gap:8px 10px!important;
+    padding:12px!important;
+    overflow:hidden;
+    border-radius:18px;
+  }
+  .payment-list.full-list .countdown-box{
+    grid-column:1/-1!important;
+    width:max-content;
+    max-width:100%;
+    margin:0;
+  }
+  .payment-list.full-list .payment-main{
+    grid-column:1!important;
+    grid-row:auto!important;
+  }
+  .payment-list.full-list .payment-main p{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    line-height:1.3;
+  }
+  .payment-list.full-list .payment-date{
+    display:none!important;
+  }
+  .payment-list.full-list .payment-amount{
+    grid-column:2!important;
+    align-self:start;
+    justify-self:end;
+    white-space:nowrap;
+  }
+  .payment-list.full-list .row-actions{
+    grid-column:1/-1!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr auto;
+    gap:6px;
+    width:100%;
+  }
+  .payment-list.full-list .row-actions .primary-button,
+  .payment-list.full-list .row-actions .secondary-button{
+    width:100%;
+    min-width:0;
+    padding-inline:8px;
+  }
+}
+
+@media(max-width:390px){
+  .payment-tabs button{
+    font-size:7.7px!important;
+    letter-spacing:-.01em;
+  }
+}
