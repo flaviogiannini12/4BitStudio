@@ -1,5 +1,6 @@
 import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Clock3, Repeat2, UsersRound } from 'lucide-react'
 import { countdownLabel, money, todayISO } from '../lib/date'
+import { memberToneClass } from '../lib/memberTone'
 import type { StudioData } from '../types/studio'
 
 function pct(value: number) {
@@ -30,6 +31,7 @@ export function StatsPage({ data }: { data: StudioData }) {
     label: member.name,
     value: openTasks.filter(t => t.assigneeId === member.id).length,
     done: doneTasks.filter(t => t.assigneeId === member.id).length,
+    tone: memberToneClass(member.name),
   })).sort((a,b) => b.value - a.value)
 
   const taskByClient = activeClients.map(client => ({
@@ -123,10 +125,10 @@ function Metric({ icon: Icon, label, value, sub }: { icon: typeof UsersRound; la
   </article>
 }
 
-function BarRows({ rows, suffix, secondaryLabel }: { rows: {label:string;value:number;done?:number}[]; suffix: string; secondaryLabel?: string }) {
+function BarRows({ rows, suffix, secondaryLabel }: { rows: {label:string;value:number;done?:number;tone?:string}[]; suffix: string; secondaryLabel?: string }) {
   const max = Math.max(1, ...rows.map(x => x.value))
   return <div className="stats-bars">
-    {rows.map(row => <div key={row.label} className="stats-bar-row">
+    {rows.map(row => <div key={row.label} className={`stats-bar-row ${row.tone ?? ''}`}>
       <div className="stats-bar-head"><strong>{row.label}</strong><span>{row.value}{suffix}{secondaryLabel && row.done !== undefined ? ' · ' + row.done + ' ' + secondaryLabel : ''}</span></div>
       <div className="stats-track"><span style={{width: Math.max(4,row.value/max*100) + '%'}}/></div>
     </div>)}
