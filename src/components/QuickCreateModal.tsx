@@ -22,6 +22,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState('')
+  const [servicesValue, setServicesValue] = useState('')
   const activeClients = useMemo(
     () => [...data.clients]
       .filter(c => c.status !== 'archived' && c.status !== 'lead')
@@ -51,7 +52,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
           email: '',
           phone: '',
           logoUrl,
-          services: val('services').split(',').map(x => x.trim()).filter(Boolean),
+          services: servicesValue.split(',').map(x => x.trim()).filter(Boolean),
           notes: val('notes'),
           yearAcquired: val('yearAcquired') ? Number(val('yearAcquired')) : new Date().getFullYear(),
           analyticsEnabled: false,
@@ -126,7 +127,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
             <Select name="status" label="Stato" options={[["active","Attivo"],["in_progress","In corso"],["paused","In pausa"]]}/>
           </div>
           <Field label="Contatto" name="contactName"/>
-          <Field label="Servizi" name="services" placeholder="Figma, Sito web, Hosting"/>
+          <QuickServiceField value={servicesValue} onChange={setServicesValue}/>
           <TextArea label="Note" name="notes"/>
         </>}
 
@@ -174,4 +175,22 @@ function SelectClient({ data, allowEmpty = false }: { data: StudioData['clients'
 
 function Select({ label, name, options, allowEmpty = false, defaultValue = '' }: { label: string; name: string; options: string[][]; allowEmpty?: boolean; defaultValue?: string }) {
   return <label className="form-field"><span>{label}</span><select className="field" name={name} defaultValue={defaultValue}>{allowEmpty && <option value="">Nessuno</option>}{!allowEmpty && <option value="" disabled>Seleziona…</option>}{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>
+}
+
+
+const QUICK_SERVICE_SUGGESTIONS = ['Sito','Gestione Social','Produzione contenuti','WhatsApp','Hosting','Branding','ADV']
+
+function QuickServiceField({value,onChange}:{value:string;onChange:(value:string)=>void}) {
+  function add(service:string) {
+    const current = value.split(',').map(x => x.trim()).filter(Boolean)
+    if (current.some(item => item.toLowerCase() === service.toLowerCase())) return
+    onChange([...current,service].join(', '))
+  }
+  return <label className="form-field service-field">
+    <span>Servizi</span>
+    <input className="field" name="services" value={value} onChange={e => onChange(e.target.value)} placeholder="Sito, Gestione Social, Produzione contenuti…"/>
+    <div className="service-suggestions">
+      {QUICK_SERVICE_SUGGESTIONS.map(service => <button type="button" key={service} onClick={() => add(service)}>{service}</button>)}
+    </div>
+  </label>
 }
