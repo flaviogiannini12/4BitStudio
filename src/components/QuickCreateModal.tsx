@@ -124,7 +124,7 @@ export function QuickCreateModal({ data, actions, onClose, initialKind = 'task' 
           <div className="field-grid two"><Field label="Nome cliente" name="name" required/><Field label="Dominio / sito" name="website" placeholder="es. cliente.it"/></div>
           <div className="field-grid two">
             <Field label="Anno acquisizione" name="yearAcquired" type="number" min="2000" max="2100" defaultValue={new Date().getFullYear()}/>
-            <Select name="status" label="Stato" options={[["active","Attivo"],["in_progress","In corso"],["paused","In pausa"]]}/>
+            <Select name="status" label="Stato" options={[["active","Attivo"],["paused","In pausa"],["lead","Lead"],["archived","Archivio"]]}/>
           </div>
           <Field label="Contatto" name="contactName"/>
           <QuickServiceField value={servicesValue} onChange={setServicesValue}/>
