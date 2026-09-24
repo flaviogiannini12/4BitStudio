@@ -71,11 +71,11 @@ export function RecordEditorModal({
           services:s('services').split(',').map(x=>x.trim()).filter(Boolean),
           notes:s('notes'),
           yearAcquired:s('yearAcquired') ? n('yearAcquired') : null,
-          analyticsEnabled:fd.get('analyticsEnabled') === 'on',
-          leadSector:s('leadSector'),
-          leadSource:s('leadSource'),
-          leadStage:s('leadStage'),
-          nextAction:s('nextAction'),
+          analyticsEnabled:(record as Client | null)?.analyticsEnabled ?? false,
+          leadSector:(record as Client | null)?.leadSector ?? '',
+          leadSource:(record as Client | null)?.leadSource ?? '',
+          leadStage:(record as Client | null)?.leadStage ?? '',
+          nextAction:(record as Client | null)?.nextAction ?? '',
           lastContact:nullable('lastContact'),
           logoUrl,
         }
@@ -175,9 +175,6 @@ export function RecordEditorModal({
         <div className="field-grid two"><Field name="contactName" label="Referente" defaultValue={v('contactName')}/><Field name="email" label="Email" type="email" defaultValue={v('email')}/></div>
         <div className="field-grid two"><Field name="phone" label="Telefono" defaultValue={v('phone')}/><Field name="lastContact" label="Ultimo contatto" type="date" defaultValue={v('lastContact')}/></div>
         <Field name="services" label="Servizi" defaultValue={v('services')} placeholder="Figma, Sito web, Hosting"/>
-        <label className="checkbox-field"><input type="checkbox" name="analyticsEnabled" defaultChecked={Boolean((record as Client | null)?.analyticsEnabled)}/><span>Monitoraggio Analytics attivo</span></label>
-        <div className="field-grid two"><Field name="leadSector" label="Settore lead" defaultValue={v('leadSector')}/><Field name="leadSource" label="Fonte lead" defaultValue={v('leadSource')}/></div>
-        <div className="field-grid two"><Field name="leadStage" label="Stato lead" defaultValue={v('leadStage')}/><Field name="nextAction" label="Prossima azione" defaultValue={v('nextAction')}/></div>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
