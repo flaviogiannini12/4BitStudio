@@ -9,6 +9,7 @@ export function TaskEditorModal({
   open,
   task,
   initialDate,
+  initialClientId,
   data,
   actions,
   onClose,
@@ -16,6 +17,7 @@ export function TaskEditorModal({
   open: boolean
   task: Task | null
   initialDate: string | null
+  initialClientId?: string | null
   data: StudioData
   actions: Actions
   onClose: () => void
@@ -23,11 +25,11 @@ export function TaskEditorModal({
   const initial = useMemo(() => ({
     title: task?.title ?? '',
     description: task?.description ?? '',
-    clientId: task?.clientId ?? '',
+    clientId: task?.clientId ?? initialClientId ?? '',
     assigneeId: task?.assigneeId ?? '',
     dueDate: task?.dueDate ?? initialDate ?? '',
     status: task?.status ?? 'todo',
-  }), [task, initialDate])
+  }), [task, initialDate, initialClientId])
 
   const [draft, setDraft] = useState(initial)
   const [saving, setSaving] = useState(false)
