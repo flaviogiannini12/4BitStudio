@@ -252,7 +252,10 @@ function Select({name,label,defaultValue,options}:{name:string;label:string;defa
   return <label className="form-field"><span>{label}</span><select className="field" name={name} defaultValue={defaultValue}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
 }
 function ClientSelect({data,defaultValue,allowEmpty=false}:{data:StudioData;defaultValue:string;allowEmpty?:boolean}) {
-  return <label className="form-field"><span>Cliente / lavoro</span><select className="field" name="clientId" defaultValue={defaultValue}>{allowEmpty && <option value="">4Bit Studio / Nessun cliente</option>}{!allowEmpty && <option value="" disabled>Seleziona…</option>}{data.clients.filter(c=>c.status!=='archived'&&c.status!=='lead').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+  const clients = [...data.clients]
+    .filter(c => c.status !== 'archived' && c.status !== 'lead')
+    .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+  return <label className="form-field"><span>Cliente / lavoro</span><select className="field" name="clientId" defaultValue={defaultValue}>{allowEmpty && <option value="">4Bit Studio / Nessun cliente</option>}{!allowEmpty && <option value="" disabled>Seleziona…</option>}{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
 }
 function MemberSelect({data,defaultValue}:{data:StudioData;defaultValue:string}) {
   return <label className="form-field"><span>Collaboratore</span><select className="field" name="memberId" defaultValue={defaultValue}><option value="">Nessuno</option>{data.members.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
