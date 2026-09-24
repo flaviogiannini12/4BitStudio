@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { addMonths, todayISO } from '../lib/date'
 import { demoData } from '../lib/demo'
@@ -95,6 +95,7 @@ export function useStudio(user: User | null, ready: boolean) {
   const [loading, setLoading] = useState(cloudEnabled)
   const [error, setError] = useState<string | null>(null)
   const [needsWorkspace, setNeedsWorkspace] = useState(false)
+  const realtimeReloadTimer = useRef<number | null>(null)
 
   const saveLocal = useCallback((recipe: (current: StudioData) => StudioData) => {
     setData(current => {
@@ -104,13 +105,13 @@ export function useStudio(user: User | null, ready: boolean) {
     })
   }, [])
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (silent = false) => {
     if (!cloudEnabled) {
       setData(readLocal())
       return
     }
     if (!user) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       let member = await hasWorkspaceMembership()
       if (!member) {
@@ -136,7 +137,7 @@ export function useStudio(user: User | null, ready: boolean) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossibile caricare i dati')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [user])
 
@@ -145,23 +146,73 @@ export function useStudio(user: User | null, ready: boolean) {
     void reload()
   }, [ready, reload])
 
+  const scheduleRealtimeReload = useCallback(() => {
+    if (realtimeReloadTimer.current !== null) window.clearTimeout(realtimeReloadTimer.current)
+    realtimeReloadTimer.current = window.setTimeout(() => {
+      realtimeReloadTimer.current = null
+      void reload(true)
+    }, 120)
+  }, [reload])
+
   useEffect(() => {
     if (!cloudEnabled || !supabase || !user) return
     const client = supabase
+    const refresh = () => scheduleRealtimeReload()
+    const refreshAccesses = () => {
+      window.dispatchEvent(new Event('4bit:access-refresh'))
+      scheduleRealtimeReload()
+    }
+
     const channel = client.channel(`studio-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'recurrences' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger_entries' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'compensations' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deadlines' }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_periods' }, () => void reload())
-      .subscribe()
-    return () => { void client.removeChannel(channel) }
-  }, [reload, user])
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'recurrences' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger_entries' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'compensations' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deadlines' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_periods' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'access_credentials' }, refreshAccesses)
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleRealtimeReload()
+      })
+
+    return () => {
+      if (realtimeReloadTimer.current !== null) {
+        window.clearTimeout(realtimeReloadTimer.current)
+        realtimeReloadTimer.current = null
+      }
+      void client.removeChannel(channel)
+    }
+  }, [scheduleRealtimeReload, user])
+
+  useEffect(() => {
+    if (!cloudEnabled || !user) return
+
+    const refresh = () => scheduleRealtimeReload()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    window.addEventListener('focus', refresh)
+    window.addEventListener('online', refresh)
+    window.addEventListener('pageshow', refresh)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    const safetyRefresh = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
+    }, 45000)
+
+    return () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('online', refresh)
+      window.removeEventListener('pageshow', refresh)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.clearInterval(safetyRefresh)
+    }
+  }, [scheduleRealtimeReload, user])
 
   async function joinStudio(code: string) {
     if (!cloudEnabled || !user) return
