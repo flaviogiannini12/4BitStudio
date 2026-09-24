@@ -208,6 +208,34 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
     </article>
   }
 
+  const completedTaskCard = (task: Task) => {
+    const c = client(task.clientId)
+    const m = member(task.assigneeId)
+
+    return <article key={task.id} className="todo-task-card completed-task-card is-done">
+      <button className="todo-task-check" onClick={() => void toggleComplete(task)} aria-label="Riapri task"><Check size={14}/></button>
+      <button className="todo-task-content" onClick={() => openEdit(task)}>
+        <div className="todo-task-topline">
+          <h3>{task.title}</h3>
+          <span className={`todo-assignee ${m ? assigneeTone(m.name) : 'unassigned'}`}>
+            <span>{m ? m.name.slice(0,1).toUpperCase() : '?'}</span>
+            {m?.name ?? 'Non assegnata'}
+          </span>
+        </div>
+        <div className="todo-task-meta">
+          {c
+            ? <span className="task-client-chip" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
+            : <span className="task-internal-chip">4Bit Studio</span>}
+          <span className="task-status-inline done">Completata</span>
+        </div>
+        {task.description && <p>{task.description}</p>}
+      </button>
+      <div className="todo-task-side">
+        <button className="task-more-button" onClick={() => openEdit(task)} aria-label="Modifica task"><MoreHorizontal size={16}/></button>
+      </div>
+    </article>
+  }
+
   return <>
     <section className="todo-planner-page">
       <div className="todo-planner-head">
@@ -245,20 +273,21 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
           </select>
         </label>
 
-        <label className="planner-toggle">
-          <input type="checkbox" checked={onlyDaysWithTasks} onChange={e => setOnlyDaysWithTasks(e.target.checked)}/>
-          <span className="planner-switch"><span/></span>
-          <span>Solo giorni con attività</span>
-        </label>
-
-        <label className="date-jump">
-          <CalendarSearch size={14}/>
-          <input type="date" value={jumpDate} min={todayKey} onChange={e => {
-            setJumpDate(e.target.value)
-            if (e.target.value) window.setTimeout(() => jumpToDate(e.target.value), 30)
-          }}/>
-          <button type="button" onClick={() => jumpToDate()}><MoveRight size={14}/></button>
-        </label>
+        {statusFilter === 'open' && <>
+          <label className="planner-toggle">
+            <input type="checkbox" checked={onlyDaysWithTasks} onChange={e => setOnlyDaysWithTasks(e.target.checked)}/>
+            <span className="planner-switch"><span/></span>
+            <span>Solo giorni con attività</span>
+          </label>
+          <label className="date-jump">
+            <CalendarSearch size={14}/>
+            <input type="date" value={jumpDate} min={todayKey} onChange={e => {
+              setJumpDate(e.target.value)
+              if (e.target.value) window.setTimeout(() => jumpToDate(e.target.value), 30)
+            }}/>
+            <button type="button" onClick={() => jumpToDate()}><MoveRight size={14}/></button>
+          </label>
+        </>}
       </div>
 
       <div className="todo-planner-grid">
