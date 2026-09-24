@@ -2184,27 +2184,11 @@
   color:var(--client-chip-ink,#B83D16)!important;
   border:1px solid color-mix(in srgb,var(--client-chip-accent,#F25A2A) 16%,transparent);
 }
-.task-client-chip::before{
-  content:'';
-  width:5px;
-  height:5px;
-  flex:0 0 auto;
-  border-radius:50%;
-  background:var(--client-chip-accent,#F25A2A);
-}
 .home-task-client:not(.internal){
   padding:3px 7px 3px 4px;
   border-radius:999px;
   background:var(--client-chip-bg,rgba(5,5,5,.04));
   color:var(--client-chip-ink,rgba(5,5,5,.52));
-}
-.home-task-client:not(.internal)::before{
-  content:'';
-  width:5px;
-  height:5px;
-  flex:0 0 auto;
-  border-radius:50%;
-  background:var(--client-chip-accent,#999);
 }
 
 .todo-completed-panel{
