@@ -21,6 +21,17 @@ function rollingDays(start: Date, count: number) {
   })
 }
 
+function assigneeTone(name?: string) {
+  const value = (name ?? '').trim().toLowerCase()
+  if (value === 'flavio') return 'assignee-flavio'
+  if (value === 'edoardo') return 'assignee-edoardo'
+  if (value === 'francesco') return 'assignee-francesco'
+  if (value === 'matteo') return 'assignee-matteo'
+  let hash = 0
+  for (const char of value) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0
+  return `assignee-tone-${Math.abs(hash) % 4}`
+}
+
 function sortTasks(tasks: Task[]) {
   return [...tasks].sort((a,b) => {
     const order = (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
@@ -164,7 +175,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
       <button className="todo-task-content" onClick={() => openEdit(task)}>
         <div className="todo-task-topline">
           <h3>{task.title}</h3>
-          <span className={`todo-assignee ${m ? '' : 'unassigned'}`}>
+          <span className={`todo-assignee ${m ? assigneeTone(m.name) : 'unassigned'}`}>
             <span>{m ? m.name.slice(0,1).toUpperCase() : '?'}</span>
             {m?.name ?? 'Non assegnata'}
           </span>
