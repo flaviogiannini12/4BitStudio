@@ -1876,3 +1876,14 @@
     letter-spacing:-.01em;
   }
 }
+
+
+/* Desktop curiosity headline: slightly more compact, mobile/tablet unchanged */
+@media (min-width:901px){
+  .page-header h1{
+    max-width:1120px;
+    font-size:clamp(2.25rem,3.7vw,3.65rem);
+    line-height:.97;
+    letter-spacing:-.06em;
+  }
+}
