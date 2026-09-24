@@ -29,6 +29,7 @@ export function RecordEditorModal({
   const [saving,setSaving] = useState(false)
   const [error,setError] = useState<string | null>(null)
   const [logoUrl,setLogoUrl] = useState(() => kind === 'client' ? ((record as Client | null)?.logoUrl ?? '') : '')
+  const [servicesValue,setServicesValue] = useState(() => kind === 'client' ? (((record as Client | null)?.services ?? []).join(', ')) : '')
   const title = useMemo(() => ({
     client: record ? 'Modifica cliente' : 'Nuovo cliente',
     payment: record ? 'Modifica pagamento' : 'Nuovo pagamento',
@@ -63,12 +64,12 @@ export function RecordEditorModal({
       if (kind === 'client') {
         const payload = {
           name:s('name'),
-          status:s('status') as Client['status'],
+          status:(s('status') === 'in_progress' ? 'active' : s('status')) as Client['status'],
           website:s('website'),
           contactName:s('contactName'),
           email:(record as Client | null)?.email ?? '',
           phone:(record as Client | null)?.phone ?? '',
-          services:s('services').split(',').map(x=>x.trim()).filter(Boolean),
+          services:servicesValue.split(',').map(x=>x.trim()).filter(Boolean),
           notes:s('notes'),
           yearAcquired:s('yearAcquired') ? n('yearAcquired') : null,
           analyticsEnabled:(record as Client | null)?.analyticsEnabled ?? false,
@@ -170,10 +171,10 @@ export function RecordEditorModal({
           <div><strong>{logoUrl ? 'Logo cliente' : 'Logo cliente (facoltativo)'}</strong><span>{logoUrl ? 'Puoi sostituirlo oppure rimuoverlo' : 'PNG, JPG o WebP'}</span></div>
           {logoUrl && <button type="button" className="logo-remove-button" title="Rimuovi logo" onClick={event => { event.preventDefault(); event.stopPropagation(); setLogoUrl('') }}><X size={14}/></button>}
         </label>
-        <div className="field-grid two"><Field name="name" label="Nome" defaultValue={v('name')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'active'} options={[['active','Attivo'],['in_progress','In lavorazione'],['paused','In pausa'],['lead','Lead'],['archived','Archivio']]}/></div>
+        <div className="field-grid two"><Field name="name" label="Nome" defaultValue={v('name')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'active'} options={[['active','Attivo'],['paused','In pausa'],['lead','Lead'],['archived','Archivio']]}/></div>
         <div className="field-grid two"><Field name="website" label="Dominio / sito" defaultValue={v('website')}/><Field name="yearAcquired" label="Anno acquisizione" type="number" defaultValue={v('yearAcquired') || (!record ? String(new Date().getFullYear()) : '')}/></div>
         <Field name="contactName" label="Contatto" defaultValue={v('contactName') || v('email') || v('phone')}/>
-        <Field name="services" label="Servizi" defaultValue={v('services')} placeholder="Figma, Sito web, Hosting"/>
+        <ServiceField value={servicesValue} onChange={setServicesValue}/>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
@@ -258,4 +259,22 @@ function ClientSelect({data,defaultValue,allowEmpty=false}:{data:StudioData;defa
 }
 function MemberSelect({data,defaultValue}:{data:StudioData;defaultValue:string}) {
   return <label className="form-field"><span>Collaboratore</span><select className="field" name="memberId" defaultValue={defaultValue}><option value="">Nessuno</option>{data.members.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+}
+
+
+const SERVICE_SUGGESTIONS = ['Sito','Gestione Social','Produzione contenuti','WhatsApp','Hosting','Branding','ADV']
+
+function ServiceField({value,onChange}:{value:string;onChange:(value:string)=>void}) {
+  function add(service:string) {
+    const current = value.split(',').map(x => x.trim()).filter(Boolean)
+    if (current.some(item => item.toLowerCase() === service.toLowerCase())) return
+    onChange([...current,service].join(', '))
+  }
+  return <label className="form-field service-field">
+    <span>Servizi</span>
+    <input className="field" name="services" value={value} onChange={e => onChange(e.target.value)} placeholder="Sito, Gestione Social, Produzione contenuti…"/>
+    <div className="service-suggestions">
+      {SERVICE_SUGGESTIONS.map(service => <button type="button" key={service} onClick={() => add(service)}>{service}</button>)}
+    </div>
+  </label>
 }
