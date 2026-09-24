@@ -22,14 +22,26 @@ export function TaskEditorModal({
   actions: Actions
   onClose: () => void
 }) {
+  const defaultFlavioId = useMemo(
+    () => data.members.find(member => member.active && member.name.trim().toLowerCase() === 'flavio')?.id ?? '',
+    [data.members],
+  )
+
+  const orderedClients = useMemo(
+    () => [...data.clients]
+      .filter(client => client.status !== 'archived' && client.status !== 'lead')
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [data.clients],
+  )
+
   const initial = useMemo(() => ({
     title: task?.title ?? '',
     description: task?.description ?? '',
     clientId: task?.clientId ?? initialClientId ?? '',
-    assigneeId: task?.assigneeId ?? '',
+    assigneeId: task ? (task.assigneeId ?? '') : defaultFlavioId,
     dueDate: task?.dueDate ?? initialDate ?? '',
     status: task?.status ?? 'todo',
-  }), [task, initialDate, initialClientId])
+  }), [task, initialDate, initialClientId, defaultFlavioId])
 
   const [draft, setDraft] = useState(initial)
   const [saving, setSaving] = useState(false)
@@ -142,7 +154,7 @@ export function TaskEditorModal({
             <span>Lavoro / cliente</span>
             <select className="field" value={draft.clientId} onChange={e => setDraft({...draft,clientId:e.target.value})}>
               <option value="">4Bit Studio / Interno</option>
-              {data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {orderedClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </label>
 
