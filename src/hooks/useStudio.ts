@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import { addMonths, todayISO } from '../lib/date'
 import { demoData } from '../lib/demo'
 import { cloudEnabled, supabase } from '../lib/supabase'
-import { cloudRepo, hasWorkspaceMembership, joinWorkspace, loadStudioData } from '../lib/studioRepository'
+import { claimInitialWorkspace, cloudRepo, hasWorkspaceMembership, joinWorkspace, loadStudioData } from '../lib/studioRepository'
 import type {
   Client, ClientInput, Compensation, CompensationInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
   Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
@@ -112,7 +112,11 @@ export function useStudio(user: User | null, ready: boolean) {
     if (!user) return
     setLoading(true)
     try {
-      const member = await hasWorkspaceMembership()
+      let member = await hasWorkspaceMembership()
+      if (!member) {
+        const claimedWorkspace = await claimInitialWorkspace()
+        member = Boolean(claimedWorkspace) || await hasWorkspaceMembership()
+      }
       if (!member) {
         setNeedsWorkspace(true)
         setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], deadlines: [], maintenancePeriods: [] })
