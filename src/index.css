@@ -1887,3 +1887,90 @@
     letter-spacing:-.06em;
   }
 }
+
+
+/* Client service suggestions */
+.service-field{gap:7px}
+.service-suggestions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:2px;
+}
+.service-suggestions button{
+  min-height:29px;
+  padding:5px 10px;
+  border:1px solid rgba(5,5,5,.07);
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:rgba(5,5,5,.56);
+  font-size:9px;
+  font-weight:720;
+  transition:.16s ease;
+}
+.service-suggestions button:hover{
+  background:#050505;
+  color:#fff;
+  border-color:#050505;
+}
+
+/* Counters beside filters */
+.filter-count{
+  display:inline-grid;
+  min-width:20px;
+  height:20px;
+  margin-left:5px;
+  place-items:center;
+  padding:0 5px;
+  border-radius:999px;
+  background:rgba(5,5,5,.07);
+  color:rgba(5,5,5,.52);
+  font-size:8px;
+  font-weight:850;
+}
+.segmented button.active .filter-count{
+  background:#050505;
+  color:#fff;
+}
+.task-filter-with-count{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.task-filter-with-count .task-filter{
+  margin:0;
+}
+.task-filter-counter{
+  display:inline-flex;
+  min-height:38px;
+  align-items:center;
+  gap:4px;
+  padding:0 12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:rgba(255,255,255,.62);
+  color:rgba(5,5,5,.42);
+  font-size:9px;
+  font-weight:760;
+  white-space:nowrap;
+}
+.task-filter-counter strong{
+  color:#050505;
+  font-size:11px;
+}
+
+@media(max-width:760px){
+  .task-filter-with-count{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:7px;
+  }
+  .task-filter-with-count .task-filter{
+    width:100%;
+  }
+  .task-filter-counter{
+    min-height:42px;
+    border-radius:15px;
+  }
+}
