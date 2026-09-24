@@ -49,8 +49,8 @@ export function AuthScreen() {
           <div className="auth-form">
             <img className="mobile-brand-logo" src={BRAND_LOGO} alt="4Bit Studio"/>
             <p className="muted-label">{mode === 'login' ? 'Bentornato' : 'Nuovo account'}</p>
-            <h2>{mode === 'login' ? 'Accedi' : 'Crea lo spazio'}</h2>
-            <p className="form-copy">Lo stesso gestionale su computer, telefono e tablet.</p>
+            <h2>{mode === 'login' ? 'Accedi' : 'Crea account'}</h2>
+            <p className="form-copy">Un unico gestionale online, sincronizzato su computer, telefono e tablet.</p>
             <form onSubmit={submit} className="form-stack">
               <label><span>Email</span><input className="field" type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
               <label><span>Password</span><input className="field" type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} /></label>
