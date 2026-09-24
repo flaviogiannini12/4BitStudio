@@ -26,6 +26,23 @@ export async function joinWorkspace(inviteCode: string) {
   if (error) throw error
 }
 
+export async function claimInitialWorkspace() {
+  const { data, error } = await requireCloud().rpc('claim_initial_4bit_workspace')
+  if (error) throw error
+  return data as string | null
+}
+
+async function currentWorkspaceId() {
+  const { data, error } = await requireCloud()
+    .from('workspace_members')
+    .select('workspace_id')
+    .limit(1)
+    .single()
+  if (error) throw error
+  if (!data?.workspace_id) throw new Error('Workspace 4Bit non collegato')
+  return data.workspace_id as string
+}
+
 const fromClient = (r: any): Client => ({
   id: r.id, name: r.name, status: r.status, website: r.website ?? '', contactName: r.contact_name ?? '',
   email: r.email ?? '', phone: r.phone ?? '', logoUrl: r.logo_url ?? '', services: r.services ?? [], notes: r.notes ?? '',
@@ -80,7 +97,8 @@ async function remove(table: string, id: string) {
 
 export const cloudRepo = {
   async createClient(user: User, input: ClientInput) {
-    return fromClient(await insert('clients', { owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logo_url: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', year_acquired: input.yearAcquired ?? null, analytics_enabled: input.analyticsEnabled ?? false, lead_sector: input.leadSector ?? '', lead_source: input.leadSource ?? '', lead_stage: input.leadStage ?? '', next_action: input.nextAction ?? '', last_contact: input.lastContact ?? null, sort_order: input.sortOrder ?? 0 }))
+    const workspaceId = await currentWorkspaceId()
+    return fromClient(await insert('clients', { workspace_id: workspaceId, owner_id: user.id, name: input.name, status: input.status ?? 'active', website: input.website ?? '', contact_name: input.contactName ?? '', email: input.email ?? '', phone: input.phone ?? '', logo_url: input.logoUrl ?? '', services: input.services ?? [], notes: input.notes ?? '', year_acquired: input.yearAcquired ?? null, analytics_enabled: input.analyticsEnabled ?? false, lead_sector: input.leadSector ?? '', lead_source: input.leadSource ?? '', lead_stage: input.leadStage ?? '', next_action: input.nextAction ?? '', last_contact: input.lastContact ?? null, sort_order: input.sortOrder ?? 0 }))
   },
   async updateClient(id: string, input: Partial<Client>) {
     const payload: any = {}
@@ -104,28 +122,27 @@ export const cloudRepo = {
     return fromClient(await update('clients', id, payload))
   },
   deleteClient: (id: string) => remove('clients', id),
-  async createMember(user: User, input: TeamMemberInput) { return fromMember(await insert('team_members', { owner_id: user.id, name: input.name, role: input.role ?? 'Team', active: true })) },
+  async createMember(user: User, input: TeamMemberInput) { const workspaceId = await currentWorkspaceId(); return fromMember(await insert('team_members', { workspace_id: workspaceId, owner_id: user.id, name: input.name, role: input.role ?? 'Team', active: true })) },
   async updateMember(id: string, input: Partial<TeamMember>) { return fromMember(await update('team_members', id, { ...(input.name !== undefined ? { name: input.name } : {}), ...(input.role !== undefined ? { role: input.role } : {}), ...(input.active !== undefined ? { active: input.active } : {}) })) },
-  async createProject(user: User, input: ProjectInput) { return fromProject(await insert('projects', { owner_id: user.id, client_id: input.clientId, name: input.name, status: input.status ?? 'planning', deadline: input.deadline || null, description: input.description ?? '' })) },
+  async createProject(user: User, input: ProjectInput) { const workspaceId = await currentWorkspaceId(); return fromProject(await insert('projects', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, name: input.name, status: input.status ?? 'planning', deadline: input.deadline || null, description: input.description ?? '' })) },
   async updateProject(id: string, input: Partial<Project>) { return fromProject(await update('projects', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.name !== undefined ? { name: input.name } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.deadline !== undefined ? { deadline: input.deadline || null } : {}), ...(input.description !== undefined ? { description: input.description } : {}) })) },
   deleteProject: (id: string) => remove('projects', id),
-  async createTask(user: User, input: TaskInput) { return fromTask(await insert('tasks', { owner_id: user.id, title: input.title, client_id: input.clientId || null, project_id: input.projectId || null, assignee_id: input.assigneeId || null, due_date: input.dueDate || null, status: input.status ?? 'todo', description: input.description ?? '', checklist: input.checklist ?? [], sort_order: input.sortOrder ?? 0 })) },
+  async createTask(user: User, input: TaskInput) { const workspaceId = await currentWorkspaceId(); return fromTask(await insert('tasks', { workspace_id: workspaceId, owner_id: user.id, title: input.title, client_id: input.clientId || null, project_id: input.projectId || null, assignee_id: input.assigneeId || null, due_date: input.dueDate || null, status: input.status ?? 'todo', description: input.description ?? '', checklist: input.checklist ?? [], sort_order: input.sortOrder ?? 0 })) },
   async updateTask(id: string, input: Partial<Task>) { return fromTask(await update('tasks', id, { ...(input.title !== undefined ? { title: input.title } : {}), ...(input.clientId !== undefined ? { client_id: input.clientId || null } : {}), ...(input.projectId !== undefined ? { project_id: input.projectId || null } : {}), ...(input.assigneeId !== undefined ? { assignee_id: input.assigneeId || null } : {}), ...(input.dueDate !== undefined ? { due_date: input.dueDate || null } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.description !== undefined ? { description: input.description } : {}), ...(input.checklist !== undefined ? { checklist: input.checklist } : {}), ...(input.completedAt !== undefined ? { completed_at: input.completedAt } : {}), ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}) })) },
   deleteTask: (id: string) => remove('tasks', id),
-  async createPayment(user: User, input: PaymentInput) { return fromPayment(await insert('payments', { owner_id: user.id, client_id: input.clientId, project_id: input.projectId || null, recurrence_id: input.recurrenceId || null, label: input.label, amount: input.amount, due_date: input.dueDate, status: 'pending', notes: input.notes ?? '' })) },
+  async createPayment(user: User, input: PaymentInput) { const workspaceId = await currentWorkspaceId(); return fromPayment(await insert('payments', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, project_id: input.projectId || null, recurrence_id: input.recurrenceId || null, label: input.label, amount: input.amount, due_date: input.dueDate, status: 'pending', notes: input.notes ?? '' })) },
   async updatePayment(id: string, input: Partial<Payment>) { return fromPayment(await update('payments', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.projectId !== undefined ? { project_id: input.projectId || null } : {}), ...(input.recurrenceId !== undefined ? { recurrence_id: input.recurrenceId || null } : {}), ...(input.label !== undefined ? { label: input.label } : {}), ...(input.amount !== undefined ? { amount: input.amount } : {}), ...(input.dueDate !== undefined ? { due_date: input.dueDate } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.paidAt !== undefined ? { paid_at: input.paidAt } : {}), ...(input.reminderCount !== undefined ? { reminder_count: input.reminderCount } : {}), ...(input.lastReminderAt !== undefined ? { last_reminder_at: input.lastReminderAt } : {}), ...(input.notes !== undefined ? { notes: input.notes } : {}) })) },
   deletePayment: (id: string) => remove('payments', id),
-  async createRecurrence(user: User, input: RecurrenceInput) { return fromRecurrence(await insert('recurrences', { owner_id: user.id, client_id: input.clientId, label: input.label, amount: input.amount, interval_months: input.intervalMonths, due_day: input.dueDay ?? null, next_due_date: input.nextDueDate, active: true, notes: input.notes ?? '' })) },
+  async createRecurrence(user: User, input: RecurrenceInput) { const workspaceId = await currentWorkspaceId(); return fromRecurrence(await insert('recurrences', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, label: input.label, amount: input.amount, interval_months: input.intervalMonths, due_day: input.dueDay ?? null, next_due_date: input.nextDueDate, active: true, notes: input.notes ?? '' })) },
   async updateRecurrence(id: string, input: Partial<Recurrence>) { return fromRecurrence(await update('recurrences', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.label !== undefined ? { label: input.label } : {}), ...(input.amount !== undefined ? { amount: input.amount } : {}), ...(input.intervalMonths !== undefined ? { interval_months: input.intervalMonths } : {}), ...(input.dueDay !== undefined ? { due_day: input.dueDay } : {}), ...(input.nextDueDate !== undefined ? { next_due_date: input.nextDueDate } : {}), ...(input.active !== undefined ? { active: input.active } : {}), ...(input.notes !== undefined ? { notes: input.notes } : {}) })) },
   deleteRecurrence: (id: string) => remove('recurrences', id),
 
   async createLedger(input: LedgerEntryInput) {
     const user = (await requireCloud().auth.getUser()).data.user
     if (!user) throw new Error('Accesso richiesto')
-    const membership = await requireCloud().from('workspace_members').select('workspace_id').limit(1).single()
-    if (membership.error) throw membership.error
+    const workspaceId = await currentWorkspaceId()
     return fromLedger(await insert('ledger_entries', {
-      workspace_id: membership.data.workspace_id,
+      workspace_id: workspaceId,
       entry_date: input.entryDate || null,
       direction: input.direction,
       client_id: input.clientId || null,
@@ -151,10 +168,9 @@ export const cloudRepo = {
   deleteLedger: (id: string) => remove('ledger_entries', id),
 
   async createCompensation(input: CompensationInput) {
-    const membership = await requireCloud().from('workspace_members').select('workspace_id').limit(1).single()
-    if (membership.error) throw membership.error
+    const workspaceId = await currentWorkspaceId()
     return fromComp(await insert('compensations', {
-      workspace_id: membership.data.workspace_id,
+      workspace_id: workspaceId,
       entry_date: input.entryDate || null,
       member_id: input.memberId || null,
       member_name: input.memberName,
@@ -180,10 +196,9 @@ export const cloudRepo = {
   deleteCompensation: (id: string) => remove('compensations', id),
 
   async createDeadline(input: DeadlineInput) {
-    const membership = await requireCloud().from('workspace_members').select('workspace_id').limit(1).single()
-    if (membership.error) throw membership.error
+    const workspaceId = await currentWorkspaceId()
     return fromDeadline(await insert('deadlines', {
-      workspace_id: membership.data.workspace_id,
+      workspace_id: workspaceId,
       client_id: input.clientId || null,
       service: input.service,
       provider: input.provider ?? '',
@@ -207,10 +222,9 @@ export const cloudRepo = {
   deleteDeadline: (id: string) => remove('deadlines', id),
 
   async createMaintenance(input: MaintenancePeriodInput) {
-    const membership = await requireCloud().from('workspace_members').select('workspace_id').limit(1).single()
-    if (membership.error) throw membership.error
+    const workspaceId = await currentWorkspaceId()
     return fromMaintenance(await insert('maintenance_periods', {
-      workspace_id: membership.data.workspace_id,
+      workspace_id: workspaceId,
       client_id: input.clientId || null,
       service: input.service,
       periodicity: input.periodicity ?? '',
