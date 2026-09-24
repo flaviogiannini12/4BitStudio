@@ -3,6 +3,7 @@ import { CalendarSearch, Check, GripVertical, Inbox, MoreHorizontal, MoveRight, 
 import { ClientLogo } from '../components/ClientLogo'
 import { TaskEditorModal } from '../components/TaskEditorModal'
 import { todayISO } from '../lib/date'
+import { clientChipStyle } from '../lib/clientTone'
 import type { StudioData, Task } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
@@ -75,6 +76,11 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
       return true
     })
   }, [data.tasks, statusFilter, clientFilter, memberFilter])
+
+  const completedTasks = useMemo(
+    () => [...filtered].sort((a,b) => (b.completedAt ?? b.createdAt).localeCompare(a.completedAt ?? a.createdAt)),
+    [filtered],
+  )
 
   const overdue = useMemo(() => sortTasks(filtered.filter(task => task.dueDate && task.dueDate < todayKey)), [filtered, todayKey])
   const backlog = useMemo(() => sortTasks(filtered.filter(task => !task.dueDate)), [filtered])
@@ -188,7 +194,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
         </div>
         <div className="todo-task-meta">
           {c
-            ? <span className="task-client-chip"><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
+            ? <span className="task-client-chip" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
             : <span className="task-internal-chip">4Bit Studio</span>}
           <span className={`task-status-inline ${task.status}`}>{task.status === 'doing' ? 'In corso' : task.status === 'done' ? 'Completata' : 'Da fare'}</span>
         </div>
