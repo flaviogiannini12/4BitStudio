@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Archive, ArrowLeft, CalendarClock, Camera, Globe2, Mail, MoreHorizontal, Pencil, Phone, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, Camera, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
 import { ClientLogo } from '../components/ClientLogo'
-import { ClientAccessSection } from '../components/ClientAccessSection'
 import { RecordEditorModal } from '../components/RecordEditorModal'
 import type { Client, ClientStatus, StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
@@ -59,7 +58,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
 
 function ClientDetail({ client, data, actions, onBack }: { client: Client; data: StudioData; actions: Actions; onBack: () => void }) {
   const [changingLogo, setChangingLogo] = useState(false)
-  const [editor, setEditor] = useState<{kind:'client'|'payment'|'recurrence'|'ledger'|'deadline'|'maintenance'; record:any} | null>(null)
+  const [editor, setEditor] = useState<{kind:'client'|'payment'|'ledger'|'deadline'|'maintenance'; record:any} | null>(null)
   const tasks = (data.tasks ?? []).filter(t => t.clientId === client.id && t.status !== 'done')
   const payments = (data.payments ?? []).filter(p => p.clientId === client.id).sort((a,b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
   const recurrences = (data.recurrences ?? []).filter(r => r.clientId === client.id)
@@ -136,7 +135,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>Anno acquisizione</small><strong>{client.yearAcquired ?? '—'}</strong></div>
         <div><small>Stato</small><strong>{clientStatusLabel[client.status]}</strong></div>
         <div><small>Dominio</small><strong>{client.website || '—'}</strong></div>
-        <div><small>Analytics</small><strong>{client.analyticsEnabled ? 'Sì' : 'No'}</strong></div>
         <div><small>Referente</small><strong>{client.contactName || '—'}</strong></div>
         <div><small>Email</small><strong>{client.email || '—'}</strong></div>
         <div><small>Telefono</small><strong>{client.phone || '—'}</strong></div>
@@ -164,16 +162,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
       </div>}
     </section>}
 
-    {client.status === 'lead' && <section className="section-block compact-block client-tasks-block">
-      <div className="section-heading"><div><p className="eyebrow">Lead</p><h2>Informazioni commerciali</h2></div></div>
-      <div className="lead-detail-grid">
-        <div><small>Settore</small><strong>{client.leadSector || '—'}</strong></div>
-        <div><small>Fonte</small><strong>{client.leadSource || '—'}</strong></div>
-        <div><small>Stato</small><strong>{client.leadStage || '—'}</strong></div>
-        <div><small>Prossima azione</small><strong>{client.nextAction || '—'}</strong></div>
-      </div>
-    </section>}
-
     <section className="section-block compact-block client-tasks-block">
       <div className="section-heading"><div><p className="eyebrow">Adesso</p><h2>Task aperte</h2></div></div>
       <div className="simple-list">
@@ -199,31 +187,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
       </div>
     </section>
 
-    <div className="client-detail-grid lower">
-      <section className="section-block compact-block">
-        <div className="section-heading"><div><p className="eyebrow">Automatici</p><h2>Ricorrenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'recurrence',record:null})}><Plus size={14}/> Aggiungi</button></div>
-        <div className="simple-list">
-          {recurrences.map(r => <button type="button" className="simple-task editable-simple-row" key={r.id} onClick={() => setEditor({kind:'recurrence',record:r})}>
-            <span className={`status-dot ${r.active ? 'status-active' : 'status-paused'}`}/>
-            <div><strong>{r.label}</strong><small>{r.intervalMonths === 1 ? 'Mensile' : `Ogni ${r.intervalMonths} mesi`}</small></div>
-            <span>{money(r.amount)}</span>
-          </button>)}
-          {!recurrences.length && <div className="empty-inline">Nessuna ricorrenza.</div>}
-        </div>
-      </section>
-
-      <section className="section-block compact-block">
-        <div className="section-heading"><div><p className="eyebrow">Contatti</p><h2>Informazioni</h2></div></div>
-        <div className="contact-lines">
-          {client.website && <div><Globe2 size={15}/><span>{client.website}</span></div>}
-          {client.email && <div><Mail size={15}/><span>{client.email}</span></div>}
-          {client.phone && <div><Phone size={15}/><span>{client.phone}</span></div>}
-          {!client.website && !client.email && !client.phone && <div className="empty-inline">Nessun contatto inserito.</div>}
-        </div>
-        {client.notes && <p className="client-notes">{client.notes}</p>}
-      </section>
-    </div>
-
     {(deadlines.length > 0 || maintenance.length > 0) && <div className="client-detail-grid lower">
       <section className="section-block compact-block">
         <div className="section-heading"><div><p className="eyebrow">Hosting e servizi</p><h2>Scadenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'deadline',record:null})}><Plus size={14}/> Aggiungi</button></div>
@@ -240,8 +203,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         </div>
       </section>
     </div>}
-
-    {client.status !== 'lead' && <ClientAccessSection clientId={client.id}/>}
 
     {editor && <RecordEditorModal
       kind={editor.kind}
