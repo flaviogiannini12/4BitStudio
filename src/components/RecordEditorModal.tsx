@@ -66,8 +66,8 @@ export function RecordEditorModal({
           status:s('status') as Client['status'],
           website:s('website'),
           contactName:s('contactName'),
-          email:s('email'),
-          phone:s('phone'),
+          email:(record as Client | null)?.email ?? '',
+          phone:(record as Client | null)?.phone ?? '',
           services:s('services').split(',').map(x=>x.trim()).filter(Boolean),
           notes:s('notes'),
           yearAcquired:s('yearAcquired') ? n('yearAcquired') : null,
@@ -76,7 +76,7 @@ export function RecordEditorModal({
           leadSource:(record as Client | null)?.leadSource ?? '',
           leadStage:(record as Client | null)?.leadStage ?? '',
           nextAction:(record as Client | null)?.nextAction ?? '',
-          lastContact:nullable('lastContact'),
+          lastContact:(record as Client | null)?.lastContact ?? null,
           logoUrl,
         }
         if (record) await actions.updateClient(record.id,payload)
@@ -171,9 +171,8 @@ export function RecordEditorModal({
           {logoUrl && <button type="button" className="logo-remove-button" title="Rimuovi logo" onClick={event => { event.preventDefault(); event.stopPropagation(); setLogoUrl('') }}><X size={14}/></button>}
         </label>
         <div className="field-grid two"><Field name="name" label="Nome" defaultValue={v('name')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'active'} options={[['active','Attivo'],['in_progress','In lavorazione'],['paused','In pausa'],['lead','Lead'],['archived','Archivio']]}/></div>
-        <div className="field-grid two"><Field name="website" label="Dominio / sito" defaultValue={v('website')}/><Field name="yearAcquired" label="Anno acquisizione" type="number" defaultValue={v('yearAcquired')}/></div>
-        <div className="field-grid two"><Field name="contactName" label="Referente" defaultValue={v('contactName')}/><Field name="email" label="Email" type="email" defaultValue={v('email')}/></div>
-        <div className="field-grid two"><Field name="phone" label="Telefono" defaultValue={v('phone')}/><Field name="lastContact" label="Ultimo contatto" type="date" defaultValue={v('lastContact')}/></div>
+        <div className="field-grid two"><Field name="website" label="Dominio / sito" defaultValue={v('website')}/><Field name="yearAcquired" label="Anno acquisizione" type="number" defaultValue={v('yearAcquired') || (!record ? String(new Date().getFullYear()) : '')}/></div>
+        <Field name="contactName" label="Contatto" defaultValue={v('contactName') || v('email') || v('phone')}/>
         <Field name="services" label="Servizi" defaultValue={v('services')} placeholder="Figma, Sito web, Hosting"/>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
