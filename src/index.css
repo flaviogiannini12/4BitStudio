@@ -1974,3 +1974,203 @@
     border-radius:15px;
   }
 }
+
+
+/* =========================================================
+   HOME TASK CARD — compact FlaToDo-style planner preview
+   ========================================================= */
+.home-tasks-card{
+  min-width:0;
+}
+.home-task-list{
+  display:grid;
+  gap:7px;
+}
+.home-task-row{
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-height:52px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:15px;
+  background:rgba(255,255,255,.62);
+  color:inherit;
+  text-align:left;
+  box-shadow:0 3px 14px rgba(33,39,55,.025);
+  transition:.16s ease;
+}
+.home-task-row:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.94);
+  box-shadow:0 7px 20px rgba(33,39,55,.055);
+}
+.home-task-check{
+  display:grid;
+  width:25px;
+  height:25px;
+  place-items:center;
+  border-radius:50%;
+  background:transparent;
+}
+.home-task-check>span{
+  width:15px;
+  height:15px;
+  border:1.5px solid rgba(5,5,5,.20);
+  border-radius:50%;
+}
+.home-task-check.doing>span{
+  border-color:var(--brand);
+  box-shadow:inset 0 0 0 4px #fff;
+  background:var(--brand);
+}
+.home-task-body{
+  min-width:0;
+}
+.home-task-topline{
+  display:flex;
+  min-width:0;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+}
+.home-task-topline>strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  font-weight:760;
+  letter-spacing:-.01em;
+}
+.home-task-assignee{
+  display:inline-flex;
+  flex:0 0 auto;
+  min-height:24px;
+  align-items:center;
+  gap:5px;
+  padding:2px 8px 2px 3px;
+  border-radius:999px;
+  background:var(--member-color,#050505);
+  color:var(--member-ink,#fff);
+  font-size:8px;
+  font-weight:790;
+}
+.home-task-assignee>span{
+  display:grid;
+  width:18px;
+  height:18px;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(0,0,0,.18);
+  color:inherit;
+  font-size:7px;
+}
+.home-task-assignee.member-flavio>span{
+  background:#050505;
+  color:#D8FF3E;
+}
+.home-task-assignee.unassigned{
+  background:rgba(5,5,5,.06);
+  color:rgba(5,5,5,.45);
+}
+.home-task-assignee.unassigned>span{
+  background:rgba(5,5,5,.08);
+}
+.home-task-meta{
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:6px;
+  margin-top:5px;
+}
+.home-task-client{
+  display:inline-flex;
+  min-width:0;
+  max-width:230px;
+  align-items:center;
+  gap:5px;
+  color:rgba(5,5,5,.44);
+  font-size:8px;
+  font-weight:700;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.home-task-client.internal{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#050505;
+  color:#fff;
+}
+.home-task-client .client-logo{
+  flex:0 0 auto;
+}
+.home-task-status{
+  display:inline-flex;
+  flex:0 0 auto;
+  min-height:20px;
+  align-items:center;
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.39);
+  font-size:7.5px;
+  font-weight:760;
+}
+.home-task-status.doing{
+  background:rgba(242,86,35,.10);
+  color:#B83D16;
+}
+.home-task-due{
+  flex:0 0 auto;
+  min-width:44px;
+  text-align:right;
+  color:rgba(5,5,5,.48);
+  font-size:9px;
+  font-weight:780;
+}
+
+/* Preserve the exact visual footprint of the Home left card */
+.home-priority-row>.home-tasks-card{
+  align-self:stretch;
+}
+.home-priority-row>.home-tasks-card .section-heading{
+  margin-bottom:12px;
+}
+
+@media(max-width:760px){
+  .home-task-list{
+    gap:6px;
+  }
+  .home-task-row{
+    grid-template-columns:25px minmax(0,1fr) auto;
+    min-height:58px;
+    gap:8px;
+    padding:9px;
+  }
+  .home-task-topline{
+    display:block;
+  }
+  .home-task-topline>strong{
+    display:block;
+    white-space:normal;
+    line-height:1.25;
+  }
+  .home-task-assignee{
+    width:max-content;
+    margin-top:5px;
+  }
+  .home-task-meta{
+    flex-wrap:wrap;
+  }
+  .home-task-client{
+    max-width:180px;
+  }
+  .home-task-due{
+    align-self:start;
+    padding-top:2px;
+  }
+}
