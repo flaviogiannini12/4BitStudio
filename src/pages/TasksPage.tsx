@@ -57,6 +57,12 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
   const today = useMemo(() => new Date(), [])
   const todayKey = todayISO(today)
   const days = useMemo(() => rollingDays(today, 180), [today])
+  const orderedClients = useMemo(
+    () => [...data.clients]
+      .filter(client => client.status !== 'archived' && client.status !== 'lead')
+      .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [data.clients],
+  )
 
   const filtered = useMemo(() => {
     return data.tasks.filter(task => {
@@ -217,7 +223,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
           <select value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
             <option value="all">Tutti i lavori</option>
             <option value="__internal">4Bit Studio / Interno</option>
-            {data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').map(c => <option value={c.id} key={c.id}>{c.name}</option>)}
+            {orderedClients.map(c => <option value={c.id} key={c.id}>{c.name}</option>)}
           </select>
         </label>
 
