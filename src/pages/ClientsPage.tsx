@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Archive, ArrowLeft, Camera, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Archive, ArrowDown, ArrowLeft, ArrowUp, Camera, GripVertical, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
 import { ClientLogo } from '../components/ClientLogo'
 import { RecordEditorModal } from '../components/RecordEditorModal'
+import { TaskEditorModal } from '../components/TaskEditorModal'
 import type { Client, ClientStatus, StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
@@ -19,7 +20,30 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
     return <ClientDetail client={selected} data={data} actions={actions} onBack={() => onSelect(null)} />
   }
 
-  const list = data.clients.filter(c => tab === 'archive' ? c.status === 'archived' : tab === 'lead' ? c.status === 'lead' : c.status !== 'archived' && c.status !== 'lead')
+  const list = data.clients
+    .filter(c => tab === 'archive' ? c.status === 'archived' : tab === 'lead' ? c.status === 'lead' : c.status !== 'archived' && c.status !== 'lead')
+    .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+
+  async function reorderClient(draggedId: string, targetId: string, position: 'before' | 'after') {
+    if (draggedId === targetId) return
+    const ordered = list.filter(client => client.id !== draggedId)
+    const targetIndex = ordered.findIndex(client => client.id === targetId)
+    if (targetIndex < 0) return
+    const dragged = list.find(client => client.id === draggedId)
+    if (!dragged) return
+    ordered.splice(position === 'after' ? targetIndex + 1 : targetIndex, 0, dragged)
+    await actions.reorderClients(ordered.map(client => client.id))
+  }
+
+  async function moveClient(clientId: string, direction: -1 | 1) {
+    const index = list.findIndex(client => client.id === clientId)
+    const nextIndex = index + direction
+    if (index < 0 || nextIndex < 0 || nextIndex >= list.length) return
+    const ordered = [...list]
+    const [moved] = ordered.splice(index, 1)
+    ordered.splice(nextIndex, 0, moved)
+    await actions.reorderClients(ordered.map(client => client.id))
+  }
 
   return <section className="section-block page-section">
     <div className="section-heading responsive-heading">
@@ -37,7 +61,27 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
       {list.map(c => {
         const open = data.tasks.filter(t => t.clientId === c.id && t.status !== 'done')
         const payment = data.payments.filter(p => p.clientId === c.id && p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))[0]
-        return <button className="client-list-row" key={c.id} onClick={() => onSelect(c.id)}>
+        return <div
+          className="client-list-row client-list-row-sortable"
+          key={c.id}
+          draggable
+          onDragStart={event => {
+            event.dataTransfer.setData('text/4bit-client-list', c.id)
+            event.dataTransfer.effectAllowed = 'move'
+          }}
+          onDragOver={event => {
+            if (event.dataTransfer.types.includes('text/4bit-client-list')) event.preventDefault()
+          }}
+          onDrop={event => {
+            event.preventDefault()
+            const draggedId = event.dataTransfer.getData('text/4bit-client-list')
+            if (!draggedId) return
+            const rect = event.currentTarget.getBoundingClientRect()
+            void reorderClient(draggedId, c.id, event.clientY > rect.top + rect.height / 2 ? 'after' : 'before')
+          }}
+        >
+          <div className="client-reorder-handle" title="Trascina per riordinare"><GripVertical size={15}/></div>
+          <button className="client-row-open" onClick={() => onSelect(c.id)}>
           <ClientLogo logoUrl={c.logoUrl} name={c.name}/>
           <div className="client-list-main">
             <div><h3>{c.name}</h3><span className={`status-chip client-${c.status}`}>{clientStatusLabel[c.status]}</span></div>
@@ -48,7 +92,12 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
           <div className="client-list-stat"><strong>{open.length}</strong><span>task aperte</span></div>
           <div className="client-next-payment"><small>{c.status === 'lead' ? 'Stato lead' : 'Prossimo pagamento'}</small><strong>{c.status === 'lead' ? (c.leadStage || 'Da lavorare') : payment ? countdownLabel(payment.dueDate) : '—'}</strong></div>
           <MoreHorizontal size={17}/>
-        </button>
+          </button>
+          <div className="client-mobile-order">
+            <button type="button" aria-label="Sposta su" disabled={list[0]?.id === c.id} onClick={() => void moveClient(c.id,-1)}><ArrowUp size={13}/></button>
+            <button type="button" aria-label="Sposta giù" disabled={list[list.length-1]?.id === c.id} onClick={() => void moveClient(c.id,1)}><ArrowDown size={13}/></button>
+          </div>
+        </div>
       })}
       {list.length === 0 && <div className="empty-page-mini">{tab === 'archive' ? 'Archivio vuoto.' : tab === 'lead' ? 'Nessun lead.' : 'Nessun cliente attivo.'}</div>}
     </div>
@@ -58,6 +107,7 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
 
 function ClientDetail({ client, data, actions, onBack }: { client: Client; data: StudioData; actions: Actions; onBack: () => void }) {
   const [changingLogo, setChangingLogo] = useState(false)
+  const [taskEditorOpen, setTaskEditorOpen] = useState(false)
   const [editor, setEditor] = useState<{kind:'client'|'payment'|'ledger'|'deadline'|'maintenance'; record:any} | null>(null)
   const tasks = (data.tasks ?? []).filter(t => t.clientId === client.id && t.status !== 'done')
   const payments = (data.payments ?? []).filter(p => p.clientId === client.id).sort((a,b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
@@ -87,6 +137,11 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
     }
   }
 
+  async function removeLogo() {
+    if (!client.logoUrl) return
+    await actions.updateClient(client.id, { logoUrl: '' })
+  }
+
   async function destroyClient() {
     const ok = window.confirm(`Eliminare definitivamente "${client.name}"? Verranno eliminati anche task, pagamenti e ricorrenze collegati. Questa azione non può essere annullata.`)
     if (!ok) return
@@ -101,10 +156,11 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
       <div className="client-detail-title">
         <div className="client-logo-wrap">
           <ClientLogo logoUrl={client.logoUrl} name={client.name} size="lg"/>
-          <label className="client-logo-change" title="Cambia logo">
+          <label className="client-logo-change" title={client.logoUrl ? 'Cambia logo' : 'Aggiungi logo'}>
             <input type="file" accept="image/*" onChange={e => void changeLogo(e.target.files?.[0])}/>
             <Camera size={13}/>
           </label>
+          {client.logoUrl && <button type="button" className="client-logo-remove" title="Rimuovi logo" onClick={() => void removeLogo()}><X size={12}/></button>}
         </div>
         <div>
           <div className="client-title-status"><span className={`status-dot status-${client.status}`}/>{clientStatusLabel[client.status]}</div>
@@ -163,7 +219,7 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
     </section>}
 
     <section className="section-block compact-block client-tasks-block">
-      <div className="section-heading"><div><p className="eyebrow">Adesso</p><h2>Task aperte</h2></div></div>
+      <div className="section-heading"><div><p className="eyebrow">Adesso</p><h2>Task aperte</h2></div><button className="secondary-button" onClick={() => setTaskEditorOpen(true)}><Plus size={14}/> Nuova task</button></div>
       <div className="simple-list">
         {tasks.map(t => <div className="simple-task" key={t.id}>
           <span className={`task-state-mini ${t.status}`}/>
@@ -203,6 +259,16 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         </div>
       </section>
     </div>}
+
+    <TaskEditorModal
+      open={taskEditorOpen}
+      task={null}
+      initialDate={null}
+      initialClientId={client.id}
+      data={data}
+      actions={actions}
+      onClose={() => setTaskEditorOpen(false)}
+    />
 
     {editor && <RecordEditorModal
       kind={editor.kind}
