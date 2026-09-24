@@ -8,20 +8,43 @@ import { ClientLogo } from '../components/ClientLogo'
 export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
+  const datedOpenTasks = openTasks.filter(t => Boolean(t.dueDate))
   const pendingPayments = data.payments.filter(p => p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-  const upcomingTasks = openTasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 6)
-  const memberTaskCounts = data.members.filter(m => m.active).map(member => ({ member, count: openTasks.filter(t => t.assigneeId === member.id).length }))
+  const upcomingTasks = [...datedOpenTasks].sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 6)
+  const memberTaskCounts = data.members.filter(m => m.active).map(member => ({ member, count: datedOpenTasks.filter(t => t.assigneeId === member.id).length }))
 
   function client(id: string | null) { return data.clients.find(c => c.id === id) }
   function member(id: string | null) { return data.members.find(m => m.id === id) }
 
   return <div className="home-stack">
     <div className="dashboard-two-col home-priority-row">
-      <section className="section-block compact-block">
+      <section className="section-block compact-block home-tasks-card">
         <div className="section-heading"><h2>Task da chiudere</h2><button className="text-link" onClick={onTasks}>Tutte <ArrowRight size={14}/></button></div>
-        <div className="simple-list">
-          {upcomingTasks.map(t => <div className="simple-task" key={t.id}><span className={`task-state-mini ${t.status}`}/><div><strong>{t.title}</strong><small>{client(t.clientId)?.name ?? '4Bit Studio'} · {member(t.assigneeId)?.name ?? 'Non assegnata'}</small></div><span>{t.dueDate ? formatShortDate(t.dueDate) : ''}</span></div>)}
-          {!upcomingTasks.length && <div className="empty-inline">Nessuna task urgente.</div>}
+        <div className="home-task-list">
+          {upcomingTasks.map(t => {
+            const c = client(t.clientId)
+            const m = member(t.assigneeId)
+            return <button className="home-task-row" key={t.id} onClick={onTasks}>
+              <span className={`home-task-check ${t.status}`}><span/></span>
+              <div className="home-task-body">
+                <div className="home-task-topline">
+                  <strong>{t.title}</strong>
+                  <span className={`home-task-assignee ${m ? memberToneClass(m.name) : 'unassigned'}`}>
+                    <span>{m ? m.name.slice(0,1).toUpperCase() : '?'}</span>
+                    {m?.name ?? 'Non assegnata'}
+                  </span>
+                </div>
+                <div className="home-task-meta">
+                  {c
+                    ? <span className="home-task-client"><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
+                    : <span className="home-task-client internal">4Bit Studio</span>}
+                  <span className={`home-task-status ${t.status}`}>{t.status === 'doing' ? 'In corso' : 'Da fare'}</span>
+                </div>
+              </div>
+              <span className="home-task-due">{t.dueDate ? formatShortDate(t.dueDate) : ''}</span>
+            </button>
+          })}
+          {!upcomingTasks.length && <div className="empty-inline">Nessuna task pianificata da chiudere.</div>}
         </div>
       </section>
 
@@ -41,8 +64,8 @@ export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPa
       <div className="section-heading"><h2>Clienti attivi</h2><span className="counter-pill">{activeClients.length}</span></div>
       <div className="client-status-grid">
         {activeClients.map(c => {
-          const tasks = openTasks.filter(t => t.clientId === c.id)
-          const next = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
+          const tasks = datedOpenTasks.filter(t => t.clientId === c.id)
+          const next = [...tasks].sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
           return <button
             key={c.id}
             className="client-status-card draggable-client-card"
