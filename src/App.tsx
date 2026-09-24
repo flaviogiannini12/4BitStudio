@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getNextUsefulFact } from './lib/headlines'
 import { AlertCircle, LoaderCircle, RefreshCw } from 'lucide-react'
 import { AppNav, type AppPage } from './components/AppNav'
 import { AuthScreen } from './components/AuthScreen'
@@ -24,18 +25,19 @@ function readPage(): AppPage {
 }
 
 const titles: Record<AppPage, { title: string; eyebrow: string }> = {
-  home: { title: 'Tutto sotto controllo.', eyebrow: 'La situazione dello studio, adesso' },
-  clients: { title: 'Ogni cliente, nel suo posto.', eyebrow: 'Clienti' },
-  tasks: { title: 'Cosa c’è da fare.', eyebrow: 'Operatività' },
-  payments: { title: 'Nessuna scadenza si perde.', eyebrow: 'Pagamenti e ricorrenze' },
-  team: { title: 'Chi sta facendo cosa.', eyebrow: 'Team' },
-  stats: { title: 'Numeri dello studio.', eyebrow: 'Statistiche' },
+  home: { title: '', eyebrow: '' },
+  clients: { title: 'Ogni cliente, nel suo posto.', eyebrow: '' },
+  tasks: { title: 'Cosa c’è da fare.', eyebrow: '' },
+  payments: { title: 'Nessuna scadenza si perde.', eyebrow: '' },
+  team: { title: 'Chi sta facendo cosa.', eyebrow: '' },
+  stats: { title: 'Numeri dello studio.', eyebrow: '' },
 }
 
 export default function App() {
   const auth = useAuth()
   const studio = useStudio(auth.user, !auth.cloudEnabled || Boolean(auth.user))
   const [page, setPage] = useState<AppPage>(readPage)
+  const [homeHeadline] = useState(() => getNextUsefulFact())
   const [createKind, setCreateKind] = useState<CreateKind | null>(null)
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [reminderId, setReminderId] = useState<string | null>(null)
@@ -66,7 +68,7 @@ export default function App() {
 
   const reminder = studio.data.payments.find(p => p.id === reminderId) ?? null
   const reminderClient = reminder ? studio.data.clients.find(c => c.id === reminder.clientId) : undefined
-  const current = titles[page]
+  const current = page === 'home' ? { title: homeHeadline, eyebrow: '' } : titles[page]
 
   return <>
     <AppNav page={page} onChange={navigate}/>
