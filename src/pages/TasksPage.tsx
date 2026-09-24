@@ -213,9 +213,12 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
       </div>
 
       <div className="todo-toolbar">
-        <div className="segmented task-filter task-filter-two">
-          <button onClick={() => setStatusFilter('open')} className={statusFilter === 'open' ? 'active' : ''}>Aperte</button>
-          <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'active' : ''}>Completate</button>
+        <div className="task-filter-with-count">
+          <div className="segmented task-filter task-filter-two">
+            <button onClick={() => setStatusFilter('open')} className={statusFilter === 'open' ? 'active' : ''}>Aperte</button>
+            <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'active' : ''}>Completate</button>
+          </div>
+          <span className="task-filter-counter"><strong>{filtered.length}</strong> task</span>
         </div>
 
         <label className="todo-filter-select">
