@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, Clock3 } from 'lucide-react'
 import { countdownLabel, countdownTone, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel } from '../lib/labels'
+import { clientChipStyle } from '../lib/clientTone'
 import { memberToneClass } from '../lib/memberTone'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
@@ -36,7 +37,7 @@ export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPa
                 </div>
                 <div className="home-task-meta">
                   {c
-                    ? <span className="home-task-client"><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
+                    ? <span className="home-task-client" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
                     : <span className="home-task-client internal">4Bit Studio</span>}
                   <span className={`home-task-status ${t.status}`}>{t.status === 'doing' ? 'In corso' : 'Da fare'}</span>
                 </div>
