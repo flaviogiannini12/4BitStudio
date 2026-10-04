@@ -152,75 +152,74 @@ export function EditorialItemModal({
 
   return <div className="task-editor-backdrop editorial-modal-backdrop">
     <button className="task-editor-scrim" onClick={()=>!saving && onClose()} aria-label="Chiudi"/>
-    <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel editorial-editor-panel-v2">
-      <div className="task-editor-head editorial-editor-head editorial-editor-head-v2">
+    <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel-v3">
+      <div className="task-editor-head editorial-editor-head-v3">
         <div>
-          <span className="editorial-modal-kicker">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</span>
+          <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
+          <h2>{item ? item.title : 'Contenuto social'}</h2>
         </div>
         <button type="button" className="icon-button" onClick={onClose} disabled={saving}><X size={18}/></button>
       </div>
 
-      <div className="editorial-editor-scroll editorial-editor-scroll-v2">
-        <section className="editorial-form-section editorial-form-primary editorial-form-primary-v2">
-          <div className="editorial-choice-block account-choice-block">
-            <span className="editorial-choice-label">Profilo</span>
-            <div className="editorial-choice-chips account-choice-chips">
-              {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
-                type="button"
-                key={value}
-                className={`editorial-choice-chip account-chip account-${value} ${draft.account===value?'active':''}`}
-                onClick={()=>setDraft({...draft,account:value})}
-              >{label}</button>)}
-            </div>
+      <div className="task-editor-body editorial-form-v3">
+        <div className="editorial-choice-block">
+          <span className="editorial-choice-label">Profilo</span>
+          <div className="editorial-choice-chips account-choice-chips">
+            {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
+              type="button"
+              key={value}
+              className={`editorial-choice-chip account-chip account-${value} ${draft.account===value?'active':''}`}
+              onClick={()=>setDraft({...draft,account:value})}
+            >{label}</button>)}
           </div>
+        </div>
 
-          <textarea
-            autoFocus
-            rows={2}
-            className="field editorial-title-field editorial-title-field-v2"
-            placeholder="Titolo del contenuto"
-            value={draft.title}
-            onChange={e=>setDraft({...draft,title:e.target.value})}
-          />
+        <textarea
+          autoFocus
+          rows={2}
+          className="field task-editor-title editorial-title-field-v3"
+          placeholder="Titolo del contenuto"
+          value={draft.title}
+          onChange={e=>setDraft({...draft,title:e.target.value})}
+        />
 
-          <div className="editorial-choice-block">
-            <span className="editorial-choice-label">Canali</span>
-            <div className="editorial-choice-chips platform-choice-chips">
-              {PLATFORM_ORDER.map(platform=><button
-                type="button"
-                key={platform}
-                className={`editorial-choice-chip platform-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
-                onClick={()=>togglePlatform(platform)}
-              >{editorialPlatformLabel[platform]}</button>)}
-            </div>
+        <div className="editorial-choice-block">
+          <span className="editorial-choice-label">Canali</span>
+          <div className="editorial-choice-chips platform-choice-chips">
+            {PLATFORM_ORDER.map(platform=><button
+              type="button"
+              key={platform}
+              className={`editorial-choice-chip platform-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
+              onClick={()=>togglePlatform(platform)}
+            >{editorialPlatformLabel[platform]}</button>)}
           </div>
+        </div>
 
-          <div className="editorial-choice-block">
-            <span className="editorial-choice-label">Stato</span>
-            <div className="editorial-choice-chips status-choice-chips">
-              {ACTIVE_STATUS_ORDER.map(status=><button
-                type="button"
-                key={status}
-                className={`editorial-choice-chip status-choice status-${status} ${draft.status===status?'active':''}`}
-                onClick={()=>setDraft({...draft,status})}
-              >{editorialStatusLabel[status]}</button>)}
-            </div>
+        <div className="editorial-choice-block">
+          <span className="editorial-choice-label">Stato</span>
+          <div className="editorial-choice-chips status-choice-chips">
+            {ACTIVE_STATUS_ORDER.map(status=><button
+              type="button"
+              key={status}
+              className={`editorial-choice-chip status-choice status-${status} ${draft.status===status?'active':''}`}
+              onClick={()=>setDraft({...draft,status})}
+            >{editorialStatusLabel[status]}</button>)}
           </div>
+        </div>
 
-          <div className="editorial-date-row">
-            <label className="form-field"><span>Data pubblicazione</span><input className="field" type="date" min={todayISO()} value={draft.publishDate} onChange={e=>setDraft({...draft,publishDate:e.target.value})}/></label>
-            <label className="form-field"><span>Ora</span><input className="field" type="time" value={draft.publishTime} onChange={e=>setDraft({...draft,publishTime:e.target.value})}/></label>
-          </div>
+        <div className="task-editor-grid editorial-date-grid-v3">
+          <label className="form-field"><span>Data pubblicazione</span><input className="field" type="date" min={todayISO()} value={draft.publishDate} onChange={e=>setDraft({...draft,publishDate:e.target.value})}/></label>
+          <label className="form-field"><span>Ora</span><input className="field" type="time" value={draft.publishTime} onChange={e=>setDraft({...draft,publishTime:e.target.value})}/></label>
+        </div>
 
-          <label className="form-field editorial-description-field">
-            <span>Descrizione contenuto</span>
-            <textarea className="field" rows={5} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi cosa deve essere realizzato, il messaggio, le indicazioni creative e tutto ciò che serve al team."/>
-          </label>
-        </section>
+        <label className="form-field editorial-description-field-v3">
+          <span>Descrizione contenuto</span>
+          <textarea className="field" rows={4} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi cosa deve essere realizzato e le indicazioni utili al team."/>
+        </label>
 
-        <section className="editorial-form-section editorial-assets-section-v2">
-          <div className="editorial-section-title">
-            <div><h3>Contenuto</h3><span>Allega il file originale, senza compressione</span></div>
+        <section className="editorial-upload-zone-v3">
+          <div className="editorial-upload-zone-head">
+            <div><strong>Contenuto</strong><span>Foto, grafica o video originale · nessuna compressione</span></div>
             <label className="editorial-upload-button"><Upload size={14}/> Allega<input type="file" multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/></label>
           </div>
 
@@ -241,9 +240,9 @@ export function EditorialItemModal({
               <button type="button" className="icon-button" onClick={()=>setQueued(current=>current.filter(entry=>entry.id!==file.id))}><X size={14}/></button>
             </div>)}
 
-            {!assets.length && !queued.length && <label className="editorial-assets-empty editorial-assets-drop">
+            {!assets.length && !queued.length && <label className="editorial-assets-empty editorial-assets-drop editorial-assets-drop-v3">
               <Paperclip size={18}/>
-              <span>Allega grafica, foto o video del contenuto</span>
+              <span>Seleziona il contenuto da allegare</span>
               <input type="file" multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/>
             </label>}
           </div>
@@ -254,8 +253,8 @@ export function EditorialItemModal({
           </div>}
         </section>
 
-        {item && steps.length>0 && <section className="editorial-form-section editorial-workflow-section-v2">
-          <div className="editorial-section-title"><div><h3>Lavorazione</h3><span>Chi deve ancora intervenire</span></div></div>
+        {item && steps.length>0 && <section className="editorial-workflow-compact-v3">
+          <div className="editorial-upload-zone-head"><div><strong>Lavorazione</strong><span>Completa i passaggi man mano che vengono chiusi</span></div></div>
           <div className="editorial-workflow-list editorial-workflow-list-v2">
             {steps.map(step=>{
               const owner=members.find(member=>member.id===step.ownerMemberId)
@@ -271,7 +270,7 @@ export function EditorialItemModal({
         {localError && <div className="editorial-error">{localError}</div>}
       </div>
 
-      <div className="task-editor-actions editorial-editor-actions">
+      <div className="task-editor-actions editorial-editor-actions-v3">
         {item ? <button type="button" className="danger-button" disabled={saving} onClick={()=>void removeItem()}><Trash2 size={15}/> Elimina</button> : <span/>}
         <div>
           <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annulla</button>
