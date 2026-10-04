@@ -175,7 +175,7 @@ export async function setEditorialStepDone(id:string,done:boolean) {
   const state=new Map((rows ?? []).map(row=>[String(row.label).toLowerCase(),Boolean(row.done)]))
   const nextStatus = state.get('edoardo')
     ? 'published'
-    : state.get('francesco')
+    : state.get('flavio') && state.get('francesco')
       ? 'ready'
       : 'to_produce'
 
