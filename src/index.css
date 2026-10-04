@@ -3994,3 +3994,241 @@
     justify-content:center;
   }
 }
+
+
+/* =========================================================
+   EDITORIALE V4 — compact hierarchy + team completion
+   ========================================================= */
+.editorial-task-page{
+  gap:10px!important;
+}
+.editorial-planner-head{
+  align-items:center!important;
+  padding-inline:2px!important;
+}
+.editorial-planner-head h2{
+  font-size:48px!important;
+  font-weight:650;
+  line-height:.92;
+  letter-spacing:-.065em!important;
+}
+.editorial-task-toolbar{
+  gap:7px!important;
+}
+.editorial-calendar-tasklike{
+  margin-top:0!important;
+}
+.editorial-day-tasklike{
+  padding-block:14px!important;
+}
+.editorial-todo-card{
+  min-height:60px!important;
+  padding-block:9px!important;
+}
+.editorial-todo-content .todo-task-topline h3{
+  font-size:13px!important;
+}
+.editorial-todo-meta{
+  margin-top:5px!important;
+}
+.editorial-card-description{
+  margin-top:6px!important;
+}
+.editorial-team-progress{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+  padding-top:6px;
+  border-top:1px solid rgba(5,5,5,.045);
+}
+.editorial-team-progress-chip{
+  display:inline-flex;
+  min-height:23px;
+  align-items:center;
+  gap:5px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:var(--member-color,rgba(5,5,5,.07));
+  color:var(--member-ink,#333);
+  font-size:8px;
+  font-weight:800;
+}
+.editorial-team-progress-chip.pending{
+  opacity:.46;
+  filter:saturate(.7);
+}
+.editorial-team-progress-chip.done{
+  opacity:1;
+}
+.editorial-team-progress-chip i{
+  display:grid;
+  width:13px;
+  height:13px;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.56);
+  font-size:8px;
+  font-style:normal;
+}
+
+/* Instagram + Facebook / TikTok channel identity */
+.editorial-platform-chip.platform-facebook,
+.editorial-chip-group .platform-filter.platform-facebook,
+.platform-choice.platform-facebook{
+  background:linear-gradient(100deg,#FCE5F2 0%,#EEE7FF 46%,#E4EEFF 100%)!important;
+  color:#6550A7!important;
+}
+.editorial-platform-chip.platform-tiktok,
+.editorial-chip-group .platform-filter.platform-tiktok,
+.platform-choice.platform-tiktok{
+  background:linear-gradient(105deg,#DDFBFA 0%,#F4F4F4 48%,#FFE1E9 100%)!important;
+  color:#154F52!important;
+}
+
+/* Only the two operational states matter */
+.status-choice.status-to_produce,
+.editorial-chip-group .status-filter.produce{
+  background:#F1F1F2!important;
+  color:#5C5C60!important;
+}
+.status-choice.status-ready,
+.editorial-chip-group .status-filter.ready{
+  background:#E6F5E9!important;
+  color:#28723E!important;
+}
+.status-choice.active{
+  border-color:currentColor!important;
+  box-shadow:inset 0 0 0 1.5px currentColor!important;
+}
+
+/* Team = three people, not micro-tasks */
+.editorial-team-section-v4{
+  display:grid;
+  gap:7px;
+  padding:10px;
+  border:1px solid rgba(5,5,5,.05);
+  border-radius:16px;
+  background:rgba(255,255,255,.48);
+}
+.editorial-team-section-title{
+  color:rgba(5,5,5,.38);
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.editorial-team-checks{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+.editorial-team-check{
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:7px;
+  padding:8px 9px;
+  border-radius:13px;
+  background:var(--member-color,rgba(5,5,5,.06));
+  color:var(--member-ink,#333);
+  text-align:left;
+  transition:.15s ease;
+}
+.editorial-team-check.pending{
+  opacity:.52;
+}
+.editorial-team-check.done{
+  opacity:1;
+}
+.editorial-team-check:hover{
+  transform:translateY(-1px);
+  opacity:1;
+}
+.editorial-team-check>span:last-child{
+  min-width:0;
+}
+.editorial-team-check strong,
+.editorial-team-check small{
+  display:block;
+}
+.editorial-team-check strong{
+  overflow:hidden;
+  font-size:9px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.editorial-team-check small{
+  margin-top:2px;
+  color:currentColor;
+  font-size:7px;
+  opacity:.65;
+}
+.editorial-team-check .editorial-step-check{
+  width:22px;
+  height:22px;
+  flex:0 0 auto;
+  border-color:rgba(5,5,5,.14);
+  background:rgba(255,255,255,.46);
+  color:#050505;
+}
+.editorial-team-check.done .editorial-step-check{
+  background:#050505;
+  color:#fff;
+}
+
+/* Less wasted vertical space inside the editor */
+.editorial-form-v3{
+  gap:8px!important;
+}
+.editorial-form-v3 .editorial-choice-block{
+  gap:5px!important;
+}
+.editorial-description-field-v3 textarea{
+  min-height:76px!important;
+}
+.editorial-upload-zone-v3{
+  gap:7px!important;
+  padding:9px!important;
+}
+.editorial-editor-actions-v3{
+  margin-top:10px!important;
+}
+
+@media(max-width:640px){
+  .editorial-task-page{
+    gap:8px!important;
+  }
+  .editorial-planner-head h2{
+    font-size:34px!important;
+  }
+  .editorial-planner-head{
+    margin-bottom:0!important;
+  }
+  .editorial-task-toolbar{
+    margin-top:0!important;
+  }
+  .editorial-day-tasklike{
+    padding:12px!important;
+  }
+  .editorial-team-checks{
+    grid-template-columns:1fr;
+  }
+  .editorial-team-check{
+    min-height:42px;
+  }
+  .editorial-team-progress{
+    gap:4px;
+  }
+  .editorial-team-progress-chip{
+    min-height:21px;
+    padding:3px 7px;
+    font-size:7.5px;
+  }
+  .editorial-form-v3{
+    gap:7px!important;
+  }
+  .editorial-description-field-v3 textarea{
+    min-height:68px!important;
+  }
+}
