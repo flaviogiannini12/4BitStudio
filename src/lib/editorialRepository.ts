@@ -93,7 +93,7 @@ export async function loadEditorialData(): Promise<EditorialData> {
 async function insertWorkflow(item: EditorialItem, members: TeamMember[]) {
   const db=client()
   const {workspaceId}=await currentContext()
-  const templates=editorialWorkflow(item.platforms,item.account)
+  const templates=editorialWorkflow()
   if(!templates.length) return
   const {error}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
     workspace_id:workspaceId,
@@ -125,7 +125,7 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
     hashtags:'',
     cta:'',
     objective:'',
-    status:input.status ?? 'idea',
+    status:input.status ?? 'to_produce',
     assignee_id:null,
     support_member_ids:[],
     publish_date:input.publishDate || new Date().toISOString().slice(0,10),
@@ -161,9 +161,27 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
 }
 
 export async function setEditorialStepDone(id:string,done:boolean) {
-  const {data,error}=await client().from('editorial_steps').update({done}).eq('id',id).select('*').single()
+  const db=client()
+  const {data,error}=await db.from('editorial_steps').update({done}).eq('id',id).select('*').single()
   if(error) throw error
-  return fromStep(data)
+  const step=fromStep(data)
+
+  const {data:rows,error:stepsError}=await db
+    .from('editorial_steps')
+    .select('label,done')
+    .eq('editorial_item_id',step.editorialItemId)
+  if(stepsError) throw stepsError
+
+  const state=new Map((rows ?? []).map(row=>[String(row.label).toLowerCase(),Boolean(row.done)]))
+  const nextStatus = state.get('edoardo')
+    ? 'published'
+    : state.get('francesco')
+      ? 'ready'
+      : 'to_produce'
+
+  const {error:itemError}=await db.from('editorial_items').update({status:nextStatus}).eq('id',step.editorialItemId)
+  if(itemError) throw itemError
+  return step
 }
 
 export async function deleteEditorialItem(id:string) {
