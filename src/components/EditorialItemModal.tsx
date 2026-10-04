@@ -4,7 +4,6 @@ import {
   editorialAccountLabel,
   editorialPlatformLabel,
   editorialStatusLabel,
-  editorialStatusOrder,
 } from '../lib/editorialConfig'
 import { memberToneClass } from '../lib/memberTone'
 import type { useEditorial } from '../hooks/useEditorial'
