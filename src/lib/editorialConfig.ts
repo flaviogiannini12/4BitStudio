@@ -2,12 +2,12 @@ import type { EditorialAccount, EditorialPlatform, EditorialStatus } from '../ty
 import type { TeamMember } from '../types/studio'
 
 export const editorialAccountLabel: Record<EditorialAccount,string> = {
-  casaro: 'Account Casaro',
-  autoscuola_susa: 'Account Autoscuola Susa',
+  casaro: 'Casaro',
+  autoscuola_susa: 'Autoscuola Susa',
 }
 
 export const editorialPlatformLabel: Record<EditorialPlatform,string> = {
-  fb_ig: 'Facebook + Instagram',
+  facebook: 'Facebook',
   tiktok: 'TikTok',
   youtube: 'YouTube',
   whatsapp: 'WhatsApp',
@@ -26,42 +26,57 @@ export const editorialStatusLabel: Record<EditorialStatus,string> = {
 
 export const editorialStatusOrder: EditorialStatus[] = ['idea','to_produce','in_progress','review','ready','scheduled','published','archived']
 
-export const contentTypesByPlatform: Record<EditorialPlatform,string[]> = {
-  fb_ig: ['Reel','Post statico','Carousel','Stories'],
-  tiktok: ['TikTok video','Photo mode'],
-  youtube: ['Video orizzontale','Short'],
-  whatsapp: ['Messaggio promo','Offerta','Aggiornamento'],
-}
-
 export type EditorialStepTemplate = { label:string; ownerName:string }
 
-export function editorialWorkflow(platform: EditorialPlatform, contentType: string): EditorialStepTemplate[] {
-  if (platform === 'whatsapp') {
-    return [
-      { label:'Piano editoriale WhatsApp', ownerName:'Flavio' },
-      { label:'Ricerca contenuti visual', ownerName:'Francesco' },
-      { label:'Editing e preparazione messaggio', ownerName:'Francesco' },
-      { label:'Invio programmato', ownerName:'Francesco' },
-      { label:'Gestione risposte', ownerName:'Francesco' },
-    ]
+function pushUnique(target: EditorialStepTemplate[], step: EditorialStepTemplate) {
+  if (!target.some(existing => existing.label === step.label && existing.ownerName === step.ownerName)) target.push(step)
+}
+
+export function editorialWorkflow(platforms: EditorialPlatform[], account: EditorialAccount): EditorialStepTemplate[] {
+  const steps: EditorialStepTemplate[] = []
+
+  pushUnique(steps,{ label:'Description / Copy', ownerName:'Francesco' })
+  pushUnique(steps,{ label:'Video editing', ownerName:'Francesco' })
+  pushUnique(steps,{ label:'Photo editing / Grafiche', ownerName:'Edoardo' })
+  pushUnique(steps,{ label:'Pubblicazione', ownerName:'Edoardo' })
+  pushUnique(steps,{ label:'Community Management', ownerName:'Edoardo' })
+
+  if (platforms.includes('whatsapp') && account === 'casaro') {
+    pushUnique(steps,{ label:'Piano editoriale WhatsApp', ownerName:'Edoardo' })
+    pushUnique(steps,{ label:'Ricerca contenuti visual WhatsApp', ownerName:'Francesco' })
+    pushUnique(steps,{ label:'Editing e preparazione messaggio WhatsApp', ownerName:'Francesco' })
+    pushUnique(steps,{ label:'Invio programmato WhatsApp', ownerName:'Francesco' })
+    pushUnique(steps,{ label:'Gestione risposte WhatsApp', ownerName:'Francesco' })
   }
 
-  const video = platform === 'tiktok' || platform === 'youtube' || /reel|video|short/i.test(contentType)
-  return [
-    { label:'Idea e script', ownerName:'Flavio' },
-    { label: video ? 'Video editing' : 'Photo editing / grafica', ownerName: video ? 'Francesco' : 'Edoardo' },
-    { label:'Description / Copy', ownerName:'Francesco' },
-    { label:'Pubblicazione', ownerName:'Edoardo' },
-    { label:'Community Management', ownerName:'Edoardo' },
-  ]
+  return steps
 }
 
 export function memberIdByName(members: TeamMember[], name: string) {
   return members.find(member => member.name.trim().toLowerCase() === name.trim().toLowerCase())?.id ?? null
 }
 
-export function platformAllowedForAccount(account: EditorialAccount, platform: EditorialPlatform) {
-  return account === 'casaro' || platform !== 'whatsapp'
+export function legacyPlatform(platforms: EditorialPlatform[]) {
+  const first = platforms[0] ?? 'facebook'
+  if (first === 'facebook') return 'fb_ig'
+  return first
 }
 
-export const editorialObjectives = ['Awareness','Community','Promozione','Lead','Traffico','Retention']
+export function currentWorkerNames(params:{
+  item:{description:string}
+  assetsCount:number
+  steps:{done:boolean;ownerMemberId:string|null}[]
+  members:TeamMember[]
+}) {
+  const names = new Set<string>()
+  const flavio = params.members.find(member => member.name.trim().toLowerCase() === 'flavio')
+  if (!params.item.description.trim() || params.assetsCount === 0) {
+    if (flavio) names.add(flavio.name)
+  }
+  for (const step of params.steps) {
+    if (step.done || !step.ownerMemberId) continue
+    const member = params.members.find(candidate => candidate.id === step.ownerMemberId)
+    if (member) names.add(member.name)
+  }
+  return [...names]
+}
