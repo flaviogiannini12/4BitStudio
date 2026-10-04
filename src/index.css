@@ -3545,3 +3545,452 @@
     border-radius:18px!important;
   }
 }
+
+
+/* =========================================================
+   EDITORIALE V3 — mirror Task planner, responsive cleanup
+   ========================================================= */
+.editorial-task-page{
+  padding-top:82px;
+  padding-bottom:118px;
+}
+.editorial-planner-head{
+  margin-bottom:0;
+}
+.editorial-planner-head h2{
+  margin:0;
+}
+.editorial-task-toolbar{
+  margin-top:0;
+}
+.editorial-account-filter-wrap{
+  flex:0 0 auto;
+}
+.editorial-account-switch{
+  display:grid;
+  grid-template-columns:72px 92px 132px;
+  width:auto;
+}
+.editorial-account-switch button{
+  min-width:0!important;
+  white-space:nowrap;
+}
+.editorial-view-toggle{
+  display:inline-flex;
+  min-height:40px;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:0 12px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:rgba(255,255,255,.62);
+  color:rgba(5,5,5,.48);
+  box-shadow:0 8px 28px rgba(33,39,55,.04);
+  font-size:10px;
+  font-weight:760;
+  transition:.16s ease;
+}
+.editorial-view-toggle:hover,
+.editorial-view-toggle.active{
+  background:#050505;
+  color:#fff;
+}
+.editorial-archive-search input{
+  width:150px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#050505;
+  font-size:10px;
+  font-weight:700;
+}
+
+/* Calendar now literally follows Task layout */
+.editorial-calendar-tasklike{
+  margin-top:0;
+}
+.editorial-day-tasklike{
+  position:relative;
+}
+.editorial-day-tasklike .todo-day-body{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  justify-content:center;
+}
+.editorial-day-tasklike.is-empty .todo-add-row{
+  margin-top:0;
+}
+.editorial-day-tasklike .todo-day-number.today{
+  background:var(--brand);
+  color:#fff;
+}
+.editorial-day-tasklike .todo-day-date{
+  align-self:flex-start;
+}
+
+/* Editorial content card on top of the exact Task card shell */
+.editorial-todo-card{
+  cursor:default;
+}
+.editorial-todo-card::before{
+  content:'';
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  border-radius:18px 0 0 18px;
+}
+.editorial-todo-card.account-casaro{
+  background:linear-gradient(100deg,rgba(255,214,50,.12),rgba(255,255,255,.78) 30%);
+}
+.editorial-todo-card.account-casaro::before{
+  background:linear-gradient(180deg,#FFD632,#173A91);
+}
+.editorial-todo-card.account-autoscuola_susa{
+  background:linear-gradient(100deg,rgba(11,111,159,.08),rgba(255,255,255,.78) 30%);
+}
+.editorial-todo-card.account-autoscuola_susa::before{
+  background:linear-gradient(180deg,#0B6F9F,#2D2927);
+}
+.editorial-todo-content{
+  padding-left:3px;
+}
+.editorial-todo-content .todo-task-topline{
+  align-items:center;
+}
+.editorial-todo-content .todo-task-topline h3{
+  padding-right:6px;
+}
+.editorial-todo-meta{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px;
+  margin-top:7px;
+}
+.editorial-inline-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  color:rgba(5,5,5,.36);
+  font-size:8px;
+  font-weight:720;
+}
+.editorial-card-description{
+  display:-webkit-box;
+  margin:8px 0 0!important;
+  overflow:hidden;
+  color:rgba(5,5,5,.46)!important;
+  font-size:9px!important;
+  line-height:1.4!important;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.editorial-workers-inline{
+  margin-top:8px;
+  padding-top:7px;
+}
+.editorial-workers-inline small{
+  font-size:8px;
+}
+.editorial-worker-chip{
+  min-height:22px!important;
+  padding:3px 8px!important;
+  font-size:8px!important;
+}
+.editorial-archive-tasklike{
+  margin-top:0;
+}
+.editorial-archive-card{
+  opacity:1!important;
+}
+.editorial-archive-card h3{
+  text-decoration:none!important;
+}
+
+/* Compact form: no nested pseudo-dashboard, upload is part of normal flow */
+.editorial-editor-panel-v3{
+  width:min(620px,100%);
+}
+.editorial-editor-head-v3{
+  margin-bottom:14px;
+}
+.editorial-editor-head-v3 h2{
+  margin-top:3px;
+}
+.editorial-form-v3{
+  gap:10px;
+}
+.editorial-form-v3 .editorial-choice-block{
+  gap:6px;
+}
+.editorial-form-v3 .editorial-choice-chips{
+  flex-wrap:wrap!important;
+  overflow:visible!important;
+  padding-bottom:0!important;
+}
+.editorial-form-v3 .editorial-choice-chip{
+  min-height:32px;
+  padding:6px 10px;
+  font-size:9px;
+}
+.editorial-form-v3 .account-choice-chips{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+.editorial-form-v3 .account-choice-chips .editorial-choice-chip{
+  width:100%;
+}
+.editorial-title-field-v3{
+  min-height:64px!important;
+  font-size:17px!important;
+}
+.editorial-date-grid-v3{
+  grid-template-columns:minmax(0,1.4fr) minmax(120px,.6fr);
+}
+.editorial-description-field-v3 textarea{
+  min-height:92px;
+}
+.editorial-upload-zone-v3,
+.editorial-workflow-compact-v3{
+  display:grid;
+  gap:9px;
+  padding:11px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:17px;
+  background:rgba(255,255,255,.52);
+}
+.editorial-upload-zone-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.editorial-upload-zone-head strong,
+.editorial-upload-zone-head span{
+  display:block;
+}
+.editorial-upload-zone-head strong{
+  font-size:11px;
+}
+.editorial-upload-zone-head span{
+  margin-top:2px;
+  color:rgba(5,5,5,.35);
+  font-size:8px;
+  line-height:1.35;
+}
+.editorial-assets-drop-v3{
+  min-height:64px;
+}
+.editorial-editor-actions-v3{
+  margin-top:14px;
+}
+.editorial-editor-actions-v3>div{
+  flex-wrap:wrap;
+}
+
+/* Prevent fixed navigation from covering Editoriale */
+@media(max-width:900px){
+  .editorial-task-page{
+    padding-top:20px;
+    padding-bottom:118px;
+  }
+}
+
+@media(max-width:640px){
+  .editorial-task-page{
+    padding-top:18px;
+    padding-bottom:126px;
+  }
+  .editorial-planner-head{
+    align-items:center;
+  }
+  .editorial-planner-head h2{
+    font-size:24px;
+  }
+  .editorial-planner-head .todo-new-task{
+    min-width:44px;
+    width:44px;
+    height:44px;
+    padding:0!important;
+    overflow:hidden;
+    font-size:0;
+  }
+  .editorial-planner-head .todo-new-task svg{
+    width:17px;
+    height:17px;
+  }
+  .editorial-task-toolbar{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+  .editorial-account-filter-wrap{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    width:100%;
+  }
+  .editorial-account-switch{
+    grid-template-columns:.65fr .9fr 1.45fr;
+    width:100%;
+    min-width:0;
+  }
+  .editorial-account-switch button{
+    padding-inline:5px!important;
+    font-size:8px!important;
+  }
+  .editorial-task-toolbar .todo-filter-select{
+    min-width:0;
+    width:100%;
+  }
+  .editorial-task-toolbar .todo-filter-select select{
+    min-width:0;
+    width:100%;
+    max-width:none;
+  }
+  .editorial-view-toggle{
+    grid-column:1/-1;
+    width:100%;
+  }
+  .editorial-archive-search{
+    grid-column:1/-1;
+  }
+  .editorial-archive-search input{
+    min-width:0;
+    width:100%;
+  }
+
+  .editorial-day-tasklike{
+    display:block!important;
+    min-height:116px!important;
+    padding:15px!important;
+  }
+  .editorial-day-tasklike .todo-day-date{
+    display:flex!important;
+    width:auto!important;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .editorial-day-tasklike .todo-day-number{
+    font-size:31px!important;
+  }
+  .editorial-day-tasklike .todo-day-number.today{
+    width:46px!important;
+    height:46px!important;
+    border-radius:15px!important;
+    font-size:32px!important;
+  }
+  .editorial-day-tasklike .todo-day-date p{
+    margin:0!important;
+  }
+  .editorial-day-tasklike .todo-day-date b{
+    margin:0 0 0 auto!important;
+  }
+  .editorial-todo-content .todo-task-topline{
+    display:flex!important;
+  }
+  .editorial-todo-content .todo-task-topline h3{
+    font-size:13px;
+  }
+  .editorial-account-chip,
+  .editorial-platform-chip,
+  .editorial-status-chip{
+    font-size:7.5px!important;
+  }
+
+  .editorial-editor-panel-v3{
+    width:100%;
+    max-height:94dvh;
+    border-radius:30px 30px 0 0;
+    padding:18px;
+    padding-bottom:max(18px,env(safe-area-inset-bottom));
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .editorial-editor-head-v3{
+    position:sticky;
+    z-index:4;
+    top:-18px;
+    margin:-18px -18px 10px;
+    padding:16px 18px 10px;
+    background:linear-gradient(180deg,rgba(246,243,241,.99) 75%,rgba(246,243,241,.88));
+    backdrop-filter:blur(18px);
+  }
+  .editorial-form-v3{
+    gap:9px;
+  }
+  .editorial-form-v3 .editorial-choice-chip{
+    min-height:31px;
+    padding:6px 9px;
+    font-size:8.5px;
+  }
+  .editorial-form-v3 .platform-choice-chips{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .editorial-form-v3 .platform-choice-chips .editorial-choice-chip{
+    width:100%;
+  }
+  .editorial-form-v3 .status-choice-chips{
+    display:flex;
+    flex-wrap:wrap!important;
+  }
+  .editorial-title-field-v3{
+    min-height:58px!important;
+    font-size:16px!important;
+  }
+  .editorial-date-grid-v3{
+    grid-template-columns:minmax(0,1fr) 105px!important;
+    gap:7px;
+  }
+  .editorial-description-field-v3 textarea{
+    min-height:80px;
+  }
+  .editorial-upload-zone-v3{
+    padding:10px;
+  }
+  .editorial-upload-zone-head{
+    align-items:flex-start;
+  }
+  .editorial-upload-zone-head>div{
+    min-width:0;
+  }
+  .editorial-upload-button{
+    flex:0 0 auto;
+  }
+  .editorial-assets-drop-v3{
+    min-height:58px;
+  }
+  .editorial-editor-actions-v3{
+    position:sticky;
+    z-index:4;
+    bottom:-18px;
+    margin:12px -18px -18px;
+    padding:10px 18px max(14px,env(safe-area-inset-bottom));
+    background:linear-gradient(0deg,rgba(246,243,241,.99) 78%,rgba(246,243,241,.88));
+    backdrop-filter:blur(18px);
+  }
+}
+
+@media(max-width:420px){
+  .editorial-account-switch button{
+    font-size:7px!important;
+  }
+  .editorial-task-toolbar .task-filter-counter{
+    padding-inline:9px;
+    font-size:8px;
+  }
+  .editorial-date-grid-v3{
+    grid-template-columns:1fr!important;
+  }
+  .editorial-upload-zone-head{
+    flex-direction:column;
+  }
+  .editorial-upload-button{
+    width:100%;
+    justify-content:center;
+  }
+}
