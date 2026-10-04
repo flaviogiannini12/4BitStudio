@@ -1,24 +1,15 @@
 export type EditorialAccount = 'casaro' | 'autoscuola_susa'
-export type EditorialPlatform = 'fb_ig' | 'tiktok' | 'youtube' | 'whatsapp'
+export type EditorialPlatform = 'facebook' | 'tiktok' | 'youtube' | 'whatsapp'
 export type EditorialStatus = 'idea' | 'to_produce' | 'in_progress' | 'review' | 'ready' | 'scheduled' | 'published' | 'archived'
 
 export interface EditorialItem {
   id: string
   workspaceId: string
   account: EditorialAccount
-  platform: EditorialPlatform
-  contentType: string
+  platforms: EditorialPlatform[]
   title: string
   description: string
-  hook: string
-  script: string
-  caption: string
-  hashtags: string
-  cta: string
-  objective: string
   status: EditorialStatus
-  assigneeId: string | null
-  supportMemberIds: string[]
   publishDate: string | null
   publishTime: string | null
   publishedAt: string | null
@@ -60,19 +51,10 @@ export interface EditorialData {
 
 export interface EditorialItemInput {
   account: EditorialAccount
-  platform: EditorialPlatform
-  contentType: string
+  platforms: EditorialPlatform[]
   title: string
   description?: string
-  hook?: string
-  script?: string
-  caption?: string
-  hashtags?: string
-  cta?: string
-  objective?: string
   status?: EditorialStatus
-  assigneeId?: string | null
-  supportMemberIds?: string[]
   publishDate?: string | null
   publishTime?: string | null
   sortOrder?: number
