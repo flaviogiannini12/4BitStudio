@@ -9,14 +9,16 @@ import { QuickCreateModal } from './components/QuickCreateModal'
 import { WorkspaceJoin } from './components/WorkspaceJoin'
 import { useAuth } from './hooks/useAuth'
 import { useStudio } from './hooks/useStudio'
+import { useEditorial } from './hooks/useEditorial'
 import { ClientsPage } from './pages/ClientsPage'
 import { HomePage } from './pages/HomePage'
+import { EditorialPage } from './pages/EditorialPage'
 import { PaymentsPage } from './pages/PaymentsPage'
 import { StatsPage } from './pages/StatsPage'
 import { TasksPage } from './pages/TasksPage'
 import { TeamPage } from './pages/TeamPage'
 
-const pages: AppPage[] = ['home','clients','tasks','payments','team','stats']
+const pages: AppPage[] = ['home','clients','tasks','editorial','payments','team','stats']
 type CreateKind = 'client' | 'task' | 'payment' | 'recurrence' | 'member'
 
 function readPage(): AppPage {
@@ -28,6 +30,7 @@ const titles: Record<AppPage, { title: string; eyebrow: string }> = {
   home: { title: '', eyebrow: '' },
   clients: { title: 'Ogni cliente, nel suo posto.', eyebrow: '' },
   tasks: { title: 'Cosa c’è da fare.', eyebrow: '' },
+  editorial: { title: '', eyebrow: '' },
   payments: { title: 'Nessuna scadenza si perde.', eyebrow: '' },
   team: { title: 'Chi sta facendo cosa.', eyebrow: '' },
   stats: { title: 'Numeri dello studio.', eyebrow: '' },
@@ -36,6 +39,7 @@ const titles: Record<AppPage, { title: string; eyebrow: string }> = {
 export default function App() {
   const auth = useAuth()
   const studio = useStudio(auth.user, !auth.cloudEnabled || Boolean(auth.user))
+  const editorial = useEditorial(auth.user, studio.data.members)
   const [page, setPage] = useState<AppPage>(readPage)
   const [homeHeadline] = useState(() => getNextUsefulFact())
   const [createKind, setCreateKind] = useState<CreateKind | null>(null)
@@ -73,18 +77,20 @@ export default function App() {
   return <>
     <AppNav page={page} onChange={navigate}/>
     <main className="app-shell">
-      <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user}/>
+      <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user} showAdd={page !== 'editorial'}/>
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
+      {page === 'editorial' && editorial.error && <div className="global-error"><AlertCircle size={15}/><span>{editorial.error}</span><button onClick={() => void editorial.reload()}><RefreshCw size={14}/></button></div>}
       {studio.loading ? <LoadingSkeleton/> : <>
         {page === 'home' && <HomePage data={studio.data} onClient={openClient} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')}/>} 
+        {page === 'editorial' && (editorial.loading ? <LoadingSkeleton/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions}/>)} 
         {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onNewPayment={() => setCreateKind('payment')} onNewRecurrence={() => setCreateKind('recurrence')} onReminder={setReminderId}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
     </main>
-    <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuova attività</button>
+    {page !== 'editorial' && <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuova attività</button>}
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
     {reminder && <PaymentReminderModal payment={reminder} client={reminderClient} onRecord={() => studio.actions.recordReminder(reminder.id)} onClose={() => setReminderId(null)}/>} 
   </>
