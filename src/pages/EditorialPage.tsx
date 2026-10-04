@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { Archive, CalendarDays, Clock3, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
-  currentWorkerNames,
   editorialAccountLabel,
   editorialPlatformLabel,
   editorialStatusLabel,
@@ -16,7 +15,7 @@ type Actions=ReturnType<typeof useEditorial>['actions']
 type View='calendar'|'archive'
 
 const PLATFORM_ORDER: EditorialPlatform[]=['facebook','tiktok','youtube','whatsapp']
-const STATUS_FILTERS: EditorialStatus[]=['idea','to_produce','in_progress','review','ready','scheduled']
+const STATUS_FILTERS: EditorialStatus[]=['to_produce','ready']
 
 function dateKey(date:Date){
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
@@ -30,12 +29,8 @@ function currentMonthDaysFromToday(){
 
 function statusTone(status:EditorialStatus){
   if(status==='published') return 'published'
-  if(status==='scheduled') return 'scheduled'
   if(status==='ready') return 'ready'
-  if(status==='review') return 'review'
-  if(status==='in_progress') return 'progress'
-  if(status==='to_produce') return 'produce'
-  return 'idea'
+  return 'produce'
 }
 
 function platformTone(platform:EditorialPlatform){
@@ -139,13 +134,13 @@ export function EditorialPage({
           </select>
         </label>
 
-        <label className="todo-filter-select">
+        {view==='calendar' && <label className="todo-filter-select">
           <span>Stato</span>
           <select value={status} onChange={e=>setStatus(e.target.value as 'all'|EditorialStatus)}>
             <option value="all">Tutti gli stati</option>
-            {(view==='archive' ? ['published','archived'] as EditorialStatus[] : STATUS_FILTERS).map(value=><option key={value} value={value}>{editorialStatusLabel[value]}</option>)}
+            {STATUS_FILTERS.map(value=><option key={value} value={value}>{editorialStatusLabel[value]}</option>)}
           </select>
-        </label>
+        </label>}
 
         <button
           className={`editorial-view-toggle ${view==='archive'?'active':''}`}
@@ -207,9 +202,8 @@ export function EditorialPage({
 }
 
 function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:EditorialData;members:TeamMember[];onClick:()=>void}) {
-  const steps=data.steps.filter(step=>step.editorialItemId===item.id)
+  const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
-  const workers=currentWorkerNames({item,assetsCount:assets.length,steps,members})
 
   return <article className={`todo-task-card editorial-todo-card account-${item.account}`}>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
@@ -227,9 +221,14 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
 
       {item.description && <p className="editorial-card-description">{item.description}</p>}
 
-      {workers.length>0 && <div className="editorial-workers editorial-workers-inline">
-        <small>Da lavorare</small>
-        <div>{workers.map(name=><span key={name} className={`editorial-worker-chip ${memberToneClass(name)}`}>{name}</span>)}</div>
+      {steps.length>0 && <div className="editorial-team-progress">
+        {steps.map(step=>{
+          const owner=members.find(member=>member.id===step.ownerMemberId)
+          const name=owner?.name ?? step.label
+          return <span key={step.id} className={`editorial-team-progress-chip ${memberToneClass(name)} ${step.done?'done':'pending'}`}>
+            <i>{step.done?'✓':'•'}</i>{name}
+          </span>
+        })}
       </div>}
     </button>
   </article>
