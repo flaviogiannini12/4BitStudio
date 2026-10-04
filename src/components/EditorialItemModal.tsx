@@ -15,7 +15,7 @@ type Actions = ReturnType<typeof useEditorial>['actions']
 type QueuedFile = { id:string; file:File }
 
 const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','tiktok','youtube','whatsapp']
-const ACTIVE_STATUS_ORDER = editorialStatusOrder.filter(status => status !== 'archived')
+const ACTIVE_STATUS_ORDER: EditorialStatus[] = ['to_produce','ready']
 
 function todayISO() {
   const now=new Date()
@@ -57,7 +57,7 @@ export function EditorialItemModal({
     platforms:item?.platforms?.length ? item.platforms : ['facebook'] as EditorialPlatform[],
     title:item?.title ?? '',
     description:item?.description ?? '',
-    status:item?.status ?? 'idea' as EditorialStatus,
+    status:item?.status ?? 'to_produce' as EditorialStatus,
     publishDate:item?.publishDate ?? initialDate ?? todayISO(),
     publishTime:item?.publishTime ?? '18:00',
   }),[item,initialDate])
@@ -253,14 +253,15 @@ export function EditorialItemModal({
           </div>}
         </section>
 
-        {item && steps.length>0 && <section className="editorial-workflow-compact-v3">
-          <div className="editorial-upload-zone-head"><div><strong>Lavorazione</strong><span>Completa i passaggi man mano che vengono chiusi</span></div></div>
-          <div className="editorial-workflow-list editorial-workflow-list-v2">
+        {item && steps.length>0 && <section className="editorial-team-section-v4">
+          <div className="editorial-team-section-title">Team</div>
+          <div className="editorial-team-checks">
             {steps.map(step=>{
               const owner=members.find(member=>member.id===step.ownerMemberId)
-              return <button type="button" key={step.id} className={`editorial-workflow-row ${step.done?'done':''}`} onClick={()=>void actions.setStepDone(step.id,!step.done)}>
+              const name=owner?.name ?? step.label
+              return <button type="button" key={step.id} className={`editorial-team-check ${memberToneClass(name)} ${step.done?'done':'pending'}`} onClick={()=>void actions.setStepDone(step.id,!step.done)}>
                 <span className="editorial-step-check">{step.done && <Check size={12}/>}</span>
-                <span className="editorial-workflow-copy"><strong>{step.label}</strong>{owner && <small className={`workflow-owner ${memberToneClass(owner.name)}`}>{owner.name}</small>}</span>
+                <span><strong>{name}</strong><small>{step.done?'Completato':'Da fare'}</small></span>
               </button>
             })}
           </div>
