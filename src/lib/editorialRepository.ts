@@ -109,7 +109,7 @@ async function insertWorkflow(item: EditorialItem, members: TeamMember[]) {
 export async function createEditorialItem(input: EditorialItemInput, members: TeamMember[]) {
   const db=client()
   const {user,workspaceId}=await currentContext()
-  const platforms=input.platforms.length ? input.platforms : ['facebook']
+  const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
   const {data,error}=await db.from('editorial_items').insert({
     workspace_id:workspaceId,
     owner_id:user.id,
@@ -144,7 +144,7 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
   const payload:any={}
   if(input.account !== undefined) payload.account=input.account
   if(input.platforms !== undefined) {
-    const platforms=input.platforms.length ? input.platforms : ['facebook']
+    const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
     payload.platforms=platforms
     payload.platform=legacyPlatform(platforms)
   }
