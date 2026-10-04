@@ -9,6 +9,7 @@ import {
   loadEditorialData,
   openEditorialAsset,
   setEditorialStepDone,
+  rebuildEditorialSteps,
   updateEditorialItem,
   uploadEditorialAsset,
 } from '../lib/editorialRepository'
@@ -93,7 +94,11 @@ export function useEditorial(user: User | null, members: TeamMember[]) {
     },
     async updateItem(id:string,input:Partial<EditorialItem>) {
       return protect(async()=>{
+        const previous=data.items.find(item=>item.id===id)
         const item=await updateEditorialItem(id,input)
+        if(previous && (previous.platform!==item.platform || previous.contentType!==item.contentType)) {
+          await rebuildEditorialSteps(item,members)
+        }
         await reload(true)
         return item
       })
@@ -126,7 +131,7 @@ export function useEditorial(user: User | null, members: TeamMember[]) {
     openAsset:(asset:EditorialAsset)=>protect(()=>openEditorialAsset(asset)),
     downloadAsset:(asset:EditorialAsset)=>protect(()=>downloadEditorialAsset(asset)),
     reload,
-  }),[members,reload])
+  }),[data.items,members,reload])
 
   return {data,loading,error,actions,reload}
 }
