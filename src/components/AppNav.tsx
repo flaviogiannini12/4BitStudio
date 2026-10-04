@@ -1,11 +1,12 @@
-import { BarChart3, CheckSquare2, CircleDollarSign, House, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, CalendarRange, CheckSquare2, CircleDollarSign, House, UsersRound, WalletCards } from 'lucide-react'
 
-export type AppPage = 'home' | 'clients' | 'tasks' | 'payments' | 'team' | 'stats'
+export type AppPage = 'home' | 'clients' | 'tasks' | 'editorial' | 'payments' | 'team' | 'stats'
 
 const items = [
   { id: 'home' as const, label: 'Home', icon: House },
   { id: 'clients' as const, label: 'Clienti', icon: UsersRound },
   { id: 'tasks' as const, label: 'Task', icon: CheckSquare2 },
+  { id: 'editorial' as const, label: 'Editoriale', icon: CalendarRange },
   { id: 'payments' as const, label: 'Pagamenti', icon: CircleDollarSign },
   { id: 'team' as const, label: 'Team', icon: WalletCards },
   { id: 'stats' as const, label: 'Statistiche', icon: BarChart3 },
