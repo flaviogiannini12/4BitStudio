@@ -1,8 +1,8 @@
 import * as tus from 'tus-js-client'
 import { supabase, supabaseProjectId, supabasePublishableKey } from './supabase'
-import type { EditorialAsset, EditorialData, EditorialItem, EditorialItemInput, EditorialStep } from '../types/editorial'
+import type { EditorialAsset, EditorialData, EditorialItem, EditorialItemInput, EditorialPlatform, EditorialStep } from '../types/editorial'
 import type { TeamMember } from '../types/studio'
-import { editorialWorkflow, memberIdByName } from './editorialConfig'
+import { editorialWorkflow, legacyPlatform, memberIdByName } from './editorialConfig'
 
 const BUCKET = 'editorial-assets'
 
@@ -24,23 +24,22 @@ async function currentContext() {
   return { user: userData.user, workspaceId: membership.workspace_id as string }
 }
 
+function platformsFromRow(row:any): EditorialPlatform[] {
+  if (Array.isArray(row.platforms) && row.platforms.length) return row.platforms as EditorialPlatform[]
+  if (row.platform === 'tiktok') return ['tiktok']
+  if (row.platform === 'youtube') return ['youtube']
+  if (row.platform === 'whatsapp') return ['whatsapp']
+  return ['facebook']
+}
+
 const fromItem = (r:any): EditorialItem => ({
   id:r.id,
   workspaceId:r.workspace_id,
   account:r.account,
-  platform:r.platform,
-  contentType:r.content_type ?? '',
+  platforms:platformsFromRow(r),
   title:r.title,
   description:r.description ?? '',
-  hook:r.hook ?? '',
-  script:r.script ?? '',
-  caption:r.caption ?? '',
-  hashtags:r.hashtags ?? '',
-  cta:r.cta ?? '',
-  objective:r.objective ?? '',
   status:r.status,
-  assigneeId:r.assignee_id ?? null,
-  supportMemberIds:r.support_member_ids ?? [],
   publishDate:r.publish_date ?? null,
   publishTime:r.publish_time ? String(r.publish_time).slice(0,5) : null,
   publishedAt:r.published_at ?? null,
@@ -91,45 +90,52 @@ export async function loadEditorialData(): Promise<EditorialData> {
   }
 }
 
+async function insertWorkflow(item: EditorialItem, members: TeamMember[]) {
+  const db=client()
+  const {workspaceId}=await currentContext()
+  const templates=editorialWorkflow(item.platforms,item.account)
+  if(!templates.length) return
+  const {error}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
+    workspace_id:workspaceId,
+    editorial_item_id:item.id,
+    label:step.label,
+    owner_member_id:memberIdByName(members,step.ownerName),
+    done:false,
+    sort_order:index,
+  })))
+  if(error) throw error
+}
+
 export async function createEditorialItem(input: EditorialItemInput, members: TeamMember[]) {
   const db=client()
   const {user,workspaceId}=await currentContext()
+  const platforms=input.platforms.length ? input.platforms : ['facebook']
   const {data,error}=await db.from('editorial_items').insert({
     workspace_id:workspaceId,
     owner_id:user.id,
     account:input.account,
-    platform:input.platform,
-    content_type:input.contentType,
+    platform:legacyPlatform(platforms),
+    platforms,
+    content_type:'Social content',
     title:input.title,
     description:input.description ?? '',
-    hook:input.hook ?? '',
-    script:input.script ?? '',
-    caption:input.caption ?? '',
-    hashtags:input.hashtags ?? '',
-    cta:input.cta ?? '',
-    objective:input.objective ?? '',
+    hook:'',
+    script:'',
+    caption:'',
+    hashtags:'',
+    cta:'',
+    objective:'',
     status:input.status ?? 'idea',
-    assignee_id:input.assigneeId ?? null,
-    support_member_ids:input.supportMemberIds ?? [],
-    publish_date:input.publishDate || null,
-    publish_time:input.publishTime || null,
+    assignee_id:null,
+    support_member_ids:[],
+    publish_date:input.publishDate || new Date().toISOString().slice(0,10),
+    publish_time:input.publishTime || '18:00',
     sort_order:input.sortOrder ?? Date.now(),
   }).select('*').single()
   if(error) throw error
 
   const item=fromItem(data)
-  const templates=editorialWorkflow(item.platform,item.contentType)
-  if(templates.length){
-    const {error:stepsError}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
-      workspace_id:workspaceId,
-      editorial_item_id:item.id,
-      label:step.label,
-      owner_member_id:memberIdByName(members,step.ownerName),
-      done:false,
-      sort_order:index,
-    })))
-    if(stepsError) throw stepsError
-  }
+  await insertWorkflow(item,members)
   return item
 }
 
@@ -137,21 +143,16 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
   const db=client()
   const payload:any={}
   if(input.account !== undefined) payload.account=input.account
-  if(input.platform !== undefined) payload.platform=input.platform
-  if(input.contentType !== undefined) payload.content_type=input.contentType
+  if(input.platforms !== undefined) {
+    const platforms=input.platforms.length ? input.platforms : ['facebook']
+    payload.platforms=platforms
+    payload.platform=legacyPlatform(platforms)
+  }
   if(input.title !== undefined) payload.title=input.title
   if(input.description !== undefined) payload.description=input.description
-  if(input.hook !== undefined) payload.hook=input.hook
-  if(input.script !== undefined) payload.script=input.script
-  if(input.caption !== undefined) payload.caption=input.caption
-  if(input.hashtags !== undefined) payload.hashtags=input.hashtags
-  if(input.cta !== undefined) payload.cta=input.cta
-  if(input.objective !== undefined) payload.objective=input.objective
   if(input.status !== undefined) payload.status=input.status
-  if(input.assigneeId !== undefined) payload.assignee_id=input.assigneeId || null
-  if(input.supportMemberIds !== undefined) payload.support_member_ids=input.supportMemberIds
   if(input.publishDate !== undefined) payload.publish_date=input.publishDate || null
-  if(input.publishTime !== undefined) payload.publish_time=input.publishTime || null
+  if(input.publishTime !== undefined) payload.publish_time=input.publishTime || '18:00'
   if(input.sortOrder !== undefined) payload.sort_order=input.sortOrder
 
   const {data,error}=await db.from('editorial_items').update(payload).eq('id',id).select('*').single()
@@ -230,7 +231,7 @@ export async function uploadEditorialAsset(
     storage_path:objectName,
     mime_type:file.type || 'application/octet-stream',
     size_bytes:file.size,
-    asset_role:assetRole || 'asset',
+    asset_role:assetRole || 'contenuto',
     uploaded_by:user.id,
   }).select('*').single()
   if(error) {
@@ -262,22 +263,9 @@ export async function downloadEditorialAsset(asset:EditorialAsset) {
   window.open(data.signedUrl,'_blank','noopener,noreferrer')
 }
 
-
 export async function rebuildEditorialSteps(item:EditorialItem,members:TeamMember[]) {
   const db=client()
-  const {workspaceId}=await currentContext()
   const {error:deleteError}=await db.from('editorial_steps').delete().eq('editorial_item_id',item.id)
   if(deleteError) throw deleteError
-
-  const templates=editorialWorkflow(item.platform,item.contentType)
-  if(!templates.length) return
-  const {error}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
-    workspace_id:workspaceId,
-    editorial_item_id:item.id,
-    label:step.label,
-    owner_member_id:memberIdByName(members,step.ownerName),
-    done:false,
-    sort_order:index,
-  })))
-  if(error) throw error
+  await insertWorkflow(item,members)
 }
