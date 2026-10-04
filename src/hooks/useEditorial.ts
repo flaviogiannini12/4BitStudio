@@ -96,9 +96,11 @@ export function useEditorial(user: User | null, members: TeamMember[]) {
       return protect(async()=>{
         const previous=data.items.find(item=>item.id===id)
         const item=await updateEditorialItem(id,input)
-        if(previous && (previous.platform!==item.platform || previous.contentType!==item.contentType)) {
-          await rebuildEditorialSteps(item,members)
-        }
+        const workflowChanged = previous && (
+          previous.account !== item.account ||
+          previous.platforms.join('|') !== item.platforms.join('|')
+        )
+        if(workflowChanged) await rebuildEditorialSteps(item,members)
         await reload(true)
         return item
       })
