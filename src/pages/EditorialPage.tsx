@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Archive, CalendarDays, Clock3, Paperclip, Plus, Search } from 'lucide-react'
+import { Archive, CalendarDays, Clock3, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
   currentWorkerNames,
@@ -92,7 +92,9 @@ export function EditorialPage({
   },[filtered,today])
 
   const archiveItems=useMemo(()=>[...filtered].sort((a,b)=>(b.publishedAt ?? b.archivedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.archivedAt ?? a.updatedAt)),[filtered])
-  const archiveCount=data.items.filter(item=>item.status==='published'||item.status==='archived'||Boolean(item.archivedAt)).length
+  const visibleCount=view==='calendar'
+    ? filtered.filter(item=>item.publishDate && item.publishDate>=today).length
+    : archiveItems.length
 
   function openCreate(date:string|null){
     setEditing(null)
@@ -106,76 +108,91 @@ export function EditorialPage({
     setEditorOpen(true)
   }
 
-  return <section className="editorial-page editorial-page-v2">
-    <div className="editorial-toolbar editorial-toolbar-v2">
-      <div className="editorial-toolbar-main">
-        <div className="segmented editorial-view-switch editorial-view-switch-v2">
-          <button className={view==='calendar'?'active':''} onClick={()=>{setView('calendar');setStatus('all')}}><CalendarDays size={13}/> Calendario</button>
-          <button className={view==='archive'?'active':''} onClick={()=>{setView('archive');setStatus('all')}}><Archive size={13}/> Archivio <span>{archiveCount}</span></button>
-        </div>
+  function changeView(next:View){
+    setView(next)
+    setStatus('all')
+    setSearch('')
+  }
 
-        <div className="editorial-chip-group editorial-account-filters">
-          <button className={account==='all'?'active neutral':''} onClick={()=>setAccount('all')}>Tutti</button>
-          {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
-            key={value}
-            className={`account-filter account-${value} ${account===value?'active':''}`}
-            onClick={()=>setAccount(value)}
-          >{label}</button>)}
-        </div>
-
-        <button className="primary-button editorial-new-button editorial-new-button-v2" onClick={()=>openCreate(today)}><Plus size={15}/><span>Nuovo contenuto</span></button>
+  return <>
+    <section className="todo-planner-page editorial-task-page">
+      <div className="todo-planner-head editorial-planner-head">
+        <div><h2>Editoriale</h2></div>
+        <button className="primary-button todo-new-task" onClick={()=>openCreate(today)}><Plus size={16}/> Nuovo contenuto</button>
       </div>
 
-      <div className="editorial-toolbar-secondary">
-        <div className="editorial-chip-group editorial-platform-filters">
-          <button className={platform==='all'?'active neutral':''} onClick={()=>setPlatform('all')}>Tutti i canali</button>
-          {PLATFORM_ORDER.map(value=><button
-            key={value}
-            className={`platform-filter ${platformTone(value)} ${platform===value?'active':''}`}
-            onClick={()=>setPlatform(value)}
-          >{editorialPlatformLabel[value]}</button>)}
-        </div>
-
-        <div className="editorial-chip-group editorial-status-filters">
-          <button className={status==='all'?'active neutral':''} onClick={()=>setStatus('all')}>Tutti gli stati</button>
-          {(view==='archive' ? ['published','archived'] as EditorialStatus[] : STATUS_FILTERS).map(value=><button
-            key={value}
-            className={`status-filter ${statusTone(value)} ${status===value?'active':''}`}
-            onClick={()=>setStatus(value)}
-          >{editorialStatusLabel[value]}</button>)}
-        </div>
-
-        {view==='archive' && <label className="editorial-search editorial-search-v2"><Search size={14}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cerca archivio"/></label>}
-      </div>
-    </div>
-
-    {view==='calendar' ? <div className="editorial-calendar editorial-calendar-v2">
-      {days.map(date=>{
-        const key=dateKey(date)
-        const items=byDate.get(key) ?? []
-        const isToday=key===today
-        return <section className={`editorial-day editorial-day-v2 ${isToday?'today':''}`} key={key}>
-          <div className="editorial-day-date editorial-day-date-v2">
-            <strong>{date.getDate()}</strong>
-            <span>{date.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}</span>
-            <small>{date.toLocaleDateString('it-IT',{weekday:'long'})}</small>
-            {isToday && <b>Oggi</b>}
+      <div className="todo-toolbar editorial-task-toolbar">
+        <div className="task-filter-with-count editorial-account-filter-wrap">
+          <div className="segmented task-filter editorial-account-switch">
+            <button onClick={()=>setAccount('all')} className={account==='all'?'active':''}>Tutti</button>
+            <button onClick={()=>setAccount('casaro')} className={account==='casaro'?'active':''}>Casaro</button>
+            <button onClick={()=>setAccount('autoscuola_susa')} className={account==='autoscuola_susa'?'active':''}>Autoscuola Susa</button>
           </div>
+          <span className="task-filter-counter"><strong>{visibleCount}</strong> contenuti</span>
+        </div>
 
-          <div className="editorial-day-content editorial-day-content-v2">
-            <button className="editorial-day-add editorial-day-add-v2" onClick={()=>openCreate(key)}><Plus size={13}/> Nuovo contenuto</button>
-            {items.length
-              ? <div className="editorial-day-items editorial-day-items-v2">{items.map(item=><EditorialCard key={item.id} item={item} data={data} members={members} onClick={()=>openEdit(item)}/>)}</div>
-              : <span className="editorial-day-empty">Nessun contenuto</span>}
-          </div>
-        </section>
-      })}
-    </div> : <section className="editorial-archive editorial-archive-v2">
-      <div className="editorial-archive-list">
-        {archiveItems.map(item=><EditorialArchiveRow key={item.id} item={item} data={data} members={members} onClick={()=>openEdit(item)}/>)}
-        {!archiveItems.length && <div className="editorial-empty-state"><Archive size={22}/><strong>Archivio vuoto</strong><span>I contenuti pubblicati compariranno qui automaticamente.</span></div>}
+        <label className="todo-filter-select">
+          <span>Canale</span>
+          <select value={platform} onChange={e=>setPlatform(e.target.value as 'all'|EditorialPlatform)}>
+            <option value="all">Tutti i canali</option>
+            {PLATFORM_ORDER.map(value=><option key={value} value={value}>{editorialPlatformLabel[value]}</option>)}
+          </select>
+        </label>
+
+        <label className="todo-filter-select">
+          <span>Stato</span>
+          <select value={status} onChange={e=>setStatus(e.target.value as 'all'|EditorialStatus)}>
+            <option value="all">Tutti gli stati</option>
+            {(view==='archive' ? ['published','archived'] as EditorialStatus[] : STATUS_FILTERS).map(value=><option key={value} value={value}>{editorialStatusLabel[value]}</option>)}
+          </select>
+        </label>
+
+        <button
+          className={`editorial-view-toggle ${view==='archive'?'active':''}`}
+          onClick={()=>changeView(view==='archive'?'calendar':'archive')}
+        >
+          {view==='archive'?<CalendarDays size={14}/>:<Archive size={14}/>}
+          <span>{view==='archive'?'Calendario':'Archivio'}</span>
+        </button>
+
+        {view==='archive' && <label className="todo-filter-select editorial-archive-search">
+          <span>Cerca</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Titolo o descrizione"/>
+        </label>}
       </div>
-    </section>}
+
+      {view==='calendar' ? <div className="todo-calendar-panel editorial-calendar-tasklike">
+        {days.map(date=>{
+          const key=dateKey(date)
+          const items=byDate.get(key) ?? []
+          const isToday=key===today
+          return <section key={key} className={`todo-day-row editorial-day-tasklike ${isToday?'is-today':''} ${items.length?'':'is-empty'}`}>
+            <div className="todo-day-date">
+              <div className={`todo-day-number ${isToday?'today':''}`}>{date.getDate()}</div>
+              <p>{date.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}</p>
+              <span>{date.toLocaleDateString('it-IT',{weekday:'long'})}</span>
+              {isToday && <b>Oggi</b>}
+            </div>
+
+            <div className="todo-day-body">
+              <div className="todo-task-stack">
+                {items.map(item=><EditorialCard key={item.id} item={item} data={data} members={members} onClick={()=>openEdit(item)}/>)}
+              </div>
+              <button className="todo-add-row" onClick={()=>openCreate(key)}><Plus size={15}/><span>{items.length?'Aggiungi contenuto':'Nuovo contenuto'}</span></button>
+            </div>
+          </section>
+        })}
+      </div> : <section className="todo-completed-panel editorial-archive-tasklike">
+        <div className="todo-completed-head">
+          <h3>Archivio</h3>
+          <span>{archiveItems.length}</span>
+        </div>
+        <div className="todo-completed-list">
+          {archiveItems.map(item=><EditorialArchiveRow key={item.id} item={item} data={data} onClick={()=>openEdit(item)}/>)}
+          {!archiveItems.length && <div className="empty-page-mini">Nessun contenuto pubblicato con questi filtri.</div>}
+        </div>
+      </section>}
+    </section>
 
     <EditorialItemModal
       open={editorOpen}
@@ -186,7 +203,7 @@ export function EditorialPage({
       actions={actions}
       onClose={()=>setEditorOpen(false)}
     />
-  </section>
+  </>
 }
 
 function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:EditorialData;members:TeamMember[];onClick:()=>void}) {
@@ -194,46 +211,44 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
   const workers=currentWorkerNames({item,assetsCount:assets.length,steps,members})
 
-  return <button className={`editorial-card editorial-card-v2 account-${item.account}`} onClick={onClick}>
-    <div className="editorial-card-top editorial-card-top-v2">
-      <span className={`editorial-account-chip account-${item.account}`}>{editorialAccountLabel[item.account]}</span>
-      <span className={`editorial-status-chip ${statusTone(item.status)}`}>{editorialStatusLabel[item.status]}</span>
-    </div>
+  return <article className={`todo-task-card editorial-todo-card account-${item.account}`}>
+    <button className="todo-task-content editorial-todo-content" onClick={onClick}>
+      <div className="todo-task-topline">
+        <h3>{item.title}</h3>
+        <span className={`editorial-account-chip account-${item.account}`}>{editorialAccountLabel[item.account]}</span>
+      </div>
 
-    <h3>{item.title}</h3>
+      <div className="todo-task-meta editorial-todo-meta">
+        {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
+        <span className={`editorial-status-chip ${statusTone(item.status)}`}>{editorialStatusLabel[item.status]}</span>
+        <span className="editorial-inline-meta"><Clock3 size={11}/>{item.publishTime || '18:00'}</span>
+        <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
+      </div>
 
-    <div className="editorial-platform-list">
-      {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
-    </div>
+      {item.description && <p className="editorial-card-description">{item.description}</p>}
 
-    <div className="editorial-card-meta editorial-card-meta-v2">
-      <span><Clock3 size={12}/>{item.publishTime || '18:00'}</span>
-      <span><Paperclip size={12}/>{assets.length}</span>
-      {!item.description.trim() && <span className="editorial-missing">Descrizione mancante</span>}
-      {!assets.length && <span className="editorial-missing">Contenuto mancante</span>}
-    </div>
-
-    {workers.length>0 && <div className="editorial-workers">
-      <small>Da lavorare</small>
-      <div>{workers.map(name=><span key={name} className={`editorial-worker-chip ${memberToneClass(name)}`}>{name}</span>)}</div>
-    </div>}
-  </button>
+      {workers.length>0 && <div className="editorial-workers editorial-workers-inline">
+        <small>Da lavorare</small>
+        <div>{workers.map(name=><span key={name} className={`editorial-worker-chip ${memberToneClass(name)}`}>{name}</span>)}</div>
+      </div>}
+    </button>
+  </article>
 }
 
-function EditorialArchiveRow({item,data,members,onClick}:{item:EditorialItem;data:EditorialData;members:TeamMember[];onClick:()=>void}) {
+function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:EditorialData;onClick:()=>void}) {
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
-  const published=item.publishedAt ? new Date(item.publishedAt) : item.publishDate ? new Date(item.publishDate+'T12:00:00') : null
-  return <button className={`editorial-archive-row editorial-archive-row-v2 account-${item.account}`} onClick={onClick}>
-    <div className="editorial-archive-date"><strong>{published ? published.getDate() : '—'}</strong><span>{published ? published.toLocaleDateString('it-IT',{month:'short'}).replace('.','') : ''}</span><small>{published ? published.getFullYear() : ''}</small></div>
-    <div className="editorial-archive-main">
-      <div className="editorial-archive-chips">
+  return <article className={`todo-task-card completed-task-card editorial-todo-card editorial-archive-card account-${item.account}`}>
+    <button className="todo-task-content editorial-todo-content" onClick={onClick}>
+      <div className="todo-task-topline">
+        <h3>{item.title}</h3>
         <span className={`editorial-account-chip account-${item.account}`}>{editorialAccountLabel[item.account]}</span>
-        {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
       </div>
-      <h3>{item.title}</h3>
-      <small>{item.description || 'Nessuna descrizione'}</small>
-    </div>
-    <div className="editorial-archive-assets"><Paperclip size={14}/><strong>{assets.length}</strong><span>file</span></div>
-    <span className="editorial-status-chip published">Pubblicato</span>
-  </button>
+      <div className="todo-task-meta editorial-todo-meta">
+        {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
+        <span className="editorial-status-chip published">Pubblicato</span>
+        <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
+      </div>
+      {item.description && <p className="editorial-card-description">{item.description}</p>}
+    </button>
+  </article>
 }
