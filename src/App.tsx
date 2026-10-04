@@ -77,7 +77,7 @@ export default function App() {
   return <>
     <AppNav page={page} onChange={navigate}/>
     <main className="app-shell">
-      <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user} showAdd={page !== 'editorial'}/>
+      {page !== 'editorial' && <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user}/>} 
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
       {page === 'editorial' && editorial.error && <div className="global-error"><AlertCircle size={15}/><span>{editorial.error}</span><button onClick={() => void editorial.reload()}><RefreshCw size={14}/></button></div>}
       {studio.loading ? <LoadingSkeleton/> : <>
