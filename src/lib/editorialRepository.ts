@@ -261,3 +261,23 @@ export async function downloadEditorialAsset(asset:EditorialAsset) {
   if(!data?.signedUrl) throw new Error('Impossibile scaricare il file')
   window.open(data.signedUrl,'_blank','noopener,noreferrer')
 }
+
+
+export async function rebuildEditorialSteps(item:EditorialItem,members:TeamMember[]) {
+  const db=client()
+  const {workspaceId}=await currentContext()
+  const {error:deleteError}=await db.from('editorial_steps').delete().eq('editorial_item_id',item.id)
+  if(deleteError) throw deleteError
+
+  const templates=editorialWorkflow(item.platform,item.contentType)
+  if(!templates.length) return
+  const {error}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
+    workspace_id:workspaceId,
+    editorial_item_id:item.id,
+    label:step.label,
+    owner_member_id:memberIdByName(members,step.ownerName),
+    done:false,
+    sort_order:index,
+  })))
+  if(error) throw error
+}
