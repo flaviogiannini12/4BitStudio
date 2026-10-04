@@ -131,8 +131,8 @@ export function EditorialPage({
 
     <div className="editorial-toolbar">
       <div className="segmented editorial-view-switch">
-        <button className={view==='calendar'?'active':''} onClick={()=>setView('calendar')}><CalendarDays size={13}/> Calendario</button>
-        <button className={view==='archive'?'active':''} onClick={()=>setView('archive')}><Archive size={13}/> Archivio <span>{data.items.filter(item=>item.status==='published'||item.status==='archived'||Boolean(item.archivedAt)).length}</span></button>
+        <button className={view==='calendar'?'active':''} onClick={()=>{setView('calendar');setStatus('all')}}><CalendarDays size={13}/> Calendario</button>
+        <button className={view==='archive'?'active':''} onClick={()=>{setView('archive');setStatus('all')}}><Archive size={13}/> Archivio <span>{data.items.filter(item=>item.status==='published'||item.status==='archived'||Boolean(item.archivedAt)).length}</span></button>
       </div>
 
       <label className="editorial-filter">
