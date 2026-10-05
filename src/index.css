@@ -4623,3 +4623,14 @@
     padding-inline:5px;
   }
 }
+
+
+/* Editoriale mobile: hide redundant top-right new content button */
+@media(max-width:640px){
+  .editorial-planner-head .todo-new-task{
+    display:none!important;
+  }
+  .editorial-planner-head{
+    grid-template-columns:1fr!important;
+  }
+}
