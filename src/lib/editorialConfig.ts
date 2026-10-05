@@ -41,33 +41,29 @@ export function editorialWorkflow(
   platforms: EditorialPlatform[],
   mediaKind: EditorialMediaKind,
 ): EditorialStepTemplate[] {
-  const steps: EditorialStepTemplate[] = [
-    { label:'Ideazione / Script', ownerName:'Flavio', done:true, automatic:true },
-  ]
+  const steps: EditorialStepTemplate[] = []
 
   const socialPlatforms=platforms.some(platform=>['facebook','tiktok','youtube'].includes(platform))
   const hasWhatsapp=platforms.includes('whatsapp')
 
   if (socialPlatforms) {
+    pushUnique(steps,{ label:'Ideazione / Script social', ownerName:'Flavio', done:true, automatic:true })
+
     if (mediaKind === 'video') {
-      pushUnique(steps,{ label:'Video editing', ownerName:'Francesco', done:false, automatic:true })
+      pushUnique(steps,{ label:'Video editing social', ownerName:'Francesco', done:false, automatic:true })
     } else {
-      pushUnique(steps,{ label:'Photo editing / Grafiche', ownerName:'Edoardo', done:false, automatic:true })
+      pushUnique(steps,{ label:'Photo editing / Grafiche social', ownerName:'Edoardo', done:false, automatic:true })
     }
-  }
 
-  if (hasWhatsapp) {
-    pushUnique(steps,{ label:'Preparazione contenuto WhatsApp', ownerName:'Francesco', done:false, automatic:true })
-  }
-
-  pushUnique(steps,{ label:'Description / Copy', ownerName:'Francesco', done:false })
-
-  if (socialPlatforms) {
+    pushUnique(steps,{ label:'Description / Copy social', ownerName:'Francesco', done:false })
     pushUnique(steps,{ label:'Pubblicazione social', ownerName:'Edoardo', done:false })
   }
 
   if (hasWhatsapp) {
-    pushUnique(steps,{ label:'Invio WhatsApp', ownerName:'Francesco', done:false })
+    pushUnique(steps,{ label:'WhatsApp · Ideazione', ownerName:'Francesco', done:true, automatic:true })
+    pushUnique(steps,{ label:'WhatsApp · Preparazione contenuto', ownerName:'Francesco', done:false, automatic:true })
+    pushUnique(steps,{ label:'WhatsApp · Copy', ownerName:'Francesco', done:false })
+    pushUnique(steps,{ label:'WhatsApp · Invio', ownerName:'Francesco', done:false })
   }
 
   return steps
@@ -75,10 +71,11 @@ export function editorialWorkflow(
 
 export function isAutomaticEditorialStep(label:string) {
   return [
-    'Ideazione / Script',
-    'Video editing',
-    'Photo editing / Grafiche',
-    'Preparazione contenuto WhatsApp',
+    'Ideazione / Script social',
+    'Video editing social',
+    'Photo editing / Grafiche social',
+    'WhatsApp · Ideazione',
+    'WhatsApp · Preparazione contenuto',
   ].includes(label)
 }
 
