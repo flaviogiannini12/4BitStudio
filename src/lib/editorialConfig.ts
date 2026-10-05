@@ -45,21 +45,28 @@ export function editorialWorkflow(
     { label:'Ideazione / Script', ownerName:'Flavio', done:true, automatic:true },
   ]
 
-  if (mediaKind === 'video') {
-    pushUnique(steps,{ label:'Video editing', ownerName:'Francesco', done:false, automatic:true })
-  } else {
-    pushUnique(steps,{ label:'Photo editing / Grafiche', ownerName:'Edoardo', done:false, automatic:true })
+  const socialPlatforms=platforms.some(platform=>['facebook','tiktok','youtube'].includes(platform))
+  const hasWhatsapp=platforms.includes('whatsapp')
+
+  if (socialPlatforms) {
+    if (mediaKind === 'video') {
+      pushUnique(steps,{ label:'Video editing', ownerName:'Francesco', done:false, automatic:true })
+    } else {
+      pushUnique(steps,{ label:'Photo editing / Grafiche', ownerName:'Edoardo', done:false, automatic:true })
+    }
+  }
+
+  if (hasWhatsapp) {
+    pushUnique(steps,{ label:'Preparazione contenuto WhatsApp', ownerName:'Francesco', done:false, automatic:true })
   }
 
   pushUnique(steps,{ label:'Description / Copy', ownerName:'Francesco', done:false })
 
-  const socialPlatforms=platforms.some(platform=>['facebook','tiktok','youtube'].includes(platform))
   if (socialPlatforms) {
     pushUnique(steps,{ label:'Pubblicazione social', ownerName:'Edoardo', done:false })
   }
 
-  if (platforms.includes('whatsapp')) {
-    pushUnique(steps,{ label:'Preparazione contenuto WhatsApp', ownerName:'Francesco', done:false, automatic:true })
+  if (hasWhatsapp) {
     pushUnique(steps,{ label:'Invio WhatsApp', ownerName:'Francesco', done:false })
   }
 
