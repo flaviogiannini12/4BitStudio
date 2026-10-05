@@ -98,6 +98,7 @@ export function useEditorial(user: User | null, members: TeamMember[]) {
         const item=await updateEditorialItem(id,input)
         const workflowChanged = previous && (
           previous.account !== item.account ||
+          previous.mediaKind !== item.mediaKind ||
           previous.platforms.join('|') !== item.platforms.join('|')
         )
         if(workflowChanged) await rebuildEditorialSteps(item,members)
