@@ -111,6 +111,11 @@ export function EditorialPage({
     setSearch('')
   }
 
+  function changeAccount(next:'all'|EditorialAccount){
+    setAccount(next)
+    if(next==='autoscuola_susa' && platform==='whatsapp') setPlatform('all')
+  }
+
   return <>
     <section className="todo-planner-page editorial-task-page">
       <div className="todo-planner-head editorial-planner-head">
@@ -121,9 +126,9 @@ export function EditorialPage({
       <div className="todo-toolbar editorial-task-toolbar">
         <div className="task-filter-with-count editorial-account-filter-wrap">
           <div className="segmented task-filter editorial-account-switch">
-            <button onClick={()=>setAccount('all')} className={account==='all'?'active':''}>Tutti</button>
-            <button onClick={()=>setAccount('casaro')} className={account==='casaro'?'active':''}>Casaro</button>
-            <button onClick={()=>setAccount('autoscuola_susa')} className={account==='autoscuola_susa'?'active':''}>Autoscuola Susa</button>
+            <button onClick={()=>changeAccount('all')} className={account==='all'?'active':''}>Tutti</button>
+            <button onClick={()=>changeAccount('casaro')} className={account==='casaro'?'active':''}>Casaro</button>
+            <button onClick={()=>changeAccount('autoscuola_susa')} className={account==='autoscuola_susa'?'active':''}>Autoscuola Susa</button>
           </div>
           <span className="task-filter-counter"><strong>{visibleCount}</strong> contenuti</span>
         </div>
@@ -132,7 +137,7 @@ export function EditorialPage({
           <span>Canale</span>
           <select value={platform} onChange={e=>setPlatform(e.target.value as 'all'|EditorialPlatform)}>
             <option value="all">Tutti i canali</option>
-            {PLATFORM_ORDER.map(value=><option key={value} value={value}>{editorialPlatformLabel[value]}</option>)}
+            {PLATFORM_ORDER.filter(value=>value!=='whatsapp' || account!=='autoscuola_susa').map(value=><option key={value} value={value}>{editorialPlatformLabel[value]}</option>)}
           </select>
         </label>
 
