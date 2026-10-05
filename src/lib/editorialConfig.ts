@@ -1,4 +1,4 @@
-import type { EditorialAccount, EditorialPlatform, EditorialStatus } from '../types/editorial'
+import type { EditorialAccount, EditorialMediaKind, EditorialPlatform, EditorialStatus } from '../types/editorial'
 import type { TeamMember } from '../types/studio'
 
 export const editorialAccountLabel: Record<EditorialAccount,string> = {
@@ -14,26 +14,65 @@ export const editorialPlatformLabel: Record<EditorialPlatform,string> = {
 }
 
 export const editorialStatusLabel: Record<EditorialStatus,string> = {
-  idea: 'Idea',
+  idea: 'Da produrre',
   to_produce: 'Da produrre',
-  in_progress: 'In lavorazione',
-  review: 'In revisione',
-  ready: 'Pronto per Edoardo',
-  scheduled: 'Programmato',
+  in_progress: 'Da produrre',
+  review: 'Copy da fare',
+  ready: 'Pronto da pubblicare',
+  scheduled: 'Pronto da pubblicare',
   published: 'Pubblicato',
   archived: 'Archiviato',
 }
 
-export const editorialStatusOrder: EditorialStatus[] = ['to_produce','ready','published','archived']
+export const editorialStatusOrder: EditorialStatus[] = ['to_produce','review','ready','published','archived']
 
-export type EditorialStepTemplate = { label:string; ownerName:string; done:boolean }
+export type EditorialStepTemplate = {
+  label:string
+  ownerName:string
+  done:boolean
+  automatic?:boolean
+}
 
-export function editorialWorkflow(): EditorialStepTemplate[] {
-  return [
-    { label:'Flavio', ownerName:'Flavio', done:true },
-    { label:'Francesco', ownerName:'Francesco', done:false },
-    { label:'Edoardo', ownerName:'Edoardo', done:false },
+function pushUnique(target: EditorialStepTemplate[], step: EditorialStepTemplate) {
+  if (!target.some(existing => existing.label === step.label && existing.ownerName === step.ownerName)) target.push(step)
+}
+
+export function editorialWorkflow(
+  platforms: EditorialPlatform[],
+  mediaKind: EditorialMediaKind,
+): EditorialStepTemplate[] {
+  const steps: EditorialStepTemplate[] = [
+    { label:'Ideazione / Script', ownerName:'Flavio', done:true, automatic:true },
   ]
+
+  if (mediaKind === 'video') {
+    pushUnique(steps,{ label:'Video editing', ownerName:'Francesco', done:false, automatic:true })
+  } else {
+    pushUnique(steps,{ label:'Photo editing / Grafiche', ownerName:'Edoardo', done:false, automatic:true })
+  }
+
+  pushUnique(steps,{ label:'Description / Copy', ownerName:'Francesco', done:false })
+
+  const socialPlatforms=platforms.some(platform=>['facebook','tiktok','youtube'].includes(platform))
+  if (socialPlatforms) {
+    pushUnique(steps,{ label:'Pubblicazione social', ownerName:'Edoardo', done:false })
+  }
+
+  if (platforms.includes('whatsapp')) {
+    pushUnique(steps,{ label:'Preparazione contenuto WhatsApp', ownerName:'Francesco', done:false, automatic:true })
+    pushUnique(steps,{ label:'Invio WhatsApp', ownerName:'Francesco', done:false })
+  }
+
+  return steps
+}
+
+export function isAutomaticEditorialStep(label:string) {
+  return [
+    'Ideazione / Script',
+    'Video editing',
+    'Photo editing / Grafiche',
+    'Preparazione contenuto WhatsApp',
+  ].includes(label)
 }
 
 export function memberIdByName(members: TeamMember[], name: string) {
@@ -44,4 +83,9 @@ export function legacyPlatform(platforms: EditorialPlatform[]) {
   const first = platforms[0] ?? 'facebook'
   if (first === 'facebook') return 'fb_ig'
   return first
+}
+
+export function statusLabelForItem(status:EditorialStatus,platforms:EditorialPlatform[]) {
+  if (status === 'ready' && platforms.length === 1 && platforms[0] === 'whatsapp') return 'Pronto da inviare'
+  return editorialStatusLabel[status]
 }
