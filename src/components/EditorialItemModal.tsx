@@ -3,18 +3,25 @@ import { Archive, Check, Download, File, FileImage, FileVideo, Paperclip, Trash2
 import {
   editorialAccountLabel,
   editorialPlatformLabel,
-  editorialStatusLabel,
+  isAutomaticEditorialStep,
+  statusLabelForItem,
 } from '../lib/editorialConfig'
 import { memberToneClass } from '../lib/memberTone'
 import type { useEditorial } from '../hooks/useEditorial'
-import type { EditorialAccount, EditorialAsset, EditorialData, EditorialItem, EditorialPlatform, EditorialStatus } from '../types/editorial'
+import type {
+  EditorialAccount,
+  EditorialAsset,
+  EditorialData,
+  EditorialItem,
+  EditorialMediaKind,
+  EditorialPlatform,
+} from '../types/editorial'
 import type { TeamMember } from '../types/studio'
 
 type Actions = ReturnType<typeof useEditorial>['actions']
 type QueuedFile = { id:string; file:File }
 
 const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','tiktok','youtube','whatsapp']
-const ACTIVE_STATUS_ORDER: EditorialStatus[] = ['to_produce','ready']
 
 function todayISO() {
   const now=new Date()
@@ -32,6 +39,13 @@ function assetIcon(asset:Pick<EditorialAsset,'mimeType'>) {
   if(asset.mimeType.startsWith('image/')) return FileImage
   if(asset.mimeType.startsWith('video/')) return FileVideo
   return File
+}
+
+function statusClass(status:string) {
+  if(status==='published') return 'published'
+  if(status==='ready') return 'ready'
+  if(status==='review') return 'review'
+  return 'produce'
 }
 
 export function EditorialItemModal({
@@ -54,9 +68,9 @@ export function EditorialItemModal({
   const initial=useMemo(()=>({
     account:item?.account ?? 'casaro' as EditorialAccount,
     platforms:item?.platforms?.length ? item.platforms : ['facebook'] as EditorialPlatform[],
+    mediaKind:item?.mediaKind ?? 'photo' as EditorialMediaKind,
     title:item?.title ?? '',
     description:item?.description ?? '',
-    status:item?.status ?? 'to_produce' as EditorialStatus,
     publishDate:item?.publishDate ?? initialDate ?? todayISO(),
     publishTime:item?.publishTime ?? '18:00',
   }),[item,initialDate])
@@ -94,15 +108,63 @@ export function EditorialItemModal({
 
   if(!open) return null
 
+  const hasYoutube=draft.platforms.includes('youtube')
+  const hasWhatsapp=draft.platforms.includes('whatsapp')
+  const mediaLocked: EditorialMediaKind | null = hasYoutube ? 'video' : hasWhatsapp ? 'photo' : null
+  const currentStatus=item?.status ?? 'to_produce'
+  const accept=draft.mediaKind==='video' ? 'video/*' : 'image/*'
+
+  function setAccount(account:EditorialAccount) {
+    let platforms=draft.platforms
+    if(account==='autoscuola_susa' && platforms.includes('whatsapp')) {
+      platforms=platforms.filter(value=>value!=='whatsapp')
+      if(!platforms.length) platforms=['facebook']
+    }
+    setDraft({...draft,account,platforms})
+  }
+
   function togglePlatform(platform:EditorialPlatform) {
+    if(platform==='whatsapp' && draft.account!=='casaro') return
+
     const active=draft.platforms.includes(platform)
-    if(active && draft.platforms.length===1) return
-    setDraft({...draft,platforms:active ? draft.platforms.filter(value=>value!==platform) : [...draft.platforms,platform]})
+    if(active) {
+      if(draft.platforms.length===1) return
+      const next=draft.platforms.filter(value=>value!==platform)
+      const nextKind=next.includes('youtube') ? 'video' : next.includes('whatsapp') ? 'photo' : draft.mediaKind
+      setDraft({...draft,platforms:next,mediaKind:nextKind})
+      return
+    }
+
+    let next=[...draft.platforms,platform]
+    let nextKind=draft.mediaKind
+
+    if(platform==='youtube') {
+      next=next.filter(value=>value!=='whatsapp')
+      nextKind='video'
+    }
+    if(platform==='whatsapp') {
+      next=next.filter(value=>value!=='youtube')
+      nextKind='photo'
+    }
+
+    setDraft({...draft,platforms:next,mediaKind:nextKind})
+  }
+
+  function setMediaKind(mediaKind:EditorialMediaKind) {
+    if(mediaLocked) return
+    setDraft({...draft,mediaKind})
   }
 
   function addFiles(files:FileList|null) {
     if(!files?.length) return
-    setQueued(current=>[...current,...Array.from(files).map(file=>({id:crypto.randomUUID(),file}))])
+    const selected=Array.from(files)
+    const invalid=selected.find(file=>draft.mediaKind==='video' ? !file.type.startsWith('video/') : !file.type.startsWith('image/'))
+    if(invalid){
+      setLocalError(draft.mediaKind==='video' ? 'Per questo contenuto puoi allegare un file video.' : 'Per questo contenuto puoi allegare un’immagine.')
+      return
+    }
+    setLocalError(null)
+    setQueued(current=>[...current,...selected.map(file=>({id:crypto.randomUUID(),file}))])
   }
 
   async function submit(event:FormEvent) {
@@ -114,9 +176,9 @@ export function EditorialItemModal({
       const payload={
         account:draft.account,
         platforms:draft.platforms,
+        mediaKind:draft.mediaKind,
         title:draft.title.trim(),
         description:draft.description.trim(),
-        status:draft.status,
         publishDate:draft.publishDate || todayISO(),
         publishTime:draft.publishTime || '18:00',
       }
@@ -151,8 +213,8 @@ export function EditorialItemModal({
 
   return <div className="task-editor-backdrop editorial-modal-backdrop">
     <button className="task-editor-scrim" onClick={()=>!saving && onClose()} aria-label="Chiudi"/>
-    <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel-v3">
-      <div className="task-editor-head editorial-editor-head-v3">
+    <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel-v5">
+      <div className="task-editor-head editorial-editor-head-v5">
         <div>
           <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
           <h2>{item ? item.title : 'Contenuto social'}</h2>
@@ -160,7 +222,7 @@ export function EditorialItemModal({
         <button type="button" className="icon-button" onClick={onClose} disabled={saving}><X size={18}/></button>
       </div>
 
-      <div className="task-editor-body editorial-form-v3">
+      <div className="task-editor-body editorial-form-v5">
         <div className="editorial-choice-block">
           <span className="editorial-choice-label">Profilo</span>
           <div className="editorial-choice-chips account-choice-chips">
@@ -168,7 +230,7 @@ export function EditorialItemModal({
               type="button"
               key={value}
               className={`editorial-choice-chip account-chip account-${value} ${draft.account===value?'active':''}`}
-              onClick={()=>setDraft({...draft,account:value})}
+              onClick={()=>setAccount(value)}
             >{label}</button>)}
           </div>
         </div>
@@ -176,7 +238,7 @@ export function EditorialItemModal({
         <textarea
           autoFocus
           rows={2}
-          className="field task-editor-title editorial-title-field-v3"
+          className="field task-editor-title editorial-title-field-v5"
           placeholder="Titolo del contenuto"
           value={draft.title}
           onChange={e=>setDraft({...draft,title:e.target.value})}
@@ -185,7 +247,7 @@ export function EditorialItemModal({
         <div className="editorial-choice-block">
           <span className="editorial-choice-label">Canali</span>
           <div className="editorial-choice-chips platform-choice-chips">
-            {PLATFORM_ORDER.map(platform=><button
+            {PLATFORM_ORDER.filter(platform=>platform!=='whatsapp' || draft.account==='casaro').map(platform=><button
               type="button"
               key={platform}
               className={`editorial-choice-chip platform-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
@@ -194,32 +256,35 @@ export function EditorialItemModal({
           </div>
         </div>
 
-        <div className="editorial-choice-block">
-          <span className="editorial-choice-label">Stato</span>
-          <div className="editorial-choice-chips status-choice-chips">
-            {ACTIVE_STATUS_ORDER.map(status=><button
-              type="button"
-              key={status}
-              className={`editorial-choice-chip status-choice status-${status} ${draft.status===status?'active':''}`}
-              onClick={()=>setDraft({...draft,status})}
-            >{editorialStatusLabel[status]}</button>)}
+        <div className="editorial-choice-block editorial-media-choice">
+          <span className="editorial-choice-label">Tipo contenuto</span>
+          <div className="editorial-choice-chips media-choice-chips">
+            <button type="button" disabled={mediaLocked==='video'} className={`editorial-choice-chip media-choice photo ${draft.mediaKind==='photo'?'active':''}`} onClick={()=>setMediaKind('photo')}>Foto</button>
+            <button type="button" disabled={mediaLocked==='photo'} className={`editorial-choice-chip media-choice video ${draft.mediaKind==='video'?'active':''}`} onClick={()=>setMediaKind('video')}>Video</button>
           </div>
+          {hasYoutube && <small>YouTube richiede un contenuto video.</small>}
+          {hasWhatsapp && <small>WhatsApp usa foto/visual: i video sono esclusi.</small>}
         </div>
 
-        <div className="task-editor-grid editorial-date-grid-v3">
+        <div className="editorial-auto-state">
+          <span>Stato automatico</span>
+          <b className={`editorial-status-chip ${statusClass(currentStatus)}`}>{statusLabelForItem(currentStatus,draft.platforms)}</b>
+        </div>
+
+        <div className="task-editor-grid editorial-date-grid-v5">
           <label className="form-field"><span>Data pubblicazione</span><input className="field" type="date" min={todayISO()} value={draft.publishDate} onChange={e=>setDraft({...draft,publishDate:e.target.value})}/></label>
           <label className="form-field"><span>Ora</span><input className="field" type="time" value={draft.publishTime} onChange={e=>setDraft({...draft,publishTime:e.target.value})}/></label>
         </div>
 
-        <label className="form-field editorial-description-field-v3">
+        <label className="form-field editorial-description-field-v5">
           <span>Descrizione contenuto</span>
-          <textarea className="field" rows={4} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi cosa deve essere realizzato e le indicazioni utili al team."/>
+          <textarea className="field" rows={4} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi il contenuto e le indicazioni utili al team."/>
         </label>
 
-        <section className="editorial-upload-zone-v3">
+        <section className="editorial-upload-zone-v5">
           <div className="editorial-upload-zone-head">
-            <div><strong>Contenuto</strong><span>Foto, grafica o video originale · nessuna compressione</span></div>
-            <label className="editorial-upload-button"><Upload size={14}/> Allega<input type="file" multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/></label>
+            <div><strong>Contenuto</strong><span>{draft.mediaKind==='video'?'Video originale':'Foto / grafica originale'} · nessuna compressione</span></div>
+            <label className="editorial-upload-button"><Upload size={14}/> Allega<input type="file" accept={accept} multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/></label>
           </div>
 
           <div className="editorial-assets-list">
@@ -239,10 +304,10 @@ export function EditorialItemModal({
               <button type="button" className="icon-button" onClick={()=>setQueued(current=>current.filter(entry=>entry.id!==file.id))}><X size={14}/></button>
             </div>)}
 
-            {!assets.length && !queued.length && <label className="editorial-assets-empty editorial-assets-drop editorial-assets-drop-v3">
+            {!assets.length && !queued.length && <label className="editorial-assets-empty editorial-assets-drop editorial-assets-drop-v5">
               <Paperclip size={18}/>
-              <span>Seleziona il contenuto da allegare</span>
-              <input type="file" multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/>
+              <span>{draft.mediaKind==='video'?'Seleziona il video':'Seleziona la foto o grafica'}</span>
+              <input type="file" accept={accept} multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/>
             </label>}
           </div>
 
@@ -252,25 +317,36 @@ export function EditorialItemModal({
           </div>}
         </section>
 
-        {item && steps.length>0 && <section className="editorial-team-section-v4">
-          <div className="editorial-team-section-title">Team</div>
-          <div className="editorial-team-checks">
+        {item && steps.length>0 && <section className="editorial-checklist-v5">
+          <div className="editorial-checklist-title">
+            <strong>Checklist lavorazione</strong>
+            <span>Le fasi automatiche si chiudono da sole.</span>
+          </div>
+          <div className="editorial-checklist-list">
             {steps.map(step=>{
               const owner=members.find(member=>member.id===step.ownerMemberId)
-              const name=owner?.name ?? step.label
-              return <button type="button" key={step.id} className={`editorial-team-check ${memberToneClass(name)} ${step.done?'done':'pending'}`} onClick={()=>void actions.setStepDone(step.id,!step.done)}>
+              const name=owner?.name ?? 'Team'
+              const automatic=isAutomaticEditorialStep(step.label)
+              return <button
+                type="button"
+                key={step.id}
+                disabled={automatic}
+                className={`editorial-check-row ${memberToneClass(name)} ${step.done?'done':'pending'} ${automatic?'automatic':''}`}
+                onClick={()=>!automatic && void actions.setStepDone(step.id,!step.done)}
+              >
                 <span className="editorial-step-check">{step.done && <Check size={12}/>}</span>
-                <span><strong>{name}</strong><small>{step.done?'Completato':'Da fare'}</small></span>
+                <span className="editorial-check-copy"><strong>{step.label}</strong><small>{name}</small></span>
+                <span className="editorial-check-state">{step.done?'Fatto':automatic?'Automatico':'Da fare'}</span>
               </button>
             })}
           </div>
         </section>}
 
-        {draft.status==='published' && <div className="editorial-archive-notice"><Archive size={16}/><span>Quando salvi come <strong>Pubblicato</strong>, il contenuto passa automaticamente nell’Archivio.</span></div>}
+        {currentStatus==='published' && <div className="editorial-archive-notice"><Archive size={16}/><span>Contenuto pubblicato: è già nello storico.</span></div>}
         {localError && <div className="editorial-error">{localError}</div>}
       </div>
 
-      <div className="task-editor-actions editorial-editor-actions-v3">
+      <div className="task-editor-actions editorial-editor-actions-v5">
         {item ? <button type="button" className="danger-button" disabled={saving} onClick={()=>void removeItem()}><Trash2 size={15}/> Elimina</button> : <span/>}
         <div>
           <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annulla</button>
