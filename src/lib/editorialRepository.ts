@@ -1,8 +1,21 @@
 import * as tus from 'tus-js-client'
 import { supabase, supabaseProjectId, supabasePublishableKey } from './supabase'
-import type { EditorialAsset, EditorialData, EditorialItem, EditorialItemInput, EditorialPlatform, EditorialStep } from '../types/editorial'
+import type {
+  EditorialAsset,
+  EditorialData,
+  EditorialItem,
+  EditorialItemInput,
+  EditorialMediaKind,
+  EditorialPlatform,
+  EditorialStep,
+} from '../types/editorial'
 import type { TeamMember } from '../types/studio'
-import { editorialWorkflow, legacyPlatform, memberIdByName } from './editorialConfig'
+import {
+  editorialWorkflow,
+  isAutomaticEditorialStep,
+  legacyPlatform,
+  memberIdByName,
+} from './editorialConfig'
 
 const BUCKET = 'editorial-assets'
 
@@ -32,11 +45,16 @@ function platformsFromRow(row:any): EditorialPlatform[] {
   return ['facebook']
 }
 
+function mediaKindFromRow(row:any): EditorialMediaKind {
+  return row.media_kind === 'video' ? 'video' : 'photo'
+}
+
 const fromItem = (r:any): EditorialItem => ({
   id:r.id,
   workspaceId:r.workspace_id,
   account:r.account,
   platforms:platformsFromRow(r),
+  mediaKind:mediaKindFromRow(r),
   title:r.title,
   description:r.description ?? '',
   status:r.status,
@@ -90,33 +108,93 @@ export async function loadEditorialData(): Promise<EditorialData> {
   }
 }
 
-async function insertWorkflow(item: EditorialItem, members: TeamMember[]) {
+async function insertWorkflow(item: EditorialItem, members: TeamMember[], previous?: Map<string,boolean>) {
   const db=client()
   const {workspaceId}=await currentContext()
-  const templates=editorialWorkflow()
+  const templates=editorialWorkflow(item.platforms,item.mediaKind)
   if(!templates.length) return
+
   const {error}=await db.from('editorial_steps').insert(templates.map((step,index)=>({
     workspace_id:workspaceId,
     editorial_item_id:item.id,
     label:step.label,
     owner_member_id:memberIdByName(members,step.ownerName),
-    done:false,
+    done:step.done || previous?.get(step.label) === true,
     sort_order:index,
   })))
   if(error) throw error
+}
+
+async function syncEditorialAutomation(itemId:string) {
+  const db=client()
+  const [
+    {data:itemRow,error:itemError},
+    {data:assetRows,error:assetError},
+    {data:stepRows,error:stepError},
+  ]=await Promise.all([
+    db.from('editorial_items').select('id,platforms,platform,media_kind,status').eq('id',itemId).single(),
+    db.from('editorial_assets').select('id').eq('editorial_item_id',itemId),
+    db.from('editorial_steps').select('id,label,done').eq('editorial_item_id',itemId).order('sort_order',{ascending:true}),
+  ])
+
+  if(itemError) throw itemError
+  if(assetError) throw assetError
+  if(stepError) throw stepError
+
+  const hasAsset=(assetRows ?? []).length>0
+  const steps=(stepRows ?? []).map(row=>({
+    id:String(row.id),
+    label:String(row.label),
+    done:Boolean(row.done),
+  }))
+
+  for(const step of steps) {
+    let desired: boolean | null = null
+    if(step.label === 'Ideazione / Script') desired=true
+    if(['Video editing','Photo editing / Grafiche','Preparazione contenuto WhatsApp'].includes(step.label)) desired=hasAsset
+    if(desired !== null && desired !== step.done) {
+      const {error}=await db.from('editorial_steps').update({done:desired}).eq('id',step.id)
+      if(error) throw error
+      step.done=desired
+    }
+  }
+
+  const copy=steps.find(step=>step.label==='Description / Copy')
+  const editingSteps=steps.filter(step=>['Video editing','Photo editing / Grafiche','Preparazione contenuto WhatsApp'].includes(step.label))
+  const publicationSteps=steps.filter(step=>['Pubblicazione social','Invio WhatsApp'].includes(step.label))
+
+  const editingDone=editingSteps.length===0 || editingSteps.every(step=>step.done)
+  const copyDone=copy?.done ?? true
+  const publicationDone=publicationSteps.length>0 && publicationSteps.every(step=>step.done)
+
+  const nextStatus = publicationDone
+    ? 'published'
+    : !editingDone
+      ? 'to_produce'
+      : !copyDone
+        ? 'review'
+        : 'ready'
+
+  if(itemRow.status !== nextStatus) {
+    const {error}=await db.from('editorial_items').update({status:nextStatus}).eq('id',itemId)
+    if(error) throw error
+  }
 }
 
 export async function createEditorialItem(input: EditorialItemInput, members: TeamMember[]) {
   const db=client()
   const {user,workspaceId}=await currentContext()
   const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
+  const mediaKind: EditorialMediaKind = input.mediaKind === 'video' ? 'video' : 'photo'
+
   const {data,error}=await db.from('editorial_items').insert({
     workspace_id:workspaceId,
     owner_id:user.id,
     account:input.account,
     platform:legacyPlatform(platforms),
     platforms,
-    content_type:'Social content',
+    media_kind:mediaKind,
+    content_type:mediaKind === 'video' ? 'Video' : 'Foto',
     title:input.title,
     description:input.description ?? '',
     hook:'',
@@ -125,7 +203,7 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
     hashtags:'',
     cta:'',
     objective:'',
-    status:input.status ?? 'to_produce',
+    status:'to_produce',
     assignee_id:null,
     support_member_ids:[],
     publish_date:input.publishDate || new Date().toISOString().slice(0,10),
@@ -136,6 +214,7 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
 
   const item=fromItem(data)
   await insertWorkflow(item,members)
+  await syncEditorialAutomation(item.id)
   return item
 }
 
@@ -148,9 +227,12 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
     payload.platforms=platforms
     payload.platform=legacyPlatform(platforms)
   }
+  if(input.mediaKind !== undefined) {
+    payload.media_kind=input.mediaKind
+    payload.content_type=input.mediaKind === 'video' ? 'Video' : 'Foto'
+  }
   if(input.title !== undefined) payload.title=input.title
   if(input.description !== undefined) payload.description=input.description
-  if(input.status !== undefined) payload.status=input.status
   if(input.publishDate !== undefined) payload.publish_date=input.publishDate || null
   if(input.publishTime !== undefined) payload.publish_time=input.publishTime || '18:00'
   if(input.sortOrder !== undefined) payload.sort_order=input.sortOrder
@@ -162,26 +244,19 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
 
 export async function setEditorialStepDone(id:string,done:boolean) {
   const db=client()
-  const {data,error}=await db.from('editorial_steps').update({done}).eq('id',id).select('*').single()
+  const {data,error}=await db.from('editorial_steps').select('id,label,editorial_item_id').eq('id',id).single()
   if(error) throw error
-  const step=fromStep(data)
+  if(isAutomaticEditorialStep(String(data.label))) {
+    await syncEditorialAutomation(String(data.editorial_item_id))
+    const {data:fresh,error:freshError}=await db.from('editorial_steps').select('*').eq('id',id).single()
+    if(freshError) throw freshError
+    return fromStep(fresh)
+  }
 
-  const {data:rows,error:stepsError}=await db
-    .from('editorial_steps')
-    .select('label,done')
-    .eq('editorial_item_id',step.editorialItemId)
-  if(stepsError) throw stepsError
-
-  const state=new Map((rows ?? []).map(row=>[String(row.label).toLowerCase(),Boolean(row.done)]))
-  const nextStatus = state.get('edoardo')
-    ? 'published'
-    : state.get('flavio') && state.get('francesco')
-      ? 'ready'
-      : 'to_produce'
-
-  const {error:itemError}=await db.from('editorial_items').update({status:nextStatus}).eq('id',step.editorialItemId)
-  if(itemError) throw itemError
-  return step
+  const {data:updated,error:updateError}=await db.from('editorial_steps').update({done}).eq('id',id).select('*').single()
+  if(updateError) throw updateError
+  await syncEditorialAutomation(String(data.editorial_item_id))
+  return fromStep(updated)
 }
 
 export async function deleteEditorialItem(id:string) {
@@ -256,6 +331,8 @@ export async function uploadEditorialAsset(
     await db.storage.from(BUCKET).remove([objectName])
     throw error
   }
+
+  await syncEditorialAutomation(itemId)
   return fromAsset(data)
 }
 
@@ -265,6 +342,7 @@ export async function deleteEditorialAsset(asset:EditorialAsset) {
   if(removed.error) throw removed.error
   const {error}=await db.from('editorial_assets').delete().eq('id',asset.id)
   if(error) throw error
+  await syncEditorialAutomation(asset.editorialItemId)
 }
 
 export async function openEditorialAsset(asset:EditorialAsset) {
@@ -283,7 +361,13 @@ export async function downloadEditorialAsset(asset:EditorialAsset) {
 
 export async function rebuildEditorialSteps(item:EditorialItem,members:TeamMember[]) {
   const db=client()
+  const {data:existing,error:existingError}=await db.from('editorial_steps').select('label,done').eq('editorial_item_id',item.id)
+  if(existingError) throw existingError
+  const previous=new Map((existing ?? []).map(row=>[String(row.label),Boolean(row.done)]))
+
   const {error:deleteError}=await db.from('editorial_steps').delete().eq('editorial_item_id',item.id)
   if(deleteError) throw deleteError
-  await insertWorkflow(item,members)
+
+  await insertWorkflow(item,members,previous)
+  await syncEditorialAutomation(item.id)
 }
