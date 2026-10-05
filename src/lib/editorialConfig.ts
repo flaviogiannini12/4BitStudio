@@ -18,7 +18,7 @@ export const editorialStatusLabel: Record<EditorialStatus,string> = {
   to_produce: 'Da produrre',
   in_progress: 'Da produrre',
   review: 'Copy da fare',
-  ready: 'Pronto da pubblicare',
+  ready: 'Pronto',
   scheduled: 'Pronto da pubblicare',
   published: 'Pubblicato',
   archived: 'Archiviato',
@@ -94,5 +94,6 @@ export function legacyPlatform(platforms: EditorialPlatform[]) {
 
 export function statusLabelForItem(status:EditorialStatus,platforms:EditorialPlatform[]) {
   if (status === 'ready' && platforms.length === 1 && platforms[0] === 'whatsapp') return 'Pronto da inviare'
+  if (status === 'ready') return 'Pronto da pubblicare'
   return editorialStatusLabel[status]
 }
