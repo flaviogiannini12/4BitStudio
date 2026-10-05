@@ -150,8 +150,8 @@ async function syncEditorialAutomation(itemId:string) {
 
   for(const step of steps) {
     let desired: boolean | null = null
-    if(step.label === 'Ideazione / Script') desired=true
-    if(['Video editing','Photo editing / Grafiche','Preparazione contenuto WhatsApp'].includes(step.label)) desired=hasAsset
+    if(['Ideazione / Script social','WhatsApp · Ideazione'].includes(step.label)) desired=true
+    if(['Video editing social','Photo editing / Grafiche social','WhatsApp · Preparazione contenuto'].includes(step.label)) desired=hasAsset
     if(desired !== null && desired !== step.done) {
       const {error}=await db.from('editorial_steps').update({done:desired}).eq('id',step.id)
       if(error) throw error
@@ -159,12 +159,12 @@ async function syncEditorialAutomation(itemId:string) {
     }
   }
 
-  const copy=steps.find(step=>step.label==='Description / Copy')
-  const editingSteps=steps.filter(step=>['Video editing','Photo editing / Grafiche','Preparazione contenuto WhatsApp'].includes(step.label))
-  const publicationSteps=steps.filter(step=>['Pubblicazione social','Invio WhatsApp'].includes(step.label))
+  const copySteps=steps.filter(step=>['Description / Copy social','WhatsApp · Copy'].includes(step.label))
+  const editingSteps=steps.filter(step=>['Video editing social','Photo editing / Grafiche social','WhatsApp · Preparazione contenuto'].includes(step.label))
+  const publicationSteps=steps.filter(step=>['Pubblicazione social','WhatsApp · Invio'].includes(step.label))
 
   const editingDone=editingSteps.length===0 || editingSteps.every(step=>step.done)
-  const copyDone=copy?.done ?? true
+  const copyDone=copySteps.length===0 || copySteps.every(step=>step.done)
   const publicationDone=publicationSteps.length>0 && publicationSteps.every(step=>step.done)
 
   const nextStatus = publicationDone
@@ -185,6 +185,9 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
   const db=client()
   const {user,workspaceId}=await currentContext()
   const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
+  if (input.account === 'autoscuola_susa' && platforms.includes('whatsapp')) {
+    throw new Error('WhatsApp è disponibile solo per l’account Casaro.')
+  }
   const mediaKind: EditorialMediaKind = input.mediaKind === 'video' ? 'video' : 'photo'
 
   const {data,error}=await db.from('editorial_items').insert({
@@ -224,6 +227,9 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
   if(input.account !== undefined) payload.account=input.account
   if(input.platforms !== undefined) {
     const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
+    if (input.account === 'autoscuola_susa' && platforms.includes('whatsapp')) {
+      throw new Error('WhatsApp è disponibile solo per l’account Casaro.')
+    }
     payload.platforms=platforms
     payload.platform=legacyPlatform(platforms)
   }
