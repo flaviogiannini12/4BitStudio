@@ -5,6 +5,7 @@ import {
   editorialAccountLabel,
   editorialPlatformLabel,
   editorialStatusLabel,
+  statusLabelForItem,
 } from '../lib/editorialConfig'
 import { memberToneClass } from '../lib/memberTone'
 import type { useEditorial } from '../hooks/useEditorial'
@@ -15,7 +16,7 @@ type Actions=ReturnType<typeof useEditorial>['actions']
 type View='calendar'|'archive'
 
 const PLATFORM_ORDER: EditorialPlatform[]=['facebook','tiktok','youtube','whatsapp']
-const STATUS_FILTERS: EditorialStatus[]=['to_produce','ready']
+const STATUS_FILTERS: EditorialStatus[]=['to_produce','review','ready']
 
 function dateKey(date:Date){
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
@@ -30,6 +31,7 @@ function currentMonthDaysFromToday(){
 function statusTone(status:EditorialStatus){
   if(status==='published') return 'published'
   if(status==='ready') return 'ready'
+  if(status==='review') return 'review'
   return 'produce'
 }
 
@@ -214,7 +216,8 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
 
       <div className="todo-task-meta editorial-todo-meta">
         {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
-        <span className={`editorial-status-chip ${statusTone(item.status)}`}>{editorialStatusLabel[item.status]}</span>
+        <span className={`editorial-status-chip ${statusTone(item.status)}`}>{statusLabelForItem(item.status,item.platforms)}</span>
+        <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
         <span className="editorial-inline-meta"><Clock3 size={11}/>{item.publishTime || '18:00'}</span>
         <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
@@ -245,6 +248,7 @@ function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:Editor
       <div className="todo-task-meta editorial-todo-meta">
         {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
         <span className="editorial-status-chip published">Pubblicato</span>
+        <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
         <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
       {item.description && <p className="editorial-card-description">{item.description}</p>}
