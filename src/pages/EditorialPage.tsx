@@ -240,7 +240,7 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
       .filter((name): name is string=>Boolean(name))
   )]
 
-  return <article className={`todo-task-card editorial-todo-card account-${item.account}`}>
+  return <article className={`todo-task-card editorial-todo-card account-${item.account} ${item.status==='published'?'is-published':''}`}>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
       <div className="todo-task-topline">
         <h3>{item.title}</h3>
@@ -268,7 +268,7 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
 
 function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:EditorialData;onClick:()=>void}) {
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
-  return <article className={`todo-task-card completed-task-card editorial-todo-card editorial-archive-card account-${item.account}`}>
+  return <article className={`todo-task-card completed-task-card editorial-todo-card editorial-archive-card account-${item.account} is-published`}>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
       <div className="todo-task-topline">
         <h3>{item.title}</h3>
