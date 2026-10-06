@@ -6020,3 +6020,177 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:19px;
   }
 }
+
+
+/* =========================================================
+   UX MICROFIXES — Editoriale, Task scadute, Home team
+   ========================================================= */
+
+/* Editoriale form: stable date/time sizing on desktop + iPad */
+.editorial-date-grid-v5{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(128px,160px)!important;
+  gap:8px!important;
+  width:100%!important;
+  max-width:100%!important;
+}
+.editorial-date-grid-v5 .form-field{
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+}
+.editorial-date-grid-v5 .field,
+.editorial-date-grid-v5 input[type="date"],
+.editorial-date-grid-v5 input[type="time"]{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.editorial-form-v5,
+.editorial-form-v5 .form-field,
+.editorial-form-v5 .editorial-choice-block{
+  min-width:0;
+  max-width:100%;
+}
+.editorial-form-v5 .editorial-choice-chips{
+  max-width:100%;
+  flex-wrap:wrap;
+}
+@media(min-width:641px) and (max-width:1024px){
+  .editorial-editor-panel-v5{
+    width:min(610px,calc(100vw - 44px))!important;
+    max-width:calc(100vw - 44px)!important;
+  }
+  .editorial-form-v5{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+  .editorial-date-grid-v5{
+    grid-template-columns:minmax(0,1fr) 138px!important;
+  }
+  .editorial-description-field-v5 textarea{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .editorial-upload-zone-v5,
+  .editorial-checklist-v5{
+    width:100%;
+    max-width:100%;
+  }
+}
+@media(max-width:640px){
+  .editorial-date-grid-v5{
+    grid-template-columns:minmax(0,1fr) 104px!important;
+  }
+}
+@media(max-width:480px){
+  .editorial-date-grid-v5{
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* Task scadute: compact accordion, closed by default */
+.todo-overdue-collapsible{
+  overflow:hidden;
+}
+.todo-overdue-toggle{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto 28px;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  padding:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+}
+.todo-overdue-toggle h3{
+  margin:2px 0 0;
+}
+.todo-overdue-count{
+  display:grid;
+  min-width:28px;
+  height:28px;
+  place-items:center;
+  padding:0 8px;
+  border-radius:999px;
+  background:rgba(181,45,45,.09);
+  color:#B52D2D;
+  font-size:9px;
+  font-weight:850;
+}
+.todo-overdue-chevron{
+  color:rgba(5,5,5,.34);
+  transition:transform .18s ease;
+}
+.todo-overdue-collapsible.is-open .todo-overdue-chevron{
+  transform:rotate(180deg);
+}
+.todo-overdue-list{
+  margin-top:13px;
+  animation:overdueReveal .18s ease both;
+}
+@keyframes overdueReveal{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:640px){
+  .todo-overdue-toggle{
+    grid-template-columns:minmax(0,1fr) auto 24px;
+    gap:7px;
+  }
+}
+
+/* Home: useful team snapshot replaces duplicated task list */
+.home-team-status-card{
+  min-width:0;
+}
+.home-team-snapshot{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.home-team-snapshot>div{
+  min-width:0;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:16px;
+  background:rgba(255,255,255,.56);
+}
+.home-team-snapshot span,
+.home-team-snapshot strong,
+.home-team-snapshot small{
+  display:block;
+}
+.home-team-snapshot span{
+  color:rgba(5,5,5,.36);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.home-team-snapshot strong{
+  margin-top:6px;
+  font-size:24px;
+  line-height:1;
+  letter-spacing:-.055em;
+}
+.home-team-snapshot small{
+  margin-top:5px;
+  color:rgba(5,5,5,.30);
+  font-size:7.5px;
+}
+@media(max-width:640px){
+  .home-team-snapshot{
+    grid-template-columns:1fr 1fr;
+  }
+  .home-team-snapshot>div{
+    padding:11px;
+  }
+  .home-team-snapshot strong{
+    font-size:21px;
+  }
+}
