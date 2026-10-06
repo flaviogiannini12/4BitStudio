@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent, type PointerEvent } from 'react'
-import { Archive, CalendarDays, Clock3, GripVertical, Paperclip, Plus } from 'lucide-react'
+import { Archive, CalendarDays, GripVertical, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
   editorialAccountLabel,
@@ -344,11 +344,9 @@ function EditorialCard({
         {item.platforms.map(value=><span key={value} className={`editorial-platform-chip ${platformTone(value)}`}>{editorialPlatformLabel[value]}</span>)}
         <span className={`editorial-status-chip ${statusTone(item.status)}`}>{statusLabelForItem(item.status,item.platforms)}</span>
         <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
-        <span className="editorial-inline-meta"><Clock3 size={11}/>{item.publishTime || '18:00'}</span>
         <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
 
-      {item.description && <p className="editorial-card-description">{item.description}</p>}
 
       {pendingPeople.length>0 && <div className="editorial-team-progress">
         {pendingPeople.map(name=><span key={name} className={`editorial-team-progress-chip ${memberToneClass(name)} pending`}>
@@ -373,7 +371,6 @@ function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:Editor
         <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
         <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
-      {item.description && <p className="editorial-card-description">{item.description}</p>}
     </button>
   </article>
 }
