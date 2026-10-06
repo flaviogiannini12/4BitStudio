@@ -18,13 +18,13 @@ export function AppNav({ page, onChange }: { page: AppPage; onChange: (page: App
       <nav className="glass-nav desktop-nav">
         {items.map(item => {
           const Icon = item.icon
-          return <button key={item.id} onClick={() => onChange(item.id)} className={page === item.id ? 'nav-active' : ''}><Icon size={15}/><span>{item.label}</span></button>
+          return <button key={item.id} onClick={() => onChange(item.id)} className={`nav-item nav-item-${item.id} ${page === item.id ? 'nav-active' : ''}`}><Icon size={15}/><span>{item.label}</span></button>
         })}
       </nav>
       <nav className="glass-nav mobile-nav">
         {items.map(item => {
           const Icon = item.icon
-          return <button key={item.id} onClick={() => onChange(item.id)} className={page === item.id ? 'nav-active' : ''}><Icon size={18}/><span>{item.label}</span></button>
+          return <button key={item.id} onClick={() => onChange(item.id)} className={`nav-item nav-item-${item.id} ${page === item.id ? 'nav-active' : ''}`}><Icon size={18}/><span>{item.label}</span></button>
         })}
       </nav>
     </>
