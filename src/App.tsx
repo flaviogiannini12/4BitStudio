@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getNextUsefulFact } from './lib/headlines'
-import { AlertCircle, LoaderCircle, RefreshCw } from 'lucide-react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
 import { AppNav, type AppPage } from './components/AppNav'
+import { CompletionConfetti } from './components/CompletionConfetti'
+import { PremiumLoader } from './components/PremiumLoader'
 import { AuthScreen } from './components/AuthScreen'
 import { PageHeader } from './components/PageHeader'
 import { PaymentReminderModal } from './components/PaymentReminderModal'
@@ -45,6 +47,7 @@ export default function App() {
   const [createKind, setCreateKind] = useState<CreateKind | null>(null)
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [reminderId, setReminderId] = useState<string | null>(null)
+  const [confettiBurst, setConfettiBurst] = useState(0)
 
   useEffect(() => {
     const onHash = () => setPage(readPage())
@@ -59,6 +62,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function celebrateCompletion() {
+    setConfettiBurst(current => current + 1)
+    if (window.matchMedia('(max-width: 767px), (pointer: coarse)').matches && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(15)
+    }
+  }
+
   function openClient(id: string) {
     setSelectedClient(id)
     setPage('clients')
@@ -66,7 +76,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (auth.loading) return <div className="center-loader"><LoaderCircle className="spin"/></div>
+  if (auth.loading) return <PremiumLoader/>
   if (auth.cloudEnabled && !auth.user) return <AuthScreen/>
   if (auth.cloudEnabled && studio.needsWorkspace) return <WorkspaceJoin onJoin={studio.joinStudio}/>
 
@@ -75,16 +85,17 @@ export default function App() {
   const current = page === 'home' ? { title: homeHeadline, eyebrow: '' } : titles[page]
 
   return <>
+    <CompletionConfetti burst={confettiBurst}/>
     <AppNav page={page} onChange={navigate}/>
     <main className="app-shell">
       {page !== 'editorial' && <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user}/>} 
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
       {page === 'editorial' && editorial.error && <div className="global-error"><AlertCircle size={15}/><span>{editorial.error}</span><button onClick={() => void editorial.reload()}><RefreshCw size={14}/></button></div>}
-      {studio.loading ? <LoadingSkeleton/> : <>
+      {studio.loading ? <PremiumLoader/> : <>
         {page === 'home' && <HomePage data={studio.data} onClient={openClient} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
-        {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')}/>} 
-        {page === 'editorial' && (editorial.loading ? <LoadingSkeleton/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions}/>)} 
+        {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
+        {page === 'editorial' && (editorial.loading ? <PremiumLoader label="Piano Editoriale"/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
         {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onNewPayment={() => setCreateKind('payment')} onNewRecurrence={() => setCreateKind('recurrence')} onReminder={setReminderId}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
@@ -94,8 +105,4 @@ export default function App() {
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
     {reminder && <PaymentReminderModal payment={reminder} client={reminderClient} onRecord={() => studio.actions.recordReminder(reminder.id)} onClose={() => setReminderId(null)}/>} 
   </>
-}
-
-function LoadingSkeleton() {
-  return <div className="loading-stack"><div/><div/><div/></div>
 }
