@@ -4933,3 +4933,16 @@
     animation-duration:.01ms!important;
   }
 }
+
+
+/* Touch drag on editorial cards */
+.editorial-drag-handle{
+  touch-action:none;
+}
+body.editorial-touch-dragging{
+  user-select:none;
+  -webkit-user-select:none;
+}
+body.editorial-touch-dragging .editorial-drag-handle{
+  cursor:grabbing;
+}
