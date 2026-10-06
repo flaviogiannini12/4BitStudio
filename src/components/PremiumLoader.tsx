@@ -4,7 +4,7 @@ export function PremiumLoader({ label = '4Bit Studio' }: { label?: string }) {
     <div className="premium-loader-mark">
       <span className="premium-loader-ring"/>
       <span className="premium-loader-ring premium-loader-ring-two"/>
-      <img src="/favicon.png" alt="" />
+      <img src="/apple-touch-icon-4bit-v3.png" alt="" />
     </div>
     <div className="premium-loader-copy">
       <strong>{label}</strong>
