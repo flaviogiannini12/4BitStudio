@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Archive, CalendarDays, Clock3, Paperclip, Plus } from 'lucide-react'
+import { Archive, CalendarDays, Clock3, GripVertical, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
   editorialAccountLabel,
@@ -51,10 +51,12 @@ export function EditorialPage({
   data,
   members,
   actions,
+  onCelebrate,
 }:{
   data:EditorialData
   members:TeamMember[]
   actions:Actions
+  onCelebrate:()=>void
 }) {
   const [view,setView]=useState<View>('calendar')
   const [account,setAccount]=useState<'all'|EditorialAccount>('all')
@@ -64,6 +66,7 @@ export function EditorialPage({
   const [editorOpen,setEditorOpen]=useState(false)
   const [editing,setEditing]=useState<EditorialItem|null>(null)
   const [newDate,setNewDate]=useState<string|null>(null)
+  const [dragOverDate,setDragOverDate]=useState<string|null>(null)
 
   const [today,setToday]=useState(()=>dateKey(new Date()))
   const days=useMemo(()=>currentMonthDaysFromToday(today),[today])
@@ -125,6 +128,13 @@ export function EditorialPage({
     setEditing(item)
     setNewDate(item.publishDate)
     setEditorOpen(true)
+  }
+
+  async function moveEditorialItem(itemId:string,publishDate:string){
+    setDragOverDate(null)
+    const item=data.items.find(candidate=>candidate.id===itemId)
+    if(!item || item.publishDate===publishDate) return
+    await actions.updateItem(itemId,{publishDate,sortOrder:Date.now()})
   }
 
   function changeView(next:View){
@@ -190,7 +200,25 @@ export function EditorialPage({
           const key=dateKey(date)
           const items=byDate.get(key) ?? []
           const isToday=key===today
-          return <section key={key} className={`todo-day-row editorial-day-tasklike ${isToday?'is-today':''} ${items.length?'':'is-empty'}`}>
+          return <section
+            key={key}
+            className={`todo-day-row editorial-day-tasklike ${isToday?'is-today':''} ${items.length?'':'is-empty'} ${dragOverDate===key?'is-drag-over':''}`}
+            onDragOver={event=>{
+              if(event.dataTransfer.types.includes('text/4bit-editorial')){
+                event.preventDefault()
+                event.dataTransfer.dropEffect='move'
+                setDragOverDate(key)
+              }
+            }}
+            onDragLeave={event=>{
+              if(!event.currentTarget.contains(event.relatedTarget as Node)) setDragOverDate(null)
+            }}
+            onDrop={event=>{
+              event.preventDefault()
+              const itemId=event.dataTransfer.getData('text/4bit-editorial')
+              if(itemId) void moveEditorialItem(itemId,key)
+            }}
+          >
             <div className="todo-day-date">
               <div className={`todo-day-number ${isToday?'today':''}`}>{date.getDate()}</div>
               <p>{date.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}</p>
@@ -200,7 +228,18 @@ export function EditorialPage({
 
             <div className="todo-day-body">
               <div className="todo-task-stack">
-                {items.map(item=><EditorialCard key={item.id} item={item} data={data} members={members} onClick={()=>openEdit(item)}/>)}
+                {items.map(item=><EditorialCard
+                  key={item.id}
+                  item={item}
+                  data={data}
+                  members={members}
+                  onClick={()=>openEdit(item)}
+                  onDragStart={event=>{
+                    event.dataTransfer.setData('text/4bit-editorial',item.id)
+                    event.dataTransfer.effectAllowed='move'
+                  }}
+                  onDragEnd={()=>setDragOverDate(null)}
+                />)}
               </div>
               <button className="todo-add-row" onClick={()=>openCreate(key)}><Plus size={15}/><span>{items.length?'Aggiungi contenuto':'Nuovo contenuto'}</span></button>
             </div>
@@ -225,12 +264,27 @@ export function EditorialPage({
       data={data}
       members={members}
       actions={actions}
+      onCelebrate={onCelebrate}
       onClose={()=>setEditorOpen(false)}
     />
   </>
 }
 
-function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:EditorialData;members:TeamMember[];onClick:()=>void}) {
+function EditorialCard({
+  item,
+  data,
+  members,
+  onClick,
+  onDragStart,
+  onDragEnd,
+}:{
+  item:EditorialItem
+  data:EditorialData
+  members:TeamMember[]
+  onClick:()=>void
+  onDragStart:(event:React.DragEvent<HTMLSpanElement>)=>void
+  onDragEnd:()=>void
+}) {
   const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
   const pendingPeople=[...new Set(
@@ -241,6 +295,14 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
   )]
 
   return <article className={`todo-task-card editorial-todo-card account-${item.account} ${item.status==='published'?'is-published':''}`}>
+    <span
+      className="editorial-drag-handle"
+      draggable
+      title="Trascina per cambiare giorno"
+      aria-label="Trascina per cambiare giorno"
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    ><GripVertical size={14}/></span>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
       <div className="todo-task-topline">
         <h3>{item.title}</h3>
