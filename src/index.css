@@ -5722,3 +5722,240 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:8px;
   }
 }
+
+
+/* =========================================================
+   STATISTICS V3 — money-first dashboard
+   ========================================================= */
+.stats-money-first .stats-finance-hero::before{
+  background:radial-gradient(circle,rgba(35,138,88,.10),transparent 68%);
+}
+.stats-money-first .stats-month-kpis strong{
+  white-space:nowrap;
+}
+.money-positive{color:#237342!important}
+.money-negative{color:#B52D2D!important}
+.stats-money-daily-bar{
+  fill:rgba(35,138,88,.16)!important;
+}
+.stats-chart-line.expense-line{
+  stroke:#B44C45!important;
+  opacity:.68!important;
+}
+.stats-money-first .stats-chart-legend i.completed{background:#238A58}
+.stats-money-first .stats-chart-legend i.created{background:#B44C45}
+.stats-money-first .stats-chart-legend i.daily{background:rgba(35,138,88,.20)}
+.stats-money-insights .stats-insight-icon{
+  background:#163C2A;
+}
+.stats-arr-card{
+  min-width:0;
+}
+.stats-money-ranking{
+  display:grid;
+  gap:7px;
+}
+.stats-money-ranking>div{
+  display:grid;
+  grid-template-columns:28px minmax(140px,.8fr) minmax(120px,1.25fr) minmax(88px,auto);
+  align-items:center;
+  gap:10px;
+  min-height:46px;
+  padding:8px 10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.52);
+}
+.stats-money-ranking>b{
+  color:rgba(5,5,5,.22);
+  font-size:8px;
+}
+.stats-money-ranking>div>div strong,
+.stats-money-ranking>div>div small{
+  display:block;
+}
+.stats-money-ranking>div>div strong{
+  overflow:hidden;
+  font-size:9px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.stats-money-ranking>div>div small{
+  margin-top:2px;
+  color:rgba(5,5,5,.34);
+  font-size:7.5px;
+}
+.stats-money-ranking>div>span{
+  display:block;
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(5,5,5,.05);
+}
+.stats-money-ranking>div>span i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#238A58,#67B982);
+  transform-origin:left;
+  animation:statsGrow .68s cubic-bezier(.22,.9,.3,1);
+}
+.stats-money-ranking em{
+  font-size:9px;
+  font-style:normal;
+  font-weight:800;
+  text-align:right;
+  white-space:nowrap;
+}
+.stats-annualized-summary .stats-summary-grid>div{
+  min-height:84px;
+}
+.stats-annualized-summary .stats-summary-grid small{
+  display:block;
+  margin-top:4px;
+  color:rgba(5,5,5,.30);
+  font-size:7px;
+}
+.stats-year-money-card{
+  overflow:hidden;
+}
+.stats-year-money-chart{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  align-items:end;
+  gap:8px;
+  min-height:250px;
+  padding:10px 4px 2px;
+}
+.stats-year-money-col{
+  display:grid;
+  grid-template-rows:210px 18px;
+  align-items:end;
+  justify-items:center;
+  min-width:0;
+  opacity:1;
+}
+.stats-year-money-col.future{
+  opacity:.30;
+}
+.stats-year-money-bars{
+  display:flex;
+  width:100%;
+  height:210px;
+  align-items:flex-end;
+  justify-content:center;
+  gap:3px;
+}
+.stats-year-money-bars span{
+  display:block;
+  width:min(15px,36%);
+  min-height:3px;
+  border-radius:8px 8px 3px 3px;
+  transform-origin:bottom;
+  animation:stats-column-rise .75s cubic-bezier(.22,.9,.3,1) both;
+}
+.stats-year-money-bars .income{
+  background:linear-gradient(180deg,#238A58,#6EB989);
+}
+.stats-year-money-bars .expense{
+  background:linear-gradient(180deg,#B44C45,rgba(180,76,69,.35));
+}
+.stats-year-money-col small{
+  color:rgba(5,5,5,.34);
+  font-size:7px;
+  font-weight:750;
+  text-transform:uppercase;
+}
+.stats-open-money-list{
+  display:grid;
+  gap:12px;
+}
+.stats-open-money-list .stats-track span{
+  background:linear-gradient(90deg,#F25623,#FF9A73);
+}
+.stats-aging-list{
+  display:grid;
+  gap:10px;
+}
+.stats-aging-list>div{
+  padding:12px;
+  border-radius:15px;
+  background:rgba(255,255,255,.54);
+}
+.stats-aging-list>div>div{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.stats-aging-list strong{
+  font-size:9px;
+}
+.stats-aging-list>div>div span{
+  color:rgba(5,5,5,.48);
+  font-size:9px;
+  font-weight:800;
+}
+.stats-aging-list>div>span{
+  display:block;
+  height:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(181,45,45,.06);
+}
+.stats-aging-list>div>span i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#D16A61,#B52D2D);
+  transform-origin:left;
+  animation:statsGrow .65s cubic-bezier(.22,.9,.3,1);
+}
+.stats-task-compact{
+  align-self:stretch;
+}
+.stats-task-compact .stats-summary-grid>div{
+  min-height:78px;
+}
+.stats-money-first .stats-metric-footer .stat-metric:nth-child(2) .stat-metric-icon,
+.stats-money-first .stats-metric-footer .stat-metric:nth-child(3) .stat-metric-icon,
+.stats-money-first .stats-metric-footer .stat-metric:nth-child(4) .stat-metric-icon{
+  background:#163C2A;
+}
+@media(max-width:900px){
+  .stats-money-ranking>div{
+    grid-template-columns:24px minmax(0,1fr) minmax(80px,auto);
+  }
+  .stats-money-ranking>div>span{
+    display:none;
+  }
+}
+@media(max-width:640px){
+  .stats-money-first .stats-month-kpis{
+    grid-template-columns:1fr;
+  }
+  .stats-money-ranking>div{
+    grid-template-columns:22px minmax(0,1fr) auto;
+    gap:7px;
+  }
+  .stats-money-ranking em{
+    font-size:8px;
+  }
+  .stats-year-money-card{
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .stats-year-money-card::-webkit-scrollbar{display:none}
+  .stats-year-money-chart{
+    width:690px;
+    min-width:690px;
+    grid-template-columns:repeat(12,1fr);
+    min-height:215px;
+  }
+  .stats-year-money-col{
+    grid-template-rows:175px 18px;
+  }
+  .stats-year-money-bars{
+    height:175px;
+  }
+}
