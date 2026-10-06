@@ -6194,3 +6194,60 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:21px;
   }
 }
+
+
+/* Editoriale preview: brand logos instead of channel text */
+.editorial-platform-logo{
+  display:inline-flex;
+  min-width:24px;
+  height:24px;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:4px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:9px;
+  background:rgba(255,255,255,.76);
+  box-shadow:0 3px 10px rgba(33,39,55,.035);
+}
+.editorial-platform-logo>span{
+  display:grid;
+  width:14px;
+  height:14px;
+  place-items:center;
+}
+.editorial-platform-logo svg{
+  display:block;
+  width:14px;
+  height:14px;
+  fill:currentColor;
+}
+.editorial-platform-logo.platform-meta{
+  min-width:42px;
+  padding-inline:5px;
+}
+.editorial-platform-logo .brand-instagram{color:#E4405F}
+.editorial-platform-logo .brand-facebook{color:#1877F2}
+.editorial-platform-logo .brand-tiktok{color:#050505}
+.editorial-platform-logo .brand-youtube{color:#FF0000}
+.editorial-platform-logo .brand-whatsapp{color:#25D366}
+.editorial-platform-logo.platform-tiktok{
+  background:
+    linear-gradient(135deg,rgba(37,244,238,.08),rgba(255,255,255,.78) 48%,rgba(254,44,85,.07));
+}
+@media(max-width:640px){
+  .editorial-platform-logo{
+    min-width:23px;
+    height:23px;
+    padding:4px;
+    border-radius:8px;
+  }
+  .editorial-platform-logo.platform-meta{
+    min-width:40px;
+  }
+  .editorial-platform-logo>span,
+  .editorial-platform-logo svg{
+    width:13px;
+    height:13px;
+  }
+}
