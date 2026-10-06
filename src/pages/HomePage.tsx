@@ -1,56 +1,40 @@
-import { ArrowRight, CheckCircle2, Clock3 } from 'lucide-react'
-import { countdownLabel, countdownTone, formatShortDate, money } from '../lib/date'
+import { ArrowRight, CheckCircle2, Clock3, UsersRound } from 'lucide-react'
+import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from '../lib/date'
 import { clientStatusLabel } from '../lib/labels'
-import { clientChipStyle } from '../lib/clientTone'
 import { memberToneClass } from '../lib/memberTone'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
-export function HomePage({ data, onClient, onPayments, onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
+export function HomePage({ data, onClient, onPayments, onTasks: _onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const datedOpenTasks = openTasks.filter(t => Boolean(t.dueDate))
   const pendingPayments = data.payments.filter(p => p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-  const upcomingTasks = [...datedOpenTasks].sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 6)
-  const memberTaskCounts = data.members.filter(m => m.active).map(member => ({ member, count: datedOpenTasks.filter(t => t.assigneeId === member.id).length }))
+  const activeMembers = data.members.filter(m => m.active)
+  const memberTaskCounts = activeMembers.map(member => ({ member, count: datedOpenTasks.filter(t => t.assigneeId === member.id).length }))
+  const today = todayISO()
+  const currentMonth = today.slice(0,7)
+  const teamInProgress = openTasks.filter(t => t.status === 'doing').length
+  const teamDueToday = datedOpenTasks.filter(t => t.dueDate === today).length
+  const teamUnassigned = openTasks.filter(t => !t.assigneeId).length
+  const teamCompletedMonth = data.tasks.filter(t => t.status === 'done' && t.completedAt?.startsWith(currentMonth)).length
 
   function client(id: string | null) { return data.clients.find(c => c.id === id) }
-  function member(id: string | null) { return data.members.find(m => m.id === id) }
 
   return <div className="home-stack">
     <div className="dashboard-two-col home-priority-row">
-      <section className="section-block compact-block home-tasks-card">
-        <div className="section-heading"><h2>Task da chiudere</h2><button className="text-link" onClick={onTasks}>Tutte <ArrowRight size={14}/></button></div>
-        <div className="home-task-list">
-          {upcomingTasks.map(t => {
-            const c = client(t.clientId)
-            const m = member(t.assigneeId)
-            return <button className="home-task-row" key={t.id} onClick={onTasks}>
-              <span className={`home-task-check ${t.status}`}><span/></span>
-              <div className="home-task-body">
-                <div className="home-task-topline">
-                  <strong>{t.title}</strong>
-                  <span className={`home-task-assignee ${m ? memberToneClass(m.name) : 'unassigned'}`}>
-                    <span>{m ? m.name.slice(0,1).toUpperCase() : '?'}</span>
-                    {m?.name ?? 'Non assegnata'}
-                  </span>
-                </div>
-                <div className="home-task-meta">
-                  {c
-                    ? <span className="home-task-client" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
-                    : <span className="home-task-client internal">4Bit Studio</span>}
-                  <span className={`home-task-status ${t.status}`}>{t.status === 'doing' ? 'In corso' : 'Da fare'}</span>
-                </div>
-              </div>
-              <span className="home-task-due">{t.dueDate ? formatShortDate(t.dueDate) : ''}</span>
-            </button>
-          })}
-          {!upcomingTasks.length && <div className="empty-inline">Nessuna task pianificata da chiudere.</div>}
+      <section className="section-block compact-block home-team-status-card">
+        <div className="section-heading"><h2>Stato del team</h2><UsersRound size={18} className="heading-icon"/></div>
+        <div className="home-team-snapshot">
+          <div><span>Persone attive</span><strong>{activeMembers.length}</strong><small>team operativo</small></div>
+          <div><span>In corso</span><strong>{teamInProgress}</strong><small>task in lavorazione</small></div>
+          <div><span>Da chiudere oggi</span><strong>{teamDueToday}</strong><small>scadenza odierna</small></div>
+          <div><span>Chiuse questo mese</span><strong>{teamCompletedMonth}</strong><small>{teamUnassigned} senza assegnatario</small></div>
         </div>
       </section>
 
       <section className="section-block compact-block">
-        <div className="section-heading"><h2>Team</h2></div>
+        <div className="section-heading"><h2>Carico del team</h2></div>
         <div className="team-load-list">
           {memberTaskCounts.map(({ member: m, count }) => <div className={memberToneClass(m.name)} key={m.id}>
             <div className="avatar-mini">{m.name.slice(0,1)}</div>
