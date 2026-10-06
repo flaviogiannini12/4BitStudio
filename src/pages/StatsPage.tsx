@@ -45,6 +45,13 @@ function pct(value: number) {
   return Math.round(value) + '%'
 }
 
+function diffDays(from: string, to: string) {
+  const a=parseDate(from)
+  const b=parseDate(to)
+  if(!a || !b) return 0
+  return Math.max(0,(b.getTime()-a.getTime())/86400000)
+}
+
 export function StatsPage({ data }: { data: StudioData }) {
   const today = todayISO()
   const now = new Date()
@@ -181,6 +188,20 @@ export function StatsPage({ data }: { data: StudioData }) {
   const overdueTasks=openTasks.filter(task=>task.dueDate && task.dueDate<today)
   const dueSoonTasks=openTasks.filter(task=>task.dueDate && task.dueDate>=today && task.dueDate<=addDays(today,7))
   const completionRate=data.tasks.length ? doneTasks.length/data.tasks.length*100 : 0
+  const completedThisMonth=doneTasks.filter(task=>task.completedAt?.startsWith(currentMonth))
+  const createdThisMonth=data.tasks.filter(task=>task.createdAt.startsWith(currentMonth))
+  const doingTasks=data.tasks.filter(task=>task.status==='doing')
+  const undatedOpenTasks=openTasks.filter(task=>!task.dueDate)
+  const activeMembers=data.members.filter(member=>member.active)
+  const avgOpenPerMember=activeMembers.length ? openTasks.length/activeMembers.length : 0
+  const avgOpenPerClient=activeClients.length ? openTasks.filter(task=>task.clientId).length/activeClients.length : 0
+  const completedWithDeadline=doneTasks.filter(task=>task.completedAt && task.dueDate)
+  const completedOnTime=completedWithDeadline.filter(task=>(task.completedAt??'').slice(0,10)<=(task.dueDate??'')).length
+  const onTimeRate=completedWithDeadline.length ? completedOnTime/completedWithDeadline.length*100 : 0
+  const avgCloseDays=completedThisMonth.length
+    ? completedThisMonth.reduce((sum,task)=>sum+diffDays(task.createdAt,task.completedAt??task.createdAt),0)/completedThisMonth.length
+    : 0
+  const internalOpenTasks=openTasks.filter(task=>!task.clientId).length
   const nextDeadlines=openTasks.filter(task=>task.dueDate).sort((a,b)=>(a.dueDate??'').localeCompare(b.dueDate??'')).slice(0,5)
 
   return <div className="stats-page stats-page-v2 stats-money-first">
@@ -360,6 +381,23 @@ export function StatsPage({ data }: { data: StudioData }) {
       </section>
     </div>
 
+    <section className="section-block stats-card-large stats-task-numbers-card">
+      <div className="section-heading">
+        <div><p className="eyebrow">Task</p><h2>Numeri operativi</h2></div>
+        <span className="stats-side-note">dettaglio senza togliere spazio ai dati economici</span>
+      </div>
+      <div className="stats-task-numbers-grid">
+        <TaskNumber label="Completate questo mese" value={String(completedThisMonth.length)} sub="chiuse nel mese corrente"/>
+        <TaskNumber label="Create questo mese" value={String(createdThisMonth.length)} sub="nuove attività inserite"/>
+        <TaskNumber label="In corso adesso" value={String(doingTasks.length)} sub="stato In corso"/>
+        <TaskNumber label="Senza data" value={String(undatedOpenTasks.length)} sub="aperte senza scadenza"/>
+        <TaskNumber label="Chiusura media" value={avgCloseDays ? avgCloseDays.toFixed(1)+' gg' : '—'} sub="dalla creazione alla chiusura"/>
+        <TaskNumber label="Puntualità" value={pct(onTimeRate)} sub="chiuse entro la scadenza"/>
+        <TaskNumber label="Aperte / persona" value={avgOpenPerMember.toFixed(1)} sub={activeMembers.length+' persone attive'}/>
+        <TaskNumber label="Aperte / cliente" value={avgOpenPerClient.toFixed(1)} sub={internalOpenTasks+' interne 4Bit'}/>
+      </div>
+    </section>
+
     <section className="section-block stats-card-large">
       <div className="section-heading">
         <div><p className="eyebrow">Scadenze operative</p><h2>Prossime task</h2></div>
@@ -403,6 +441,14 @@ function Metric({icon:Icon,label,value,sub}:{icon:typeof UsersRound;label:string
     <strong>{value}</strong>
     <small>{sub}</small>
   </article>
+}
+
+function TaskNumber({label,value,sub}:{label:string;value:string;sub:string}) {
+  return <div className="stats-task-number">
+    <span>{label}</span>
+    <strong>{value}</strong>
+    <small>{sub}</small>
+  </div>
 }
 
 function MoneyMetric({icon:Icon,label,value,sub,positive}:{icon:typeof ArrowUpRight;label:string;value:string;sub?:string;positive?:boolean}) {
