@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarSearch, Check, GripVertical, Inbox, MoreHorizontal, MoveRight, Plus, UserRound } from 'lucide-react'
+import { CalendarSearch, Check, ChevronDown, GripVertical, Inbox, MoreHorizontal, MoveRight, Plus, UserRound } from 'lucide-react'
 import { ClientLogo } from '../components/ClientLogo'
 import { TaskEditorModal } from '../components/TaskEditorModal'
 import { todayISO } from '../lib/date'
@@ -50,6 +50,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [newTaskDate, setNewTaskDate] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
+  const [overdueOpen, setOverdueOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('4bit.tasks.onlyDays', onlyDaysWithTasks ? '1' : '0')
@@ -293,9 +294,18 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
 
       {statusFilter === 'open' ? <div className="todo-planner-grid">
         <main className="todo-calendar-main">
-          {statusFilter === 'open' && overdue.length > 0 && <section className="todo-overdue-panel">
-            <div className="todo-section-title"><div><p className="eyebrow">Da recuperare</p><h3>Scadute</h3></div><span>{overdue.length}</span></div>
-            <div className="todo-task-stack">{overdue.map(task => taskCard(task, task.dueDate))}</div>
+          {statusFilter === 'open' && overdue.length > 0 && <section className={`todo-overdue-panel todo-overdue-collapsible ${overdueOpen?'is-open':''}`}>
+            <button
+              type="button"
+              className="todo-overdue-toggle"
+              onClick={()=>setOverdueOpen(value=>!value)}
+              aria-expanded={overdueOpen}
+            >
+              <div><p className="eyebrow">Da recuperare</p><h3>Scadute</h3></div>
+              <span className="todo-overdue-count">{overdue.length}</span>
+              <ChevronDown size={17} className="todo-overdue-chevron"/>
+            </button>
+            {overdueOpen && <div className="todo-task-stack todo-overdue-list">{overdue.map(task => taskCard(task, task.dueDate))}</div>}
           </section>}
 
           <div className="todo-calendar-panel">
