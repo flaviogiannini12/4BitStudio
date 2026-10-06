@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Archive, CalendarDays, Clock3, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
@@ -22,10 +22,18 @@ function dateKey(date:Date){
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 }
 
-function currentMonthDaysFromToday(){
-  const now=new Date()
-  const last=new Date(now.getFullYear(),now.getMonth()+1,0).getDate()
-  return Array.from({length:last-now.getDate()+1},(_,index)=>new Date(now.getFullYear(),now.getMonth(),now.getDate()+index))
+function currentMonthDaysFromToday(todayKey:string){
+  const [year,month,day]=todayKey.split('-').map(Number)
+  const now=new Date(year,month-1,day)
+  const last=new Date(year,month,0).getDate()
+  return Array.from({length:last-day+1},(_,index)=>new Date(year,month-1,day+index))
+}
+
+function shouldBeInArchive(item:EditorialItem,today:string){
+  if(item.status==='archived') return true
+  if(item.status!=='published') return false
+  if(!item.publishDate) return true
+  return item.publishDate<today
 }
 
 function statusTone(status:EditorialStatus){
@@ -57,11 +65,25 @@ export function EditorialPage({
   const [editing,setEditing]=useState<EditorialItem|null>(null)
   const [newDate,setNewDate]=useState<string|null>(null)
 
-  const days=useMemo(()=>currentMonthDaysFromToday(),[])
-  const today=dateKey(new Date())
+  const [today,setToday]=useState(()=>dateKey(new Date()))
+  const days=useMemo(()=>currentMonthDaysFromToday(today),[today])
+
+  useEffect(()=>{
+    let timer:number | null=null
+    const scheduleNextDay=()=>{
+      const now=new Date()
+      const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,1,0)
+      timer=window.setTimeout(()=>{
+        setToday(dateKey(new Date()))
+        scheduleNextDay()
+      },Math.max(1000,next.getTime()-Date.now()))
+    }
+    scheduleNextDay()
+    return ()=>{ if(timer!==null) window.clearTimeout(timer) }
+  },[])
 
   const filtered=useMemo(()=>data.items.filter(item=>{
-    const isArchive=item.status==='published' || item.status==='archived' || Boolean(item.archivedAt)
+    const isArchive=shouldBeInArchive(item,today)
     if(view==='archive' ? !isArchive : isArchive) return false
     if(account!=='all' && item.account!==account) return false
     if(platform!=='all' && !item.platforms.includes(platform)) return false
@@ -72,7 +94,7 @@ export function EditorialPage({
       if(!hay.includes(q)) return false
     }
     return true
-  }),[data.items,view,account,platform,status,search])
+  }),[data.items,view,account,platform,status,search,today])
 
   const byDate=useMemo(()=>{
     const map=new Map<string,EditorialItem[]>()
@@ -211,6 +233,12 @@ export function EditorialPage({
 function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:EditorialData;members:TeamMember[];onClick:()=>void}) {
   const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
+  const pendingPeople=[...new Set(
+    steps
+      .filter(step=>!step.done)
+      .map(step=>members.find(member=>member.id===step.ownerMemberId)?.name)
+      .filter((name): name is string=>Boolean(name))
+  )]
 
   return <article className={`todo-task-card editorial-todo-card account-${item.account}`}>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
@@ -229,14 +257,10 @@ function EditorialCard({item,data,members,onClick}:{item:EditorialItem;data:Edit
 
       {item.description && <p className="editorial-card-description">{item.description}</p>}
 
-      {steps.length>0 && <div className="editorial-team-progress">
-        {steps.map(step=>{
-          const owner=members.find(member=>member.id===step.ownerMemberId)
-          const name=owner?.name ?? step.label
-          return <span key={step.id} className={`editorial-team-progress-chip ${memberToneClass(name)} ${step.done?'done':'pending'}`}>
-            <i>{step.done?'✓':'•'}</i>{name}
-          </span>
-        })}
+      {pendingPeople.length>0 && <div className="editorial-team-progress">
+        {pendingPeople.map(name=><span key={name} className={`editorial-team-progress-chip ${memberToneClass(name)} pending`}>
+          <i>•</i>{name}
+        </span>)}
       </div>}
     </button>
   </article>
