@@ -1,11 +1,13 @@
-import { ArrowRight, CheckCircle2, Clock3, UsersRound } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Clock3, CalendarDays } from 'lucide-react'
 import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from '../lib/date'
 import { clientStatusLabel } from '../lib/labels'
 import { memberToneClass } from '../lib/memberTone'
+import { editorialAccountLabel, statusLabelForItem } from '../lib/editorialConfig'
+import type { EditorialData } from '../types/editorial'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
-export function HomePage({ data, onClient, onPayments, onTasks: _onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; onClient: (id: string) => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
+export function HomePage({ data, editorialData, onClient, onEditorial, onPayments, onTasks: _onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; editorialData: EditorialData; onClient: (id: string) => void; onEditorial: () => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const datedOpenTasks = openTasks.filter(t => Boolean(t.dueDate))
@@ -13,23 +15,30 @@ export function HomePage({ data, onClient, onPayments, onTasks: _onTasks, onRemi
   const activeMembers = data.members.filter(m => m.active)
   const memberTaskCounts = activeMembers.map(member => ({ member, count: datedOpenTasks.filter(t => t.assigneeId === member.id).length }))
   const today = todayISO()
-  const currentMonth = today.slice(0,7)
-  const teamInProgress = openTasks.filter(t => t.status === 'doing').length
-  const teamDueToday = datedOpenTasks.filter(t => t.dueDate === today).length
-  const teamUnassigned = openTasks.filter(t => !t.assigneeId).length
-  const teamCompletedMonth = data.tasks.filter(t => t.status === 'done' && t.completedAt?.startsWith(currentMonth)).length
+  const upcomingEditorial = editorialData.items
+    .filter(item => item.publishDate && item.publishDate >= today && item.status !== 'published' && item.status !== 'archived')
+    .sort((a,b) => (a.publishDate ?? '').localeCompare(b.publishDate ?? '') || (a.publishTime ?? '').localeCompare(b.publishTime ?? '') || a.sortOrder-b.sortOrder)
+    .slice(0,5)
 
   function client(id: string | null) { return data.clients.find(c => c.id === id) }
 
   return <div className="home-stack">
     <div className="dashboard-two-col home-priority-row">
-      <section className="section-block compact-block home-team-status-card">
-        <div className="section-heading"><h2>Stato del team</h2><UsersRound size={18} className="heading-icon"/></div>
-        <div className="home-team-snapshot">
-          <div><span>Persone attive</span><strong>{activeMembers.length}</strong><small>team operativo</small></div>
-          <div><span>In corso</span><strong>{teamInProgress}</strong><small>task in lavorazione</small></div>
-          <div><span>Da chiudere oggi</span><strong>{teamDueToday}</strong><small>scadenza odierna</small></div>
-          <div><span>Chiuse questo mese</span><strong>{teamCompletedMonth}</strong><small>{teamUnassigned} senza assegnatario</small></div>
+      <section className="section-block compact-block home-editorial-preview">
+        <div className="section-heading"><h2>Prossimi contenuti</h2><button className="text-link" onClick={onEditorial}>Piano Editoriale <ArrowRight size={14}/></button></div>
+        <div className="home-editorial-list">
+          {upcomingEditorial.map(item => <button key={item.id} className="home-editorial-row" onClick={onEditorial}>
+            <span className={`home-editorial-date account-${item.account}`}>
+              <strong>{item.publishDate ? new Date(item.publishDate+'T12:00:00').getDate() : '—'}</strong>
+              <small>{item.publishDate ? new Intl.DateTimeFormat('it-IT',{month:'short'}).format(new Date(item.publishDate+'T12:00:00')).replace('.','') : ''}</small>
+            </span>
+            <span className="home-editorial-main">
+              <strong>{item.title}</strong>
+              <small>{editorialAccountLabel[item.account]}</small>
+            </span>
+            <span className={`home-editorial-status ${item.status}`}>{statusLabelForItem(item.status,item.platforms)}</span>
+          </button>)}
+          {!upcomingEditorial.length && <div className="home-editorial-empty"><CalendarDays size={16}/><span>Nessun contenuto in programma.</span></div>}
         </div>
       </section>
 
