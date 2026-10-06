@@ -12,6 +12,7 @@ export function TaskEditorModal({
   initialClientId,
   data,
   actions,
+  onCelebrate,
   onClose,
 }: {
   open: boolean
@@ -20,6 +21,7 @@ export function TaskEditorModal({
   initialClientId?: string | null
   data: StudioData
   actions: Actions
+  onCelebrate: () => void
   onClose: () => void
 }) {
   const defaultFlavioId = useMemo(
@@ -80,8 +82,12 @@ export function TaskEditorModal({
         dueDate: draft.dueDate || null,
         status: draft.status as Task['status'],
       }
-      if (task) await actions.updateTask(task.id, payload)
-      else await actions.createTask({ ...payload, sortOrder: Date.now() })
+      if (task) {
+        if (task.status !== 'done' && payload.status === 'done') onCelebrate()
+        await actions.updateTask(task.id, payload)
+      } else {
+        await actions.createTask({ ...payload, sortOrder: Date.now() })
+      }
       onClose()
     } finally {
       setSaving(false)
