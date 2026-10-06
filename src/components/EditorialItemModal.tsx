@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Archive, Check, Download, File, FileImage, FileVideo, Paperclip, Trash2, Upload, X } from 'lucide-react'
+import { Archive, Check, Copy, Download, File, FileImage, FileVideo, Paperclip, Trash2, Upload, X } from 'lucide-react'
 import {
   editorialAccountLabel,
   editorialPlatformLabel,
@@ -82,6 +82,7 @@ export function EditorialItemModal({
   const [saving,setSaving]=useState(false)
   const [uploadProgress,setUploadProgress]=useState<{name:string;value:number}|null>(null)
   const [localError,setLocalError]=useState<string|null>(null)
+  const [descriptionCopied,setDescriptionCopied]=useState(false)
   const formRef=useRef<HTMLFormElement>(null)
 
   const steps=useMemo(()=>item ? data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder) : [],[data.steps,item])
@@ -93,6 +94,7 @@ export function EditorialItemModal({
     setQueued([])
     setUploadProgress(null)
     setLocalError(null)
+    setDescriptionCopied(false)
   },[open,initial])
 
   useEffect(()=>{
@@ -167,6 +169,31 @@ export function EditorialItemModal({
     }
     setLocalError(null)
     setQueued(current=>[...current,...selected.map(file=>({id:crypto.randomUUID(),file}))])
+  }
+
+  async function copyDescription() {
+    const value=draft.description.trim()
+    if(!value) return
+
+    try{
+      if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(value)
+      }else{
+        const textarea=document.createElement('textarea')
+        textarea.value=value
+        textarea.style.position='fixed'
+        textarea.style.opacity='0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        textarea.remove()
+      }
+      setDescriptionCopied(true)
+      window.setTimeout(()=>setDescriptionCopied(false),1600)
+    }catch{
+      setLocalError('Impossibile copiare la descrizione.')
+    }
   }
 
   async function submit(event:FormEvent) {
@@ -279,7 +306,22 @@ export function EditorialItemModal({
         </div>
 
         <label className="form-field editorial-description-field-v5">
-          <span>Descrizione contenuto</span>
+          <span className="editorial-description-label">
+            <span>Descrizione contenuto</span>
+            <button
+              type="button"
+              className={`editorial-copy-description ${descriptionCopied?'copied':''}`}
+              disabled={!draft.description.trim()}
+              onClick={event=>{
+                event.preventDefault()
+                event.stopPropagation()
+                void copyDescription()
+              }}
+            >
+              {descriptionCopied ? <Check size={13}/> : <Copy size={13}/>}
+              {descriptionCopied ? 'Copiato' : 'Copia'}
+            </button>
+          </span>
           <textarea className="field" rows={4} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi il contenuto e le indicazioni utili al team."/>
         </label>
 
