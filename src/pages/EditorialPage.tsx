@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type DragEvent } from 'react'
 import { Archive, CalendarDays, Clock3, GripVertical, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
@@ -282,7 +282,7 @@ function EditorialCard({
   data:EditorialData
   members:TeamMember[]
   onClick:()=>void
-  onDragStart:(event:React.DragEvent<HTMLSpanElement>)=>void
+  onDragStart:(event:DragEvent<HTMLSpanElement>)=>void
   onDragEnd:()=>void
 }) {
   const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
