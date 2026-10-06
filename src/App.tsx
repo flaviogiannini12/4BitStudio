@@ -92,7 +92,7 @@ export default function App() {
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
       {page === 'editorial' && editorial.error && <div className="global-error"><AlertCircle size={15}/><span>{editorial.error}</span><button onClick={() => void editorial.reload()}><RefreshCw size={14}/></button></div>}
       {studio.loading ? <PremiumLoader/> : <>
-        {page === 'home' && <HomePage data={studio.data} onClient={openClient} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
+        {page === 'home' && <HomePage data={studio.data} editorialData={editorial.data} onClient={openClient} onEditorial={() => navigate('editorial')} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
         {page === 'editorial' && (editorial.loading ? <PremiumLoader label="Piano Editoriale"/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
