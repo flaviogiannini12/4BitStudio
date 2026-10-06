@@ -41,7 +41,7 @@ function sortTasks(tasks: Task[]) {
   })
 }
 
-export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; actions: Actions; onNew: () => void }) {
+export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data: StudioData; actions: Actions; onNew: () => void; onCelebrate: () => void }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open')
   const [clientFilter, setClientFilter] = useState('all')
   const [memberFilter, setMemberFilter] = useState('all')
@@ -117,6 +117,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
   }
 
   async function toggleComplete(task: Task) {
+    if (task.status !== 'done') onCelebrate()
     await actions.setTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')
   }
 
@@ -369,6 +370,7 @@ export function TasksPage({ data, actions, onNew: _onNew }: { data: StudioData; 
       initialDate={newTaskDate}
       data={data}
       actions={actions}
+      onCelebrate={onCelebrate}
       onClose={() => setEditorOpen(false)}
     />
   </>
