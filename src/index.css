@@ -5678,3 +5678,47 @@ body.editorial-touch-dragging .editorial-drag-handle{
     animation-delay:0ms!important;
   }
 }
+
+
+/* Editorial description quick-copy */
+.editorial-description-label{
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.editorial-copy-description{
+  display:inline-flex;
+  min-height:29px;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:5px 9px;
+  border-radius:10px;
+  background:rgba(5,5,5,.055);
+  color:rgba(5,5,5,.55);
+  font-size:8px;
+  font-weight:800;
+  transition:.15s ease;
+}
+.editorial-copy-description:hover{
+  background:#050505;
+  color:#fff;
+  transform:translateY(-1px);
+}
+.editorial-copy-description.copied{
+  background:rgba(35,138,88,.12);
+  color:#237342;
+}
+.editorial-copy-description:disabled{
+  opacity:.32;
+  transform:none;
+}
+@media(max-width:640px){
+  .editorial-copy-description{
+    min-height:31px;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:8px;
+  }
+}
