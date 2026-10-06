@@ -4717,3 +4717,219 @@
     height:3px;
   }
 }
+
+
+/* =========================================================
+   FlaToDo exact completion confetti
+   ========================================================= */
+.completion-confetti { position: fixed; inset: 0; z-index: 140; overflow: hidden; pointer-events: none; }
+.completion-confetti-side { position: absolute; top: 48%; width: 1px; height: 1px; }
+.completion-confetti-left { left: 0; }
+.completion-confetti-right { right: 0; }
+.completion-confetti-piece {
+  --confetti-flight-x: var(--confetti-x-mobile);
+  --confetti-flight-y: var(--confetti-y-mobile);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  border-radius: 2px;
+  opacity: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  animation-duration: 980ms;
+  animation-delay: var(--confetti-delay);
+  animation-timing-function: cubic-bezier(.15,.82,.22,1);
+  animation-fill-mode: both;
+}
+.completion-confetti-left .completion-confetti-piece { animation-name: confetti-pop-left; }
+.completion-confetti-right .completion-confetti-piece { animation-name: confetti-pop-right; }
+@keyframes confetti-pop-left {
+  0% { opacity: 0; transform: translate3d(-8px, 0, 0) rotate(0deg) scale(.55); }
+  9% { opacity: 1; }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--confetti-flight-x), var(--confetti-flight-y), 0) rotate(var(--confetti-rotate)) scale(1); }
+}
+@keyframes confetti-pop-right {
+  0% { opacity: 0; transform: translate3d(8px, 0, 0) rotate(0deg) scale(.55); }
+  9% { opacity: 1; }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(calc(0px - var(--confetti-flight-x)), var(--confetti-flight-y), 0) rotate(calc(0deg - var(--confetti-rotate))) scale(1); }
+}
+@media (min-width: 768px) {
+  .completion-confetti-side { top: 50%; }
+  .completion-confetti-left { left: 12px; }
+  .completion-confetti-right { right: 12px; }
+  .completion-confetti-piece {
+    --confetti-flight-x: var(--confetti-x-desktop);
+    --confetti-flight-y: var(--confetti-y-desktop);
+    animation-duration: 1120ms;
+  }
+}
+
+/* =========================================================
+   Premium 4Bit loading screen
+   ========================================================= */
+.premium-loader-screen{
+  position:fixed;
+  z-index:220;
+  inset:0;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:18px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 43%,rgba(242,86,35,.12),transparent 18rem),
+    radial-gradient(circle at 50% 50%,rgba(255,255,255,.95),rgba(246,243,241,.96) 52%,rgba(238,233,230,.98));
+  animation:premium-loader-in .34s cubic-bezier(.22,.9,.3,1) both;
+}
+.premium-loader-aura{
+  position:absolute;
+  width:min(46vw,520px);
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(242,86,35,.08),transparent 68%);
+  filter:blur(8px);
+  animation:premium-loader-breathe 1.8s ease-in-out infinite;
+}
+.premium-loader-mark{
+  position:relative;
+  display:grid;
+  width:92px;
+  height:92px;
+  place-items:center;
+}
+.premium-loader-mark img{
+  position:relative;
+  z-index:3;
+  width:58px;
+  height:58px;
+  border-radius:17px;
+  object-fit:cover;
+  box-shadow:0 14px 42px rgba(5,5,5,.16);
+  animation:premium-loader-logo 1.45s cubic-bezier(.22,.9,.3,1) infinite;
+}
+.premium-loader-ring{
+  position:absolute;
+  inset:4px;
+  border:1px solid rgba(5,5,5,.08);
+  border-top-color:rgba(242,86,35,.72);
+  border-radius:50%;
+  animation:premium-loader-spin 1.2s linear infinite;
+}
+.premium-loader-ring-two{
+  inset:13px;
+  border-color:rgba(5,5,5,.055);
+  border-bottom-color:rgba(5,5,5,.44);
+  animation-direction:reverse;
+  animation-duration:1.75s;
+}
+.premium-loader-copy{
+  position:relative;
+  z-index:2;
+  text-align:center;
+}
+.premium-loader-copy strong{
+  display:block;
+  color:#050505;
+  font-size:12px;
+  font-weight:820;
+  letter-spacing:-.025em;
+}
+.premium-loader-copy span{
+  display:block;
+  margin-top:4px;
+  color:rgba(5,5,5,.28);
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+@keyframes premium-loader-in{
+  from{opacity:0;transform:scale(1.015)}
+  to{opacity:1;transform:scale(1)}
+}
+@keyframes premium-loader-spin{to{transform:rotate(360deg)}}
+@keyframes premium-loader-logo{
+  0%,100%{transform:translateY(0) scale(.98)}
+  50%{transform:translateY(-3px) scale(1.02)}
+}
+@keyframes premium-loader-breathe{
+  0%,100%{opacity:.65;transform:scale(.92)}
+  50%{opacity:1;transform:scale(1.08)}
+}
+
+/* Pending people should be full, not washed out. */
+.editorial-team-progress-chip.pending{
+  opacity:1!important;
+  filter:none!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--member-color,#050505) 16%,transparent);
+}
+
+/* Editorial drag-and-drop rescheduling */
+.editorial-todo-card{
+  position:relative;
+}
+.editorial-todo-content{
+  padding-right:30px!important;
+}
+.editorial-drag-handle{
+  position:absolute;
+  z-index:5;
+  right:8px;
+  bottom:8px;
+  display:grid;
+  width:25px;
+  height:25px;
+  place-items:center;
+  border-radius:9px;
+  background:rgba(255,255,255,.72);
+  color:rgba(5,5,5,.28);
+  box-shadow:0 3px 12px rgba(33,39,55,.04);
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  transition:.15s ease;
+}
+.editorial-drag-handle:hover{
+  background:#050505;
+  color:#fff;
+  transform:translateY(-1px);
+}
+.editorial-drag-handle:active{cursor:grabbing}
+.editorial-day-tasklike{
+  transition:background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.editorial-day-tasklike.is-drag-over{
+  background:rgba(242,86,35,.075)!important;
+  box-shadow:inset 0 0 0 2px rgba(242,86,35,.24);
+}
+.editorial-day-tasklike.is-drag-over .todo-day-number{
+  transform:scale(1.04);
+}
+
+@media(max-width:640px){
+  .premium-loader-mark{
+    width:82px;
+    height:82px;
+  }
+  .premium-loader-mark img{
+    width:52px;
+    height:52px;
+    border-radius:15px;
+  }
+  .editorial-drag-handle{
+    right:7px;
+    bottom:7px;
+    width:27px;
+    height:27px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-loader-mark img,
+  .premium-loader-ring,
+  .premium-loader-aura{
+    animation-duration:.01ms!important;
+  }
+}
