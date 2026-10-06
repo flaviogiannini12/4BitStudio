@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent } from 'react'
+import { useEffect, useMemo, useState, type DragEvent, type PointerEvent } from 'react'
 import { Archive, CalendarDays, Clock3, GripVertical, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
@@ -202,6 +202,7 @@ export function EditorialPage({
           const isToday=key===today
           return <section
             key={key}
+            data-editorial-day={key}
             className={`todo-day-row editorial-day-tasklike ${isToday?'is-today':''} ${items.length?'':'is-empty'} ${dragOverDate===key?'is-drag-over':''}`}
             onDragOver={event=>{
               if(event.dataTransfer.types.includes('text/4bit-editorial')){
@@ -239,6 +240,8 @@ export function EditorialPage({
                     event.dataTransfer.effectAllowed='move'
                   }}
                   onDragEnd={()=>setDragOverDate(null)}
+                  onMove={moveEditorialItem}
+                  onDragHover={setDragOverDate}
                 />)}
               </div>
               <button className="todo-add-row" onClick={()=>openCreate(key)}><Plus size={15}/><span>{items.length?'Aggiungi contenuto':'Nuovo contenuto'}</span></button>
@@ -277,6 +280,8 @@ function EditorialCard({
   onClick,
   onDragStart,
   onDragEnd,
+  onMove,
+  onDragHover,
 }:{
   item:EditorialItem
   data:EditorialData
@@ -284,6 +289,8 @@ function EditorialCard({
   onClick:()=>void
   onDragStart:(event:DragEvent<HTMLSpanElement>)=>void
   onDragEnd:()=>void
+  onMove:(itemId:string,publishDate:string)=>Promise<void>
+  onDragHover:(publishDate:string|null)=>void
 }) {
   const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
   const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
@@ -302,6 +309,30 @@ function EditorialCard({
       aria-label="Trascina per cambiare giorno"
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onPointerDown={(event:PointerEvent<HTMLSpanElement>)=>{
+        if(event.pointerType==='mouse') return
+        event.currentTarget.setPointerCapture(event.pointerId)
+        document.body.classList.add('editorial-touch-dragging')
+      }}
+      onPointerMove={(event:PointerEvent<HTMLSpanElement>)=>{
+        if(event.pointerType==='mouse' || !event.currentTarget.hasPointerCapture(event.pointerId)) return
+        const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-editorial-day]') as HTMLElement | null
+        onDragHover(target?.dataset.editorialDay ?? null)
+      }}
+      onPointerUp={(event:PointerEvent<HTMLSpanElement>)=>{
+        if(event.pointerType==='mouse') return
+        const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-editorial-day]') as HTMLElement | null
+        const date=target?.dataset.editorialDay
+        if(date) void onMove(item.id,date)
+        onDragHover(null)
+        document.body.classList.remove('editorial-touch-dragging')
+        if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+      }}
+      onPointerCancel={(event:PointerEvent<HTMLSpanElement>)=>{
+        onDragHover(null)
+        document.body.classList.remove('editorial-touch-dragging')
+        if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+      }}
     ><GripVertical size={14}/></span>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
       <div className="todo-task-topline">
