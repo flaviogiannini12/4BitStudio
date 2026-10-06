@@ -4678,3 +4678,42 @@
     letter-spacing:-.045em!important;
   }
 }
+
+
+/* Editoriale: published/completed visual state */
+.editorial-todo-card.is-published{
+  border-color:rgba(35,138,88,.16)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.80)),
+    linear-gradient(90deg,rgba(35,138,88,.10),transparent 48%)!important;
+  box-shadow:0 5px 18px rgba(35,138,88,.055)!important;
+}
+.editorial-todo-card.is-published::before{
+  background:linear-gradient(180deg,#63C887,#238A58)!important;
+}
+.editorial-todo-card.is-published::after{
+  content:'';
+  position:absolute;
+  right:12px;
+  bottom:0;
+  left:12px;
+  height:3px;
+  border-radius:999px 999px 0 0;
+  background:linear-gradient(90deg,rgba(35,138,88,0),#4FBD77 30%,#238A58 70%,rgba(35,138,88,0));
+}
+.editorial-todo-card.is-published .editorial-status-chip.published{
+  background:#E4F5E9!important;
+  color:#237342!important;
+  box-shadow:inset 0 0 0 1px rgba(35,138,88,.12);
+}
+.editorial-todo-card.is-published .editorial-card-description{
+  color:rgba(5,5,5,.40)!important;
+}
+
+@media(max-width:640px){
+  .editorial-todo-card.is-published::after{
+    right:10px;
+    left:10px;
+    height:3px;
+  }
+}
