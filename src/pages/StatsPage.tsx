@@ -1,10 +1,10 @@
+import type { CSSProperties } from 'react'
 import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   CalendarClock,
-  CheckCircle2,
   CircleDollarSign,
   Clock3,
   Flame,
@@ -370,7 +370,7 @@ export function StatsPage({ data }: { data: StudioData }) {
           <span className="stats-side-note">{serviceRows.length} categorie</span>
         </div>
         <div className="stats-service-cloud">
-          {serviceRows.map((row,index)=><div key={row.label} style={{'--service-size':String(.78+row.value/maxService*.72),'--delay':`${index*45}ms`} as React.CSSProperties}>
+          {serviceRows.map((row,index)=><div key={row.label} style={{'--service-size':String(.78+row.value/maxService*.72),'--delay':`${index*45}ms`} as CSSProperties}>
             <strong>{row.value}</strong><span>{row.label}</span>
           </div>)}
           {!serviceRows.length && <div className="empty-inline">Nessun servizio registrato.</div>}
