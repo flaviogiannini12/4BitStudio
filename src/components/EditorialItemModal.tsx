@@ -55,6 +55,7 @@ export function EditorialItemModal({
   data,
   members,
   actions,
+  onCelebrate,
   onClose,
 }: {
   open:boolean
@@ -63,6 +64,7 @@ export function EditorialItemModal({
   data:EditorialData
   members:TeamMember[]
   actions:Actions
+  onCelebrate:()=>void
   onClose:()=>void
 }) {
   const initial=useMemo(()=>({
@@ -327,12 +329,19 @@ export function EditorialItemModal({
               const owner=members.find(member=>member.id===step.ownerMemberId)
               const name=owner?.name ?? 'Team'
               const automatic=isAutomaticEditorialStep(step.label)
+              const willPublish = !step.done
+                && ['Pubblicazione social','WhatsApp · Invio'].includes(step.label)
+                && steps.every(other=>other.id===step.id || other.done)
               return <button
                 type="button"
                 key={step.id}
                 disabled={automatic}
                 className={`editorial-check-row ${memberToneClass(name)} ${step.done?'done':'pending'} ${automatic?'automatic':''}`}
-                onClick={()=>!automatic && void actions.setStepDone(step.id,!step.done)}
+                onClick={()=>{
+                  if(automatic) return
+                  if(willPublish) onCelebrate()
+                  void actions.setStepDone(step.id,!step.done)
+                }}
               >
                 <span className="editorial-step-check">{step.done && <Check size={12}/>}</span>
                 <span className="editorial-check-copy"><strong>{step.label}</strong><small>{name}</small></span>
