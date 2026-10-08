@@ -2,14 +2,14 @@ import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'rea
 import { ImagePlus, Trash2, X } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
-  Client, Compensation, Deadline, LedgerEntry, MaintenancePeriod, Payment, Recurrence, StudioData, TeamMember,
+  Client, Compensation, Debt, Deadline, LedgerEntry, MaintenancePeriod, Payment, Recurrence, StudioData, TeamMember,
 } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 import { imageFileToDataUrl } from '../lib/image'
 
 type Actions = ReturnType<typeof useStudio>['actions']
-type Kind = 'client' | 'payment' | 'recurrence' | 'ledger' | 'deadline' | 'compensation' | 'maintenance' | 'member'
-type RecordType = Client | Payment | Recurrence | LedgerEntry | Deadline | Compensation | MaintenancePeriod | TeamMember | null
+type Kind = 'client' | 'payment' | 'recurrence' | 'ledger' | 'deadline' | 'compensation' | 'debt' | 'maintenance' | 'member'
+type RecordType = Client | Payment | Recurrence | LedgerEntry | Deadline | Compensation | Debt | MaintenancePeriod | TeamMember | null
 
 export function RecordEditorModal({
   kind,
@@ -37,6 +37,7 @@ export function RecordEditorModal({
     ledger: record ? 'Modifica movimento' : 'Nuovo movimento',
     deadline: record ? 'Modifica scadenza' : 'Nuova scadenza',
     compensation: record ? 'Modifica compenso' : 'Nuovo compenso',
+    debt: record ? 'Modifica debito' : 'Nuovo debito',
     maintenance: record ? 'Modifica manutenzione' : 'Nuova manutenzione',
     member: record ? 'Modifica persona' : 'Nuova persona',
   })[kind], [kind,record])
@@ -117,6 +118,21 @@ export function RecordEditorModal({
         else await actions.createCompensation(payload)
       }
 
+      if (kind === 'debt') {
+        const status = s('status') as Debt['status']
+        const payload = {
+          creditor:s('creditor'),
+          description:s('description'),
+          amount:n('amount'),
+          dueDate:nullable('dueDate'),
+          status,
+          paidAt:status === 'paid' ? ((record as Debt | null)?.paidAt ?? new Date().toISOString()) : null,
+          notes:s('notes'),
+        }
+        if (record) await actions.updateDebt(record.id,payload)
+        else await actions.createDebt(payload)
+      }
+
       if (kind === 'maintenance') {
         const payload = { clientId:nullable('clientId'), service:s('service'), periodicity:s('periodicity'), amount:n('amount'), periodFrom:s('periodFrom'), periodTo:s('periodTo'), status:s('status'), notes:s('notes') }
         if (record) await actions.updateMaintenance(record.id,payload)
@@ -147,6 +163,7 @@ export function RecordEditorModal({
       if (kind === 'ledger') await actions.deleteLedger(record.id)
       if (kind === 'deadline') await actions.deleteDeadline(record.id)
       if (kind === 'compensation') await actions.deleteCompensation(record.id)
+      if (kind === 'debt') await actions.deleteDebt(record.id)
       if (kind === 'maintenance') await actions.deleteMaintenance(record.id)
       if (kind === 'member') await actions.updateMember(record.id,{active:false})
       onClose()
@@ -216,6 +233,14 @@ export function RecordEditorModal({
         <Field name="description" label="Descrizione" defaultValue={v('description')} required/>
         <div className="field-grid two"><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/><Field name="entryDate" label="Data" type="date" defaultValue={v('entryDate')}/></div>
         <Field name="status" label="Stato" defaultValue={v('status')}/>
+        <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
+      </>}
+
+      {kind === 'debt' && <>
+        <Field name="creditor" label="A chi dobbiamo restituire" defaultValue={v('creditor')} required/>
+        <Field name="description" label="Motivo / descrizione" defaultValue={v('description')} placeholder="Es. Anticipo, rimborso, prestito…"/>
+        <div className="field-grid two"><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/><Field name="dueDate" label="Da restituire entro" type="date" defaultValue={v('dueDate')}/></div>
+        <Select name="status" label="Stato" defaultValue={v('status') || 'open'} options={[['open','Da restituire'],['paid','Restituito']]}/>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
