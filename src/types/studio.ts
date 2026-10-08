@@ -68,7 +68,7 @@ export interface Recurrence {
   dueDay: number | null
   nextDueDate: string
   active: boolean
-  invoiced: boolean
+  invoiced?: boolean
   notes: string
   createdAt: string
 }
@@ -82,7 +82,7 @@ export interface Payment {
   amount: number
   dueDate: string
   status: PaymentStatus
-  invoiced: boolean
+  invoiced?: boolean
   paidAt: string | null
   reminderCount: number
   lastReminderAt: string | null
