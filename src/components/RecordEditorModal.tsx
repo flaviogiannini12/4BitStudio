@@ -30,6 +30,11 @@ export function RecordEditorModal({
   const [error,setError] = useState<string | null>(null)
   const [logoUrl,setLogoUrl] = useState(() => kind === 'client' ? ((record as Client | null)?.logoUrl ?? '') : '')
   const [servicesValue,setServicesValue] = useState(() => kind === 'client' ? (((record as Client | null)?.services ?? []).join(', ')) : '')
+  const [invoiceEnabled,setInvoiceEnabled] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Boolean((record as Payment | Recurrence | null)?.invoiced) : false)
+  const [invoiceAmount,setInvoiceAmount] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Number((record as Payment | Recurrence | null)?.amount ?? 0) : 0)
+  const invoiceContribution = invoiceAmount * .04
+  const invoiceGross = invoiceAmount + invoiceContribution + 2
+  const invoiceNet = invoiceGross * .40
   const title = useMemo(() => ({
     client: record ? 'Modifica cliente' : 'Nuovo cliente',
     payment: record ? 'Modifica pagamento' : 'Nuovo pagamento',
@@ -86,14 +91,14 @@ export function RecordEditorModal({
       }
 
       if (kind === 'payment') {
-        const payload = { clientId:s('clientId'), label:s('label'), amount:n('amount'), dueDate:s('dueDate'), notes:s('notes') }
+        const payload = { clientId:s('clientId'), label:s('label'), amount:n('amount'), dueDate:s('dueDate'), invoiced:invoiceEnabled, notes:s('notes') }
         if (record) {
           await actions.updatePayment(record.id,{...payload,status:s('status') as Payment['status'],paidAt:s('status') === 'paid' ? ((record as Payment).paidAt ?? new Date().toISOString()) : null})
         } else await actions.createPayment(payload)
       }
 
       if (kind === 'recurrence') {
-        const payload = { clientId:s('clientId'), label:s('label'), amount:n('amount'), intervalMonths:n('intervalMonths'), nextDueDate:s('nextDueDate'), dueDay:null, notes:s('notes') }
+        const payload = { clientId:s('clientId'), label:s('label'), amount:n('amount'), intervalMonths:n('intervalMonths'), nextDueDate:s('nextDueDate'), dueDay:null, invoiced:invoiceEnabled, notes:s('notes') }
         if (record) await actions.updateRecurrence(record.id,{...payload,active:fd.get('active') === 'on'})
         else await actions.createRecurrence(payload)
       }
@@ -197,16 +202,20 @@ export function RecordEditorModal({
 
       {kind === 'payment' && <>
         <ClientSelect data={data} defaultValue={v('clientId') || presetClientId || ''}/>
-        <div className="field-grid two"><Field name="label" label="Voce" defaultValue={v('label')} required/><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/></div>
+        <div className="field-grid two"><Field name="label" label="Voce" defaultValue={v('label')} required/><Field name="amount" label="Importo base €" type="number" step="0.01" defaultValue={v('amount')} required onChange={e => setInvoiceAmount(Number(e.currentTarget.value || 0))}/></div>
         <div className="field-grid two"><Field name="dueDate" label="Scadenza" type="date" defaultValue={v('dueDate')} required/><Select name="status" label="Stato" defaultValue={v('status') || 'pending'} options={[['pending','Da incassare'],['paid','Pagato']]}/></div>
+        <InvoiceToggle checked={invoiceEnabled} onChange={setInvoiceEnabled} amount={invoiceAmount} contribution={invoiceContribution} gross={invoiceGross} net={invoiceNet}/>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
       {kind === 'recurrence' && <>
         <ClientSelect data={data} defaultValue={v('clientId') || presetClientId || ''}/>
-        <div className="field-grid two"><Field name="label" label="Voce" defaultValue={v('label')} required/><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/></div>
+        <div className="field-grid two"><Field name="label" label="Voce" defaultValue={v('label')} required/><Field name="amount" label="Importo base €" type="number" step="0.01" defaultValue={v('amount')} required onChange={e => setInvoiceAmount(Number(e.currentTarget.value || 0))}/></div>
         <div className="field-grid two"><Select name="intervalMonths" label="Frequenza" defaultValue={v('intervalMonths') || '3'} options={[['1','Mensile'],['2','Ogni 2 mesi'],['3','Trimestrale'],['6','Semestrale'],['12','Annuale']]}/><Field name="nextDueDate" label="Prossima scadenza" type="date" defaultValue={v('nextDueDate')} required/></div>
-        <label className="checkbox-field"><input type="checkbox" name="active" defaultChecked={record ? Boolean((record as Recurrence).active) : true}/><span>Ricorrenza attiva</span></label>
+        <div className="invoice-toggle-stack">
+          <label className="checkbox-field"><input type="checkbox" name="active" defaultChecked={record ? Boolean((record as Recurrence).active) : true}/><span>Ricorrenza attiva</span></label>
+          <InvoiceToggle checked={invoiceEnabled} onChange={setInvoiceEnabled} amount={invoiceAmount} contribution={invoiceContribution} gross={invoiceGross} net={invoiceNet}/>
+        </div>
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
@@ -264,6 +273,24 @@ export function RecordEditorModal({
       </div>
     </form>
   </Modal>
+}
+
+function InvoiceToggle({checked,onChange,amount,contribution,gross,net}:{checked:boolean;onChange:(value:boolean)=>void;amount:number;contribution:number;gross:number;net:number}) {
+  const eur = (value:number) => new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(value || 0)
+  return <div className={`invoice-toggle-card ${checked ? 'active' : ''}`}>
+    <label className="invoice-toggle-control">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}/>
+      <span className="invoice-check-box">{checked ? '✓' : ''}</span>
+      <span><strong>Fatturato</strong><small>Applica 4% + €2 marca da bollo e calcola il netto al 40%</small></span>
+    </label>
+    {checked && <div className="invoice-live-breakdown">
+      <div><span>Base</span><strong>{eur(amount)}</strong></div>
+      <div><span>4%</span><strong>+ {eur(contribution)}</strong></div>
+      <div><span>Bollo</span><strong>+ {eur(2)}</strong></div>
+      <div className="gross"><span>Lordo</span><strong>{eur(gross)}</strong></div>
+      <div className="net"><span>Netto 40%</span><strong>{eur(net)}</strong></div>
+    </div>}
+  </div>
 }
 
 function Field(props: InputHTMLAttributes<HTMLInputElement> & {name:string;label:string}) {
