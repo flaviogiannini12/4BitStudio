@@ -5,7 +5,9 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock3,
+  LayoutDashboard,
   Landmark,
+  ListChecks,
   PauseCircle,
   Pencil,
   PlayCircle,
@@ -106,24 +108,9 @@ export function PaymentsPage({
   const sortedCompensations = [...compensations].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
   const sortedDeadlines = [...deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
 
-  const attentionTotal = overdueTotal + openCompensationsTotal + openDebtsTotal
-
   return <div className="economy-page">
-    <section className="section-block economy-hero">
-      <div className="economy-hero-head">
-        <div>
-          <p className="eyebrow">Economia 4Bit</p>
-          <h2>I soldi, senza confusione.</h2>
-          <p>Incassi, compensi, debiti e scadenze in un unico posto. I dati storici restano invariati.</p>
-        </div>
-        <div className="economy-hero-balance">
-          <span>Da gestire</span>
-          <strong>{money(attentionTotal)}</strong>
-          <small>scaduti + compensi da pagare + debiti aperti</small>
-        </div>
-      </div>
-
-      <div className="economy-kpi-grid">
+    <section className="section-block economy-hero economy-hero-compact">
+      <div className="economy-kpi-grid economy-kpi-grid-top">
         <EconomyKpi icon={CircleDollarSign} label="Incassato questo mese" value={money(paidThisMonth)} note="pagamenti registrati come incassati" tone="positive"/>
         <EconomyKpi icon={CalendarClock} label="In arrivo questo mese" value={money(incomingThisMonth)} note={pendingPayments.filter(p => p.dueDate.startsWith(currentMonth)).length + ' incassi previsti'} tone="brand"/>
         <EconomyKpi icon={WalletCards} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
@@ -132,17 +119,17 @@ export function PaymentsPage({
     </section>
 
     <div className="economy-tabs" role="tablist" aria-label="Sezioni economia">
-      <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>Panoramica</button>
-      <button className={tab === 'income' ? 'active' : ''} onClick={() => setTab('income')}>Incassi</button>
-      <button className={tab === 'compensations' ? 'active' : ''} onClick={() => setTab('compensations')}>Stipendi</button>
-      <button className={tab === 'debts' ? 'active' : ''} onClick={() => setTab('debts')}>Debiti</button>
-      <button className={tab === 'operations' ? 'active' : ''} onClick={() => setTab('operations')}>Altre voci</button>
+      <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}><LayoutDashboard size={14}/><span>Panoramica</span></button>
+      <button className={tab === 'income' ? 'active' : ''} onClick={() => setTab('income')}><CircleDollarSign size={14}/><span>Incassi</span></button>
+      <button className={tab === 'compensations' ? 'active' : ''} onClick={() => setTab('compensations')}><WalletCards size={14}/><span>Stipendi</span></button>
+      <button className={tab === 'debts' ? 'active' : ''} onClick={() => setTab('debts')}><Landmark size={14}/><span>Debiti</span></button>
+      <button className={tab === 'operations' ? 'active' : ''} onClick={() => setTab('operations')}><ListChecks size={14}/><span>Altre voci</span></button>
     </div>
 
     {tab === 'overview' && <div className="economy-overview-grid">
       <section className="section-block economy-panel economy-incoming-panel">
-        <div className="section-heading">
-          <div><p className="eyebrow">Previsione semplice</p><h2>Incassi mensili in arrivo</h2></div>
+        <div className="section-heading economy-section-heading">
+          <div className="economy-heading-copy"><span className="economy-heading-icon"><CalendarClock size={17}/></span><div><p className="eyebrow">Previsione semplice</p><h2>Incassi mensili in arrivo</h2></div></div>
           <strong className="stats-total">{money(pendingTotal)}</strong>
         </div>
         <div className="economy-month-list">
@@ -158,7 +145,7 @@ export function PaymentsPage({
       </section>
 
       <section className="section-block economy-panel economy-attention-panel">
-        <div className="section-heading"><div><p className="eyebrow">Da controllare</p><h2>Tre cose importanti</h2></div></div>
+        <div className="section-heading economy-section-heading"><div className="economy-heading-copy"><span className="economy-heading-icon warning"><AlertTriangle size={17}/></span><div><p className="eyebrow">Da controllare</p><h2>Tre cose importanti</h2></div></div></div>
         <button className={`economy-attention-row ${overduePayments.length ? 'danger' : ''}`} onClick={() => setTab('income')}>
           <span className="economy-attention-icon"><AlertTriangle size={18}/></span>
           <div><strong>Incassi scaduti</strong><small>{overduePayments.length} voci</small></div>
@@ -179,7 +166,7 @@ export function PaymentsPage({
 
     {tab === 'income' && <section className="section-block economy-panel">
       <div className="section-heading responsive-heading">
-        <div><p className="eyebrow">Entrate</p><h2>Incassi</h2></div>
+        <div className="economy-heading-copy"><span className="economy-heading-icon positive"><CircleDollarSign size={17}/></span><div><p className="eyebrow">Entrate</p><h2>Incassi</h2></div></div>
         <button className="primary-button" onClick={() => setEditor({kind:'payment',record:null})}><Plus size={15}/> Nuovo incasso</button>
       </div>
       <div className="economy-mini-summary">
@@ -207,7 +194,7 @@ export function PaymentsPage({
 
     {tab === 'compensations' && <section className="section-block economy-panel">
       <div className="section-heading responsive-heading">
-        <div><p className="eyebrow">Persone</p><h2>Stipendi & compensi</h2></div>
+        <div className="economy-heading-copy"><span className="economy-heading-icon"><WalletCards size={17}/></span><div><p className="eyebrow">Persone</p><h2>Stipendi & compensi</h2></div></div>
         <button className="primary-button" onClick={() => setEditor({kind:'compensation',record:null})}><Plus size={15}/> Nuovo compenso</button>
       </div>
       <div className="economy-mini-summary">
@@ -235,7 +222,7 @@ export function PaymentsPage({
 
     {tab === 'debts' && <section className="section-block economy-panel">
       <div className="section-heading responsive-heading">
-        <div><p className="eyebrow">Soldi da restituire</p><h2>Debiti</h2></div>
+        <div className="economy-heading-copy"><span className="economy-heading-icon debt"><Landmark size={17}/></span><div><p className="eyebrow">Soldi da restituire</p><h2>Debiti</h2></div></div>
         <button className="primary-button" onClick={() => setEditor({kind:'debt',record:null})}><Plus size={15}/> Nuovo debito</button>
       </div>
       <div className="economy-debt-total">
