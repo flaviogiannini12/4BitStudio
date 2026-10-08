@@ -7,7 +7,7 @@ const items = [
   { id: 'clients' as const, label: 'Clienti', icon: UsersRound },
   { id: 'tasks' as const, label: 'Task', icon: CheckSquare2 },
   { id: 'editorial' as const, label: 'Piano Editoriale', icon: CalendarRange },
-  { id: 'payments' as const, label: 'Pagamenti', icon: CircleDollarSign },
+  { id: 'payments' as const, label: 'Economia', icon: CircleDollarSign },
   { id: 'team' as const, label: 'Team', icon: WalletCards },
   { id: 'stats' as const, label: 'Statistiche', icon: BarChart3 },
 ]
