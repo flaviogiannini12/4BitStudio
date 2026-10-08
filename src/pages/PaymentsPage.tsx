@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
+  Banknote,
+  CalendarDays,
   CalendarClock,
   CheckCircle2,
   CircleDollarSign,
@@ -13,6 +15,7 @@ import {
   PlayCircle,
   Plus,
   Repeat2,
+  Wallet,
   WalletCards,
 } from 'lucide-react'
 import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from '../lib/date'
@@ -111,9 +114,9 @@ export function PaymentsPage({
   return <div className="economy-page">
     <section className="section-block economy-hero economy-hero-compact">
       <div className="economy-kpi-grid economy-kpi-grid-top">
-        <EconomyKpi icon={CircleDollarSign} label="Incassato questo mese" value={money(paidThisMonth)} note="pagamenti registrati come incassati" tone="positive"/>
-        <EconomyKpi icon={CalendarClock} label="In arrivo questo mese" value={money(incomingThisMonth)} note={pendingPayments.filter(p => p.dueDate.startsWith(currentMonth)).length + ' incassi previsti'} tone="brand"/>
-        <EconomyKpi icon={WalletCards} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
+        <EconomyKpi icon={Banknote} label="Incassato questo mese" value={money(paidThisMonth)} note="pagamenti registrati come incassati" tone="positive"/>
+        <EconomyKpi icon={CalendarDays} label="In arrivo questo mese" value={money(incomingThisMonth)} note={pendingPayments.filter(p => p.dueDate.startsWith(currentMonth)).length + ' incassi previsti'} tone="brand"/>
+        <EconomyKpi icon={Wallet} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
         <EconomyKpi icon={Landmark} label="Debiti da restituire" value={money(openDebtsTotal)} note={openDebts.length ? openDebts.length + ' debiti aperti' : 'nessun debito aperto'} tone="neutral"/>
       </div>
     </section>
@@ -311,7 +314,7 @@ function EconomyKpi({
   tone: 'positive' | 'brand' | 'warning' | 'neutral'
 }) {
   return <article className={`economy-kpi economy-kpi-${tone}`}>
-    <span className="economy-kpi-icon"><Icon size={18}/></span>
+    <span className="economy-kpi-icon"><Icon size={20} strokeWidth={1.9}/></span>
     <div><span>{label}</span><strong>{value}</strong><small>{note}</small></div>
   </article>
 }
