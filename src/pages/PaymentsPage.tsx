@@ -50,6 +50,11 @@ function statusIsPaid(status: string) {
   return value === 'pagato' || value === 'paid' || value === 'saldato' || value === 'restituito'
 }
 
+const roundMoney = (value:number) => Math.round(value * 100) / 100
+const invoiceContribution = (amount:number) => roundMoney(amount * .04)
+const invoiceGross = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(amount + invoiceContribution(amount) + 2) : amount
+const invoiceNet = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(invoiceGross(amount,true) * .40) : amount
+
 export function PaymentsPage({
   data,
   actions,
@@ -78,10 +83,15 @@ export function PaymentsPage({
   const pendingPayments = payments.filter(p => p.status === 'pending')
   const paidPayments = payments.filter(p => p.status === 'paid')
   const overduePayments = pendingPayments.filter(p => p.dueDate < today)
-  const pendingTotal = pendingPayments.reduce((sum,p) => sum+p.amount,0)
-  const overdueTotal = overduePayments.reduce((sum,p) => sum+p.amount,0)
-  const paidThisMonth = paidPayments.filter(p => p.paidAt?.startsWith(currentMonth)).reduce((sum,p) => sum+p.amount,0)
-  const incomingThisMonth = pendingPayments.filter(p => p.dueDate.startsWith(currentMonth)).reduce((sum,p) => sum+p.amount,0)
+  const pendingTotal = pendingPayments.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
+  const pendingNet = pendingPayments.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)
+  const overdueTotal = overduePayments.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
+  const paidThisMonthRows = paidPayments.filter(p => p.paidAt?.startsWith(currentMonth))
+  const paidThisMonth = paidThisMonthRows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
+  const paidThisMonthNet = paidThisMonthRows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)
+  const incomingThisMonthRows = pendingPayments.filter(p => p.dueDate.startsWith(currentMonth))
+  const incomingThisMonth = incomingThisMonthRows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
+  const incomingThisMonthNet = incomingThisMonthRows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)
 
   const openCompensations = compensations.filter(c => !statusIsPaid(c.status))
   const openCompensationsTotal = openCompensations.reduce((sum,c) => sum+c.amount,0)
@@ -94,7 +104,7 @@ export function PaymentsPage({
   const incomingMonths = useMemo(() => Array.from({length:6},(_,offset) => {
     const key = monthKeyAtOffset(offset)
     const rows = pendingPayments.filter(p => p.dueDate.startsWith(key)).sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-    return {key,label:monthLabel(key),rows,total:rows.reduce((sum,p) => sum+p.amount,0)}
+    return {key,label:monthLabel(key),rows,total:rows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0),net:rows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)}
   }), [pendingPayments])
 
   const maxIncomingMonth = Math.max(1,...incomingMonths.map(m => m.total))
@@ -114,8 +124,8 @@ export function PaymentsPage({
   return <div className="economy-page">
     <section className="section-block economy-hero economy-hero-compact">
       <div className="economy-kpi-grid economy-kpi-grid-top">
-        <EconomyKpi icon={Banknote} label="Incassato questo mese" value={money(paidThisMonth)} note="pagamenti registrati come incassati" tone="positive"/>
-        <EconomyKpi icon={CalendarDays} label="In arrivo questo mese" value={money(incomingThisMonth)} note={pendingPayments.filter(p => p.dueDate.startsWith(currentMonth)).length + ' incassi previsti'} tone="brand"/>
+        <EconomyKpi icon={Banknote} label="Incassato questo mese · lordo" value={money(paidThisMonth)} note={`Netto stimato ${money(paidThisMonthNet)}`} tone="positive"/>
+        <EconomyKpi icon={CalendarDays} label="In arrivo questo mese · lordo" value={money(incomingThisMonth)} note={`Netto previsto ${money(incomingThisMonthNet)} · ${incomingThisMonthRows.length} incassi`} tone="brand"/>
         <EconomyKpi icon={Wallet} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
         <EconomyKpi icon={Landmark} label="Debiti da restituire" value={money(openDebtsTotal)} note={openDebts.length ? openDebts.length + ' debiti aperti' : 'nessun debito aperto'} tone="neutral"/>
       </div>
@@ -139,7 +149,7 @@ export function PaymentsPage({
           {incomingMonths.map(month => <button key={month.key} type="button" className="economy-month-row" onClick={() => setTab('income')}>
             <div className="economy-month-copy">
               <strong>{month.label}</strong>
-              <span>{month.rows.length ? month.rows.length + (month.rows.length === 1 ? ' incasso' : ' incassi') : 'Nessun incasso previsto'}</span>
+              <span>{month.rows.length ? `${month.rows.length}${month.rows.length === 1 ? ' incasso' : ' incassi'} · netto ${money(month.net)}` : 'Nessun incasso previsto'}</span>
             </div>
             <div className="economy-month-track"><i style={{width:`${month.total ? Math.max(5,month.total/maxIncomingMonth*100) : 0}%`}}/></div>
             <b>{money(month.total)}</b>
@@ -173,17 +183,24 @@ export function PaymentsPage({
         <button className="primary-button" onClick={() => setEditor({kind:'payment',record:null})}><Plus size={15}/> Nuovo incasso</button>
       </div>
       <div className="economy-mini-summary">
-        <div><span>Da incassare</span><strong>{money(pendingTotal)}</strong></div>
-        <div className={overdueTotal ? 'danger' : ''}><span>Scaduto</span><strong>{money(overdueTotal)}</strong></div>
-        <div><span>Incassato mese</span><strong>{money(paidThisMonth)}</strong></div>
+        <div><span>Da incassare · lordo</span><strong>{money(pendingTotal)}</strong><small>Netto previsto {money(pendingNet)}</small></div>
+        <div className={overdueTotal ? 'danger' : ''}><span>Scaduto · lordo</span><strong>{money(overdueTotal)}</strong></div>
+        <div><span>Incassato mese · lordo</span><strong>{money(paidThisMonth)}</strong><small>Netto {money(paidThisMonthNet)}</small></div>
       </div>
       <div className="list-toolbar"><p><strong>{pendingPayments.length}</strong> incassi aperti</p><label className="switch-label"><input type="checkbox" checked={showPaid} onChange={e => setShowPaid(e.target.checked)}/><span/>Mostra incassati</label></div>
       <div className="payment-list full-list">
         {visiblePayments.map(p => <article className={`payment-row tone-${p.status === 'paid' ? 'paid' : countdownTone(p.dueDate)}`} key={p.id}>
           <div className="countdown-box"><small>{p.status === 'paid' ? 'stato' : 'scadenza'}</small><strong>{p.status === 'paid' ? 'incassato' : countdownLabel(p.dueDate)}</strong></div>
-          <div className="payment-main"><h3>{client(p.clientId)}</h3><p>{p.label}</p><small>{p.recurrenceId ? 'Ricorrente' : 'Una tantum'}{p.reminderCount ? ` · ${p.reminderCount} solleciti` : ''}</small></div>
+          <div className="payment-main">
+            <h3>{client(p.clientId)}</h3>
+            <p>{p.label}</p>
+            <div className="payment-meta-line"><small>{p.recurrenceId ? 'Ricorrente' : 'Una tantum'}{p.reminderCount ? ` · ${p.reminderCount} solleciti` : ''}</small>{p.invoiced && <span className="invoice-chip">✓ Fatturato</span>}</div>
+            {p.invoiced && <div className="invoice-row-breakdown"><span>Base {money(p.amount)}</span><span>4% +{money(invoiceContribution(p.amount))}</span><span>Bollo +{money(2)}</span></div>}
+          </div>
           <div className="payment-date"><small>Data</small><strong>{formatShortDate(p.dueDate)}</strong></div>
-          <div className="payment-amount">{money(p.amount)}</div>
+          {p.invoiced
+            ? <div className="payment-amount payment-amount-invoiced"><small>Lordo</small><strong>{money(invoiceGross(p.amount,true))}</strong><span>Netto {money(invoiceNet(p.amount,true))}</span></div>
+            : <div className="payment-amount">{money(p.amount)}</div>}
           <div className="row-actions">
             {p.status === 'pending'
               ? <><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna incassato</button></>
@@ -258,7 +275,8 @@ export function PaymentsPage({
         <div className="recurrence-grid">
           {recurrences.map(r => <article className={`recurrence-card ${r.active ? '' : 'inactive'}`} key={r.id}>
             <div className="recurrence-icon"><CalendarClock size={20}/></div>
-            <div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3></div><strong>{money(r.amount)}</strong></div>
+            <div className="recurrence-head"><div><p>{client(r.clientId)}</p><h3>{r.label}</h3>{r.invoiced && <span className="invoice-chip">✓ Fatturato</span>}</div><div className="recurrence-head-amount"><small>{r.invoiced ? 'Lordo fattura' : 'Importo'}</small><strong>{money(invoiceGross(r.amount,r.invoiced))}</strong>{r.invoiced && <span>Netto {money(invoiceNet(r.amount,true))}</span>}</div></div>
+            {r.invoiced && <div className="recurrence-tax-line"><span>Base {money(r.amount)}</span><span>4% +{money(invoiceContribution(r.amount))}</span><span>Bollo +{money(2)}</span></div>}
             <div className="recurrence-data"><div><small>Frequenza</small><strong>{r.intervalMonths === 1 ? 'Mensile' : r.intervalMonths === 3 ? 'Trimestrale' : r.intervalMonths === 6 ? 'Semestrale' : r.intervalMonths === 12 ? 'Annuale' : `Ogni ${r.intervalMonths} mesi`}</strong></div><div><small>Prossima</small><strong>{countdownLabel(r.nextDueDate)}</strong></div></div>
             <div className="card-actions"><button className="secondary-button" onClick={() => void actions.updateRecurrence(r.id,{active:!r.active})}>{r.active ? <><PauseCircle size={14}/> Pausa</> : <><PlayCircle size={14}/> Riattiva</>}</button><button className="icon-button tiny" onClick={() => setEditor({kind:'recurrence',record:r})}><Pencil size={13}/></button></div>
           </article>)}
