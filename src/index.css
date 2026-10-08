@@ -7345,3 +7345,117 @@ body.editorial-touch-dragging .editorial-drag-handle{
     margin-top:6px;
   }
 }
+
+
+/* =========================================================
+   STATISTICHE — lordo, fatturato e tasse
+   ========================================================= */
+.stats-tax-overview{
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 92% 12%,rgba(243,236,54,.10),transparent 30%),
+    linear-gradient(145deg,rgba(255,255,255,.95),rgba(248,248,246,.88));
+}
+.stats-fiscal-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:14px;
+}
+.stats-fiscal-grid .stats-money-metric{
+  min-height:112px;
+  padding:14px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:16px;
+  background:rgba(255,255,255,.72);
+  box-shadow:0 8px 22px rgba(5,5,5,.025);
+}
+.stats-fiscal-grid .stats-money-metric>span:first-child{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+}
+.stats-fiscal-grid .stats-money-metric>small{
+  margin-top:10px;
+}
+.stats-fiscal-grid .stats-money-metric>strong{
+  margin-top:4px;
+  font-size:20px;
+  letter-spacing:-.035em;
+}
+.stats-fiscal-grid .stats-money-metric>p{
+  margin-top:5px;
+  line-height:1.35;
+}
+.stats-gross-split{
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+  padding:14px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:16px;
+  background:rgba(255,255,255,.64);
+}
+.stats-gross-split-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+.stats-gross-split-head span{
+  color:rgba(5,5,5,.48);
+  font-size:8px;
+}
+.stats-gross-split-head b{
+  color:#050505;
+  font-size:9px;
+}
+.stats-gross-split-track{
+  display:flex;
+  width:100%;
+  height:10px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(5,5,5,.05);
+}
+.stats-gross-split-track span{
+  display:block;
+  height:100%;
+  transition:width .35s ease;
+}
+.stats-gross-split-track .invoiced{
+  background:#050505;
+}
+.stats-gross-split-track .non-invoiced{
+  background:var(--brand);
+}
+.stats-gross-split>small{
+  color:rgba(5,5,5,.38);
+  font-size:7.5px;
+  line-height:1.4;
+}
+
+@media(max-width:900px){
+  .stats-fiscal-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:560px){
+  .stats-fiscal-grid{
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+  .stats-fiscal-grid .stats-money-metric{
+    min-height:105px;
+    padding:12px;
+    border-radius:15px;
+  }
+  .stats-fiscal-grid .stats-money-metric>strong{
+    font-size:17px;
+  }
+  .stats-gross-split-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+}
