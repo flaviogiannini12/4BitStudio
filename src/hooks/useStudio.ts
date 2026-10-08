@@ -298,7 +298,7 @@ export function useStudio(user: User | null, ready: boolean) {
     },
     async createPayment(input: PaymentInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createPayment(user, input); await reload(true) })
-      const value: Payment = { id: id('payment'), clientId: input.clientId, projectId: input.projectId ?? null, recurrenceId: input.recurrenceId ?? null, label: input.label, amount: input.amount, dueDate: input.dueDate, status: 'pending', paidAt: null, reminderCount: 0, lastReminderAt: null, notes: input.notes ?? '', createdAt: new Date().toISOString() }
+      const value: Payment = { id: id('payment'), clientId: input.clientId, projectId: input.projectId ?? null, recurrenceId: input.recurrenceId ?? null, label: input.label, amount: input.amount, dueDate: input.dueDate, status: 'pending', invoiced: input.invoiced ?? false, paidAt: null, reminderCount: 0, lastReminderAt: null, notes: input.notes ?? '', createdAt: new Date().toISOString() }
       saveLocal(current => ({ ...current, payments: [...current.payments, value] }))
     },
     async updatePayment(paymentId: string, input: Partial<Payment>) {
@@ -315,7 +315,7 @@ export function useStudio(user: User | null, ready: boolean) {
         if (recurrence?.active) {
           const nextDue = addMonths(payment.dueDate, recurrence.intervalMonths, recurrence.dueDay)
           const exists = data.payments.some(x => x.recurrenceId === recurrence.id && x.status === 'pending' && x.id !== paymentId)
-          if (!exists) await cloudRepo.createPayment(user, { clientId: recurrence.clientId, recurrenceId: recurrence.id, label: recurrence.label, amount: recurrence.amount, dueDate: nextDue, notes: recurrence.notes })
+          if (!exists) await cloudRepo.createPayment(user, { clientId: recurrence.clientId, recurrenceId: recurrence.id, label: recurrence.label, amount: recurrence.amount, dueDate: nextDue, invoiced: recurrence.invoiced, notes: recurrence.notes })
           await cloudRepo.updateRecurrence(recurrence.id, { nextDueDate: nextDue })
         }
         await reload(true)
@@ -326,7 +326,7 @@ export function useStudio(user: User | null, ready: boolean) {
         if (recurrence?.active) {
           const nextDue = addMonths(payment.dueDate, recurrence.intervalMonths, recurrence.dueDay)
           if (!payments.some(x => x.recurrenceId === recurrence.id && x.status === 'pending')) {
-            payments = [...payments, { id: id('payment'), clientId: recurrence.clientId, projectId: null, recurrenceId: recurrence.id, label: recurrence.label, amount: recurrence.amount, dueDate: nextDue, status: 'pending', paidAt: null, reminderCount: 0, lastReminderAt: null, notes: recurrence.notes, createdAt: new Date().toISOString() }]
+            payments = [...payments, { id: id('payment'), clientId: recurrence.clientId, projectId: null, recurrenceId: recurrence.id, label: recurrence.label, amount: recurrence.amount, dueDate: nextDue, status: 'pending', invoiced: recurrence.invoiced, paidAt: null, reminderCount: 0, lastReminderAt: null, notes: recurrence.notes, createdAt: new Date().toISOString() }]
           }
           recurrences = recurrences.map(x => x.id === recurrence.id ? { ...x, nextDueDate: nextDue } : x)
         }
@@ -347,16 +347,27 @@ export function useStudio(user: User | null, ready: boolean) {
     async createRecurrence(input: RecurrenceInput) {
       if (cloudEnabled && user) return protect(async () => {
         const recurrence = await cloudRepo.createRecurrence(user, input)
-        await cloudRepo.createPayment(user, { clientId: input.clientId, recurrenceId: recurrence.id, label: input.label, amount: input.amount, dueDate: input.nextDueDate, notes: input.notes })
+        await cloudRepo.createPayment(user, { clientId: input.clientId, recurrenceId: recurrence.id, label: input.label, amount: input.amount, dueDate: input.nextDueDate, invoiced: input.invoiced ?? false, notes: input.notes })
         await reload(true)
       })
-      const value: Recurrence = { id: id('recurrence'), clientId: input.clientId, label: input.label, amount: input.amount, intervalMonths: input.intervalMonths, dueDay: input.dueDay ?? null, nextDueDate: input.nextDueDate, active: true, notes: input.notes ?? '', createdAt: new Date().toISOString() }
-      const payment: Payment = { id: id('payment'), clientId: input.clientId, projectId: null, recurrenceId: value.id, label: value.label, amount: value.amount, dueDate: value.nextDueDate, status: 'pending', paidAt: null, reminderCount: 0, lastReminderAt: null, notes: value.notes, createdAt: new Date().toISOString() }
+      const value: Recurrence = { id: id('recurrence'), clientId: input.clientId, label: input.label, amount: input.amount, intervalMonths: input.intervalMonths, dueDay: input.dueDay ?? null, nextDueDate: input.nextDueDate, active: true, invoiced: input.invoiced ?? false, notes: input.notes ?? '', createdAt: new Date().toISOString() }
+      const payment: Payment = { id: id('payment'), clientId: input.clientId, projectId: null, recurrenceId: value.id, label: value.label, amount: value.amount, dueDate: value.nextDueDate, status: 'pending', invoiced: value.invoiced, paidAt: null, reminderCount: 0, lastReminderAt: null, notes: value.notes, createdAt: new Date().toISOString() }
       saveLocal(current => ({ ...current, recurrences: [...current.recurrences, value], payments: [...current.payments, payment] }))
     },
     async updateRecurrence(recurrenceId: string, input: Partial<Recurrence>) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateRecurrence(recurrenceId, input); await reload(true) })
-      saveLocal(current => ({ ...current, recurrences: current.recurrences.map(x => x.id === recurrenceId ? { ...x, ...input } : x) }))
+      if (cloudEnabled && user) return protect(async () => {
+        await cloudRepo.updateRecurrence(recurrenceId, input)
+        if (input.invoiced !== undefined) {
+          const linked = data.payments.filter(x => x.recurrenceId === recurrenceId && x.status === 'pending')
+          await Promise.all(linked.map(payment => cloudRepo.updatePayment(payment.id,{invoiced:input.invoiced})))
+        }
+        await reload(true)
+      })
+      saveLocal(current => ({
+        ...current,
+        recurrences: current.recurrences.map(x => x.id === recurrenceId ? { ...x, ...input } : x),
+        payments: input.invoiced === undefined ? current.payments : current.payments.map(x => x.recurrenceId === recurrenceId && x.status === 'pending' ? {...x,invoiced:input.invoiced as boolean} : x),
+      }))
     },
     async deleteRecurrence(recurrenceId: string) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteRecurrence(recurrenceId); await reload(true) })
