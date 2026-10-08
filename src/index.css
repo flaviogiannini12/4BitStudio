@@ -7063,3 +7063,68 @@ body.editorial-touch-dragging .editorial-drag-handle{
     min-height:86px;
   }
 }
+
+
+/* =========================================================
+   ECONOMIA — exact icon centering
+   ========================================================= */
+.economy-kpi-icon{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+  padding:0!important;
+  line-height:0!important;
+}
+
+.economy-kpi-icon svg{
+  position:absolute!important;
+  inset:0!important;
+  margin:auto!important;
+  display:block!important;
+  width:20px!important;
+  height:20px!important;
+  min-width:20px!important;
+  min-height:20px!important;
+  flex:none!important;
+  transform:none!important;
+  translate:none!important;
+}
+
+.economy-heading-icon{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  line-height:0!important;
+}
+
+.economy-heading-icon svg{
+  position:absolute!important;
+  inset:0!important;
+  margin:auto!important;
+  display:block!important;
+  transform:none!important;
+  translate:none!important;
+}
+
+@media(max-width:720px){
+  .economy-kpi-icon{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .economy-kpi-icon svg{
+    width:18px!important;
+    height:18px!important;
+    min-width:18px!important;
+    min-height:18px!important;
+  }
+}
