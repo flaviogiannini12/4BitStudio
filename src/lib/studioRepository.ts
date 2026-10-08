@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import type {
-  Client, ClientInput, Compensation, CompensationInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
+  Client, ClientInput, Compensation, CompensationInput, Debt, DebtInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
   Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
   StudioData, Task, TaskInput, TeamMember, TeamMemberInput,
 } from '../types/studio'
@@ -58,6 +58,7 @@ const fromRecurrence = (r: any): Recurrence => ({ id: r.id, clientId: r.client_i
 const fromPayment = (r: any): Payment => ({ id: r.id, clientId: r.client_id, projectId: r.project_id, recurrenceId: r.recurrence_id, label: r.label, amount: Number(r.amount), dueDate: r.due_date, status: r.status, paidAt: r.paid_at, reminderCount: r.reminder_count ?? 0, lastReminderAt: r.last_reminder_at, notes: r.notes ?? '', createdAt: r.created_at })
 const fromLedger = (r: any): LedgerEntry => ({ id:r.id, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
 const fromComp = (r: any): Compensation => ({ id:r.id, entryDate:r.entry_date, memberId:r.member_id, memberName:r.member_name ?? '', clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', notes:r.notes ?? '' })
+const fromDebt = (r: any): Debt => ({ id:r.id, creditor:r.creditor ?? '', description:r.description ?? '', amount:Number(r.amount), dueDate:r.due_date, status:r.status, paidAt:r.paid_at, notes:r.notes ?? '', createdAt:r.created_at })
 const fromDeadline = (r: any): Deadline => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', provider:r.provider ?? '', dueDate:r.due_date, cost:r.cost == null ? null : Number(r.cost), status:r.status ?? '', notes:r.notes ?? '' })
 const fromMaintenance = (r: any): MaintenancePeriod => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', periodicity:r.periodicity ?? '', amount:Number(r.amount), periodFrom:r.period_from, periodTo:r.period_to, status:r.status ?? '', notes:r.notes ?? '' })
 
@@ -68,13 +69,13 @@ async function rows(table: string) {
 }
 
 export async function loadStudioData(_user: User): Promise<StudioData> {
-  const [clients, members, projects, tasks, recurrences, payments, ledger, compensations, deadlines, maintenance] = await Promise.all([
+  const [clients, members, projects, tasks, recurrences, payments, ledger, compensations, debts, deadlines, maintenance] = await Promise.all([
     rows('clients'), rows('team_members'), rows('projects'), rows('tasks'), rows('recurrences'), rows('payments'),
-    rows('ledger_entries'), rows('compensations'), rows('deadlines'), rows('maintenance_periods'),
+    rows('ledger_entries'), rows('compensations'), rows('debts'), rows('deadlines'), rows('maintenance_periods'),
   ])
   return {
     clients: clients.map(fromClient), members: members.map(fromMember), projects: projects.map(fromProject),
-    tasks: tasks.map(fromTask), recurrences: recurrences.map(fromRecurrence), payments: payments.map(fromPayment), ledgerEntries: ledger.map(fromLedger), compensations: compensations.map(fromComp), deadlines: deadlines.map(fromDeadline), maintenancePeriods: maintenance.map(fromMaintenance),
+    tasks: tasks.map(fromTask), recurrences: recurrences.map(fromRecurrence), payments: payments.map(fromPayment), ledgerEntries: ledger.map(fromLedger), compensations: compensations.map(fromComp), debts: debts.map(fromDebt), deadlines: deadlines.map(fromDeadline), maintenancePeriods: maintenance.map(fromMaintenance),
   }
 }
 
@@ -194,6 +195,32 @@ export const cloudRepo = {
     }))
   },
   deleteCompensation: (id: string) => remove('compensations', id),
+
+  async createDebt(input: DebtInput) {
+    const workspaceId = await currentWorkspaceId()
+    return fromDebt(await insert('debts', {
+      workspace_id: workspaceId,
+      creditor: input.creditor,
+      description: input.description ?? '',
+      amount: input.amount,
+      due_date: input.dueDate || null,
+      status: input.status ?? 'open',
+      paid_at: input.paidAt ?? null,
+      notes: input.notes ?? '',
+    }))
+  },
+  async updateDebt(id: string, input: Partial<Debt>) {
+    return fromDebt(await update('debts', id, {
+      ...(input.creditor !== undefined ? { creditor: input.creditor } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.amount !== undefined ? { amount: input.amount } : {}),
+      ...(input.dueDate !== undefined ? { due_date: input.dueDate || null } : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.paidAt !== undefined ? { paid_at: input.paidAt } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    }))
+  },
+  deleteDebt: (id: string) => remove('debts', id),
 
   async createDeadline(input: DeadlineInput) {
     const workspaceId = await currentWorkspaceId()
