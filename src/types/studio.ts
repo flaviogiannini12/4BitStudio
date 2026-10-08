@@ -2,6 +2,7 @@ export type ClientStatus = 'active' | 'in_progress' | 'paused' | 'archived' | 'l
 export type ProjectStatus = 'planning' | 'in_progress' | 'review' | 'done'
 export type TaskStatus = 'todo' | 'doing' | 'done'
 export type PaymentStatus = 'pending' | 'paid'
+export type DebtStatus = 'open' | 'paid'
 
 export interface Client {
   id: string
@@ -111,6 +112,18 @@ export interface Compensation {
   notes: string
 }
 
+export interface Debt {
+  id: string
+  creditor: string
+  description: string
+  amount: number
+  dueDate: string | null
+  status: DebtStatus
+  paidAt: string | null
+  notes: string
+  createdAt: string
+}
+
 export interface Deadline {
   id: string
   clientId: string | null
@@ -155,6 +168,7 @@ export interface StudioData {
   payments: Payment[]
   ledgerEntries: LedgerEntry[]
   compensations: Compensation[]
+  debts: Debt[]
   deadlines: Deadline[]
   maintenancePeriods: MaintenancePeriod[]
 }
@@ -244,6 +258,16 @@ export interface CompensationInput {
   description: string
   amount: number
   status?: string
+  notes?: string
+}
+
+export interface DebtInput {
+  creditor: string
+  description?: string
+  amount: number
+  dueDate?: string | null
+  status?: DebtStatus
+  paidAt?: string | null
   notes?: string
 }
 
