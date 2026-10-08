@@ -5,7 +5,7 @@ import { demoData } from '../lib/demo'
 import { cloudEnabled, supabase } from '../lib/supabase'
 import { claimInitialWorkspace, cloudRepo, hasWorkspaceMembership, joinWorkspace, loadStudioData } from '../lib/studioRepository'
 import type {
-  Client, ClientInput, Compensation, CompensationInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
+  Client, ClientInput, Compensation, CompensationInput, Debt, DebtInput, Deadline, DeadlineInput, LedgerEntry, LedgerEntryInput, MaintenancePeriod, MaintenancePeriodInput,
   Payment, PaymentInput, Project, ProjectInput, Recurrence, RecurrenceInput,
   StudioData, Task, TaskInput, TeamMember, TeamMemberInput,
 } from '../types/studio'
@@ -38,6 +38,7 @@ function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
     payments: source.payments ?? [],
     ledgerEntries: source.ledgerEntries ?? [],
     compensations: source.compensations ?? [],
+    debts: source.debts ?? [],
     deadlines: source.deadlines ?? [],
     maintenancePeriods: source.maintenancePeriods ?? [],
   }
@@ -91,7 +92,7 @@ function readLocal(): StudioData {
 }
 
 export function useStudio(user: User | null, ready: boolean) {
-  const [data, setData] = useState<StudioData>(() => cloudEnabled ? { clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], deadlines: [], maintenancePeriods: [] } : readLocal())
+  const [data, setData] = useState<StudioData>(() => cloudEnabled ? { clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], debts: [], deadlines: [], maintenancePeriods: [] } : readLocal())
   const [loading, setLoading] = useState(cloudEnabled)
   const [error, setError] = useState<string | null>(null)
   const [needsWorkspace, setNeedsWorkspace] = useState(false)
@@ -120,7 +121,7 @@ export function useStudio(user: User | null, ready: boolean) {
       }
       if (!member) {
         setNeedsWorkspace(true)
-        setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], deadlines: [], maintenancePeriods: [] })
+        setData({ clients: [], members: [], projects: [], tasks: [], recurrences: [], payments: [], ledgerEntries: [], compensations: [], debts: [], deadlines: [], maintenancePeriods: [] })
         setError(null)
         return
       }
@@ -172,6 +173,7 @@ export function useStudio(user: User | null, ready: boolean) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'recurrences' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger_entries' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'compensations' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'debts' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'deadlines' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_periods' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'access_credentials' }, refreshAccesses)
@@ -387,6 +389,20 @@ export function useStudio(user: User | null, ready: boolean) {
     async deleteCompensation(compId: string) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteCompensation(compId); await reload(true) })
       saveLocal(current => ({ ...current, compensations:current.compensations.filter(x => x.id !== compId) }))
+    },
+
+    async createDebt(input: DebtInput) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createDebt(input); await reload(true) })
+      const value: Debt = { id:id('debt'), creditor:input.creditor, description:input.description ?? '', amount:input.amount, dueDate:input.dueDate ?? null, status:input.status ?? 'open', paidAt:input.paidAt ?? null, notes:input.notes ?? '', createdAt:new Date().toISOString() }
+      saveLocal(current => ({ ...current, debts:[...current.debts,value] }))
+    },
+    async updateDebt(debtId: string, input: Partial<Debt>) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateDebt(debtId,input); await reload(true) })
+      saveLocal(current => ({ ...current, debts:current.debts.map(x => x.id === debtId ? {...x,...input} : x) }))
+    },
+    async deleteDebt(debtId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteDebt(debtId); await reload(true) })
+      saveLocal(current => ({ ...current, debts:current.debts.filter(x => x.id !== debtId) }))
     },
 
     async createDeadline(input: DeadlineInput) {
