@@ -7128,3 +7128,220 @@ body.editorial-touch-dragging .editorial-drag-handle{
     min-height:18px!important;
   }
 }
+
+
+/* =========================================================
+   ECONOMIA — fatturato, lordo/netto
+   ========================================================= */
+.invoice-toggle-card{
+  display:grid;
+  gap:10px;
+  padding:12px;
+  border:1px solid rgba(5,5,5,.07);
+  border-radius:16px;
+  background:rgba(255,255,255,.62);
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.invoice-toggle-card.active{
+  border-color:rgba(5,5,5,.18);
+  background:linear-gradient(145deg,rgba(5,5,5,.025),rgba(255,255,255,.92));
+  box-shadow:0 8px 22px rgba(5,5,5,.035);
+}
+.invoice-toggle-control{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+}
+.invoice-toggle-control>input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.invoice-check-box{
+  display:grid;
+  width:24px;
+  height:24px;
+  min-width:24px;
+  place-items:center;
+  border:1px solid rgba(5,5,5,.18);
+  border-radius:7px;
+  background:#fff;
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  line-height:1;
+}
+.invoice-toggle-card.active .invoice-check-box{
+  border-color:#050505;
+  background:#050505;
+}
+.invoice-toggle-control>span:last-child{
+  min-width:0;
+}
+.invoice-toggle-control strong,
+.invoice-toggle-control small{
+  display:block;
+}
+.invoice-toggle-control strong{
+  font-size:10px;
+}
+.invoice-toggle-control small{
+  margin-top:2px;
+  color:rgba(5,5,5,.38);
+  font-size:8px;
+  line-height:1.4;
+}
+.invoice-live-breakdown{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:6px;
+  padding-top:10px;
+  border-top:1px solid rgba(5,5,5,.055);
+}
+.invoice-live-breakdown>div{
+  min-width:0;
+  padding:8px 9px;
+  border-radius:11px;
+  background:rgba(5,5,5,.035);
+}
+.invoice-live-breakdown span,
+.invoice-live-breakdown strong{
+  display:block;
+}
+.invoice-live-breakdown span{
+  color:rgba(5,5,5,.38);
+  font-size:7px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.invoice-live-breakdown strong{
+  margin-top:3px;
+  font-size:10px;
+  white-space:nowrap;
+}
+.invoice-live-breakdown .gross{
+  background:rgba(243,236,54,.17);
+}
+.invoice-live-breakdown .net{
+  background:#050505;
+  color:#fff;
+}
+.invoice-live-breakdown .net span{
+  color:rgba(255,255,255,.55);
+}
+.invoice-toggle-stack{
+  display:grid;
+  gap:8px;
+}
+.payment-meta-line{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin-top:3px;
+}
+.invoice-chip{
+  display:inline-flex;
+  min-height:20px;
+  align-items:center;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#050505;
+  color:#fff;
+  font-size:7px;
+  font-weight:850;
+  line-height:1;
+  white-space:nowrap;
+}
+.invoice-row-breakdown{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+.invoice-row-breakdown span,
+.recurrence-tax-line span{
+  padding:3px 6px;
+  border-radius:7px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.48);
+  font-size:7px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.payment-amount-invoiced{
+  display:flex!important;
+  min-width:110px;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:2px;
+  line-height:1.05;
+}
+.payment-amount-invoiced small{
+  color:rgba(5,5,5,.34);
+  font-size:7px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.payment-amount-invoiced strong{
+  font-size:14px;
+  letter-spacing:-.03em;
+}
+.payment-amount-invoiced span{
+  color:#167e55;
+  font-size:8px;
+  font-weight:850;
+}
+.economy-mini-summary>div small{
+  display:block;
+  margin-top:4px;
+  color:rgba(5,5,5,.36);
+  font-size:7.5px;
+}
+.recurrence-head-amount{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  text-align:right;
+}
+.recurrence-head-amount small{
+  color:rgba(5,5,5,.36);
+  font-size:7px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.recurrence-head-amount strong{
+  margin-top:2px;
+}
+.recurrence-head-amount span{
+  margin-top:2px;
+  color:#167e55;
+  font-size:8px;
+  font-weight:850;
+}
+.recurrence-tax-line{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(5,5,5,.05);
+}
+
+@media(max-width:720px){
+  .invoice-live-breakdown{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .invoice-live-breakdown .net{
+    grid-column:1/-1;
+  }
+  .payment-amount-invoiced{
+    min-width:0;
+    align-items:flex-start;
+  }
+  .invoice-row-breakdown{
+    margin-top:6px;
+  }
+}
