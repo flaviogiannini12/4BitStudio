@@ -68,6 +68,7 @@ export interface Recurrence {
   dueDay: number | null
   nextDueDate: string
   active: boolean
+  invoiced: boolean
   notes: string
   createdAt: string
 }
@@ -81,6 +82,7 @@ export interface Payment {
   amount: number
   dueDate: string
   status: PaymentStatus
+  invoiced: boolean
   paidAt: string | null
   reminderCount: number
   lastReminderAt: string | null
@@ -220,6 +222,7 @@ export interface PaymentInput {
   label: string
   amount: number
   dueDate: string
+  invoiced?: boolean
   notes?: string
 }
 
@@ -230,6 +233,7 @@ export interface RecurrenceInput {
   intervalMonths: number
   dueDay?: number | null
   nextDueDate: string
+  invoiced?: boolean
   notes?: string
 }
 
