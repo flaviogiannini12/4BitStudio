@@ -33,7 +33,7 @@ const titles: Record<AppPage, { title: string; eyebrow: string }> = {
   clients: { title: 'Ogni cliente, nel suo posto.', eyebrow: '' },
   tasks: { title: 'Cosa c’è da fare.', eyebrow: '' },
   editorial: { title: '', eyebrow: '' },
-  payments: { title: 'Nessuna scadenza si perde.', eyebrow: '' },
+  payments: { title: 'Economia dello studio.', eyebrow: '' },
   team: { title: 'Chi sta facendo cosa.', eyebrow: '' },
   stats: { title: 'Numeri dello studio.', eyebrow: '' },
 }
@@ -96,7 +96,7 @@ export default function App() {
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
         {page === 'editorial' && (editorial.loading ? <PremiumLoader label="Piano Editoriale"/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
-        {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onNewPayment={() => setCreateKind('payment')} onNewRecurrence={() => setCreateKind('recurrence')} onReminder={setReminderId}/>} 
+        {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onReminder={setReminderId}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
