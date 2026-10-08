@@ -81,6 +81,7 @@ export const demoData: StudioData = {
     { id:'c7', entryDate:null, memberId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', memberName:'Flavio', clientId:'22222222-2222-4222-8222-222222222222', description:'Figma + Sviluppo', amount:53.65, status:'Pagato', notes:'' },
     { id:'c8', entryDate:null, memberId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', memberName:'Edoardo', clientId:'33333333-3333-4333-8333-333333333333', description:'Mantenimento Maggio–Ottobre 2026', amount:53.65, status:'Pagato', notes:'Già detratto il costo effettivo di dominio e hosting' },
   ],
+  debts: [],
   deadlines: [
     { id:'d1', clientId:'44444444-4444-4444-8444-444444444444', service:'Dominio + Hosting', provider:'Aruba', dueDate:'2026-05-25', cost:null, status:'SCADUTO', notes:'Verificare se già rinnovato: la data risulta superata' },
     { id:'d2', clientId:'11111111-1111-4111-8111-111111111111', service:'Dominio + Hosting', provider:'Aruba', dueDate:'2026-11-11', cost:42.69, status:'IN ARRIVO', notes:'' },
