@@ -1,5 +1,5 @@
 export type EditorialAccount = 'casaro' | 'autoscuola_susa'
-export type EditorialPlatform = 'facebook' | 'tiktok' | 'youtube' | 'whatsapp'
+export type EditorialPlatform = 'facebook' | 'instagram' | 'facebook_only' | 'tiktok' | 'youtube' | 'whatsapp'
 export type EditorialStatus = 'idea' | 'to_produce' | 'in_progress' | 'review' | 'ready' | 'scheduled' | 'published' | 'archived'
 export type EditorialMediaKind = 'photo' | 'video'
 
