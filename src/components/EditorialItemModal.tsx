@@ -30,7 +30,8 @@ type EditorialDraft = {
   publishTime: string
 }
 
-const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','tiktok','youtube','whatsapp']
+const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','instagram','facebook_only','tiktok','youtube','whatsapp']
+const META_PLATFORMS: EditorialPlatform[] = ['facebook','instagram','facebook_only']
 const EDITORIAL_DRAFT_KEY = '4bit-editorial-draft-v1'
 let editorialDraftFiles: QueuedFile[] = []
 
@@ -230,8 +231,13 @@ export function EditorialItemModal({
       return
     }
 
-    const withoutWhatsapp=draft.platforms.filter(value=>value!=='whatsapp')
-    const next=[...withoutWhatsapp,platform]
+    let next=draft.platforms.filter(value=>value!=='whatsapp')
+
+    if(META_PLATFORMS.includes(platform)) {
+      next=next.filter(value=>!META_PLATFORMS.includes(value))
+    }
+
+    next=[...next,platform]
     const nextKind=platform==='youtube' ? 'video' : draft.mediaKind
     setDraft({...draft,platforms:next,mediaKind:nextKind})
   }
