@@ -7647,3 +7647,52 @@ body.editorial-touch-dragging .editorial-drag-handle{
 .editorial-draft-saved svg{
   color:#167e55;
 }
+
+
+/* Piano Editoriale — sblocco progressivo mesi */
+.editorial-load-more-wrap{
+  display:flex;
+  justify-content:center;
+  padding:18px 14px 6px;
+}
+.editorial-load-more-month{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:220px;
+  min-height:42px;
+  padding:10px 17px;
+  border:1px solid rgba(5,5,5,.08);
+  border-radius:999px;
+  background:rgba(255,255,255,.78);
+  color:#050505;
+  box-shadow:0 8px 22px rgba(5,5,5,.04);
+  font:inherit;
+  font-size:9px;
+  font-weight:850;
+  text-transform:capitalize;
+  cursor:pointer;
+  transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.editorial-load-more-month:hover{
+  transform:translateY(-1px);
+  border-color:rgba(5,5,5,.14);
+  background:#fff;
+  box-shadow:0 10px 28px rgba(5,5,5,.07);
+}
+.editorial-load-more-month svg{
+  flex:0 0 auto;
+  opacity:.62;
+}
+@media(max-width:640px){
+  .editorial-load-more-wrap{
+    padding:14px 8px 2px;
+  }
+  .editorial-load-more-month{
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    font-size:9px;
+  }
+}
