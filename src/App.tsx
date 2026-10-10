@@ -48,6 +48,12 @@ export default function App() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [reminderId, setReminderId] = useState<string | null>(null)
   const [confettiBurst, setConfettiBurst] = useState(0)
+  const [bootReady, setBootReady] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setBootReady(true), 2200)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const onHash = () => setPage(readPage())
@@ -76,7 +82,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (auth.loading) return <PremiumLoader/>
+  if (!bootReady || auth.loading) return <PremiumLoader/>
   if (auth.cloudEnabled && !auth.user) return <AuthScreen/>
   if (auth.cloudEnabled && studio.needsWorkspace) return <WorkspaceJoin onJoin={studio.joinStudio}/>
 
@@ -95,7 +101,7 @@ export default function App() {
         {page === 'home' && <HomePage data={studio.data} editorialData={editorial.data} onClient={openClient} onEditorial={() => navigate('editorial')} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onReminder={setReminderId} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
-        {page === 'editorial' && (editorial.loading ? <PremiumLoader label="Piano Editoriale"/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
+        {page === 'editorial' && (editorial.loading ? <PremiumLoader/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
         {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onReminder={setReminderId}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
