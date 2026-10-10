@@ -20,8 +20,54 @@ import type { TeamMember } from '../types/studio'
 
 type Actions = ReturnType<typeof useEditorial>['actions']
 type QueuedFile = { id:string; file:File }
+type EditorialDraft = {
+  accounts: EditorialAccount[]
+  platforms: EditorialPlatform[]
+  mediaKind: EditorialMediaKind
+  title: string
+  description: string
+  publishDate: string
+  publishTime: string
+}
 
 const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','tiktok','youtube','whatsapp']
+const EDITORIAL_DRAFT_KEY = '4bit-editorial-draft-v1'
+let editorialDraftFiles: QueuedFile[] = []
+
+function readEditorialDraft(): EditorialDraft | null {
+  try {
+    const raw=window.localStorage.getItem(EDITORIAL_DRAFT_KEY)
+    if(!raw) return null
+    const parsed=JSON.parse(raw) as Partial<EditorialDraft>
+    const accounts=(parsed.accounts ?? []).filter((value): value is EditorialAccount => value==='casaro' || value==='autoscuola_susa')
+    const platforms=(parsed.platforms ?? []).filter((value): value is EditorialPlatform => PLATFORM_ORDER.includes(value as EditorialPlatform))
+    if(!accounts.length) return null
+    return {
+      accounts,
+      platforms:platforms.length ? platforms : ['facebook'],
+      mediaKind:parsed.mediaKind==='video' ? 'video' : 'photo',
+      title:typeof parsed.title==='string' ? parsed.title : '',
+      description:typeof parsed.description==='string' ? parsed.description : '',
+      publishDate:typeof parsed.publishDate==='string' && parsed.publishDate ? parsed.publishDate : todayISO(),
+      publishTime:typeof parsed.publishTime==='string' && parsed.publishTime ? parsed.publishTime : '18:00',
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeEditorialDraft(draft: EditorialDraft) {
+  try {
+    window.localStorage.setItem(EDITORIAL_DRAFT_KEY,JSON.stringify(draft))
+  } catch {
+    // La bozza resta comunque nello stato React della sessione corrente.
+  }
+}
+
+function clearEditorialDraft() {
+  try { window.localStorage.removeItem(EDITORIAL_DRAFT_KEY) } catch {}
+  editorialDraftFiles=[]
+}
 
 function todayISO() {
   const now=new Date()
@@ -83,6 +129,7 @@ export function EditorialItemModal({
   const [uploadProgress,setUploadProgress]=useState<{name:string;value:number}|null>(null)
   const [localError,setLocalError]=useState<string|null>(null)
   const [descriptionCopied,setDescriptionCopied]=useState(false)
+  const [draftSaved,setDraftSaved]=useState(false)
   const formRef=useRef<HTMLFormElement>(null)
 
   const steps=useMemo(()=>item ? data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder) : [],[data.steps,item])
@@ -90,12 +137,30 @@ export function EditorialItemModal({
 
   useEffect(()=>{
     if(!open) return
-    setDraft(initial)
-    setQueued([])
+    if(item) {
+      setDraft(initial)
+      setQueued([])
+    } else {
+      const saved=readEditorialDraft()
+      setDraft(saved ?? initial)
+      setQueued(editorialDraftFiles)
+      setDraftSaved(Boolean(saved))
+    }
     setUploadProgress(null)
     setLocalError(null)
     setDescriptionCopied(false)
-  },[open,initial])
+  },[open,initial,item])
+
+  useEffect(()=>{
+    if(!open || item) return
+    writeEditorialDraft(draft)
+    setDraftSaved(true)
+  },[draft,item,open])
+
+  useEffect(()=>{
+    if(!open || item) return
+    editorialDraftFiles=queued
+  },[item,open,queued])
 
   useEffect(()=>{
     if(!open) return
@@ -243,6 +308,10 @@ export function EditorialItemModal({
         }
       }
       setUploadProgress(null)
+      if(!item) {
+        clearEditorialDraft()
+        setDraftSaved(false)
+      }
       onClose()
     }catch(err){
       setLocalError(err instanceof Error ? err.message : 'Salvataggio non riuscito')
@@ -269,6 +338,7 @@ export function EditorialItemModal({
         <div>
           <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
           <h2>{item ? item.title : 'Contenuto social'}</h2>
+          {!item && draftSaved && <span className="editorial-draft-saved"><Check size={11}/> Bozza salvata automaticamente</span>}
         </div>
         <button type="button" className="icon-button" onClick={onClose} disabled={saving}><X size={18}/></button>
       </div>
