@@ -8,6 +8,8 @@ export const editorialAccountLabel: Record<EditorialAccount,string> = {
 
 export const editorialPlatformLabel: Record<EditorialPlatform,string> = {
   facebook: 'Instagram + Facebook',
+  instagram: 'Solo Instagram',
+  facebook_only: 'Solo Facebook',
   tiktok: 'TikTok',
   youtube: 'YouTube',
   whatsapp: 'WhatsApp',
@@ -43,7 +45,7 @@ export function editorialWorkflow(
 ): EditorialStepTemplate[] {
   const steps: EditorialStepTemplate[] = []
 
-  const socialPlatforms=platforms.some(platform=>['facebook','tiktok','youtube'].includes(platform))
+  const socialPlatforms=platforms.some(platform=>['facebook','instagram','facebook_only','tiktok','youtube'].includes(platform))
   const hasWhatsapp=platforms.includes('whatsapp')
 
   if (socialPlatforms) {
@@ -85,7 +87,7 @@ export function memberIdByName(members: TeamMember[], name: string) {
 
 export function legacyPlatform(platforms: EditorialPlatform[]) {
   const first = platforms[0] ?? 'facebook'
-  if (first === 'facebook') return 'fb_ig'
+  if (['facebook','instagram','facebook_only'].includes(first)) return 'fb_ig'
   return first
 }
 
