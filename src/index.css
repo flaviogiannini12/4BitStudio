@@ -7459,3 +7459,77 @@ body.editorial-touch-dragging .editorial-drag-handle{
     gap:4px;
   }
 }
+
+
+/* =========================================================
+   DEBITI — chip team
+   ========================================================= */
+.debt-creditor-field{
+  display:grid;
+  gap:8px;
+}
+.debt-team-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:1px;
+}
+.debt-team-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:34px;
+  padding:5px 10px 5px 6px;
+  border:1px solid rgba(5,5,5,.075);
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:rgba(5,5,5,.66);
+  font:inherit;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,border-color .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+.debt-team-chip:hover{
+  transform:translateY(-1px);
+  border-color:rgba(5,5,5,.14);
+  background:#fff;
+}
+.debt-team-chip.selected{
+  border-color:#050505;
+  background:#050505;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(5,5,5,.12);
+}
+.debt-team-chip-avatar{
+  display:grid;
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(5,5,5,.055);
+  color:#050505;
+  font-size:8px;
+  font-weight:900;
+  line-height:1;
+}
+.debt-team-chip.selected .debt-team-chip-avatar{
+  background:rgba(255,255,255,.15);
+  color:#fff;
+}
+@media(max-width:560px){
+  .debt-team-chips{
+    gap:6px;
+  }
+  .debt-team-chip{
+    min-height:32px;
+    padding:4px 9px 4px 5px;
+    font-size:8.5px;
+  }
+  .debt-team-chip-avatar{
+    width:21px;
+    height:21px;
+    flex-basis:21px;
+  }
+}
