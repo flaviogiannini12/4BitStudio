@@ -1,14 +1,12 @@
-export function PremiumLoader({ label = '4Bit Studio' }: { label?: string }) {
-  return <div className="premium-loader-screen" role="status" aria-label="Caricamento">
-    <div className="premium-loader-aura"/>
-    <div className="premium-loader-mark">
-      <span className="premium-loader-ring"/>
-      <span className="premium-loader-ring premium-loader-ring-two"/>
-      <img src="/apple-touch-icon-4bit-v3.png" alt="" />
-    </div>
-    <div className="premium-loader-copy">
-      <strong>{label}</strong>
-      <span>loading workspace</span>
+import { BRAND_LOGO } from '../lib/brand'
+
+export function PremiumLoader() {
+  return <div className="fourbit-logo-loader-screen" role="status" aria-live="polite" aria-label="Caricamento 4Bit Studio">
+    <div className="fourbit-logo-loader-shell">
+      <div className="fourbit-logo-loader-glow"/>
+      <div className="fourbit-logo-loader-reveal">
+        <img src={BRAND_LOGO} alt="4Bit Studio" className="fourbit-logo-loader-image"/>
+      </div>
     </div>
   </div>
 }
