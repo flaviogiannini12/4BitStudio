@@ -32,6 +32,7 @@ export function RecordEditorModal({
   const [servicesValue,setServicesValue] = useState(() => kind === 'client' ? (((record as Client | null)?.services ?? []).join(', ')) : '')
   const [invoiceEnabled,setInvoiceEnabled] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Boolean((record as Payment | Recurrence | null)?.invoiced) : false)
   const [invoiceAmount,setInvoiceAmount] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Number((record as Payment | Recurrence | null)?.amount ?? 0) : 0)
+  const [debtCreditor,setDebtCreditor] = useState(() => kind === 'debt' ? ((record as Debt | null)?.creditor ?? '') : '')
   const invoiceContribution = invoiceAmount * .04
   const invoiceGross = invoiceAmount + invoiceContribution + 2
   const invoiceNet = invoiceGross * .40
@@ -246,7 +247,25 @@ export function RecordEditorModal({
       </>}
 
       {kind === 'debt' && <>
-        <Field name="creditor" label="A chi dobbiamo restituire" defaultValue={v('creditor')} required/>
+        <label className="form-field debt-creditor-field">
+          <span>A chi dobbiamo restituire</span>
+          <input className="field" name="creditor" value={debtCreditor} onChange={e => setDebtCreditor(e.currentTarget.value)} required/>
+          {!!data.members.filter(member => member.active).length && <div className="debt-team-chips" aria-label="Seleziona una persona del team">
+            {data.members.filter(member => member.active).map(member => {
+              const selected = debtCreditor.trim().toLowerCase() === member.name.trim().toLowerCase()
+              return <button
+                type="button"
+                key={member.id}
+                className={`debt-team-chip ${selected ? 'selected' : ''}`}
+                aria-pressed={selected}
+                onClick={() => setDebtCreditor(member.name)}
+              >
+                <span className="debt-team-chip-avatar">{member.name.trim().charAt(0).toUpperCase()}</span>
+                <span>{member.name}</span>
+              </button>
+            })}
+          </div>}
+        </label>
         <Field name="description" label="Motivo / descrizione" defaultValue={v('description')} placeholder="Es. Anticipo, rimborso, prestito…"/>
         <div className="field-grid two"><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/><Field name="dueDate" label="Da restituire entro" type="date" defaultValue={v('dueDate')}/></div>
         <Select name="status" label="Stato" defaultValue={v('status') || 'open'} options={[['open','Da restituire'],['paid','Restituito']]}/>
