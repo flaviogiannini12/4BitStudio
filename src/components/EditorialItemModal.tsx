@@ -68,7 +68,7 @@ export function EditorialItemModal({
   onClose:()=>void
 }) {
   const initial=useMemo(()=>({
-    account:item?.account ?? 'casaro' as EditorialAccount,
+    accounts:[item?.account ?? 'casaro'] as EditorialAccount[],
     platforms:item?.platforms?.length ? item.platforms : ['facebook'] as EditorialPlatform[],
     mediaKind:item?.mediaKind ?? 'photo' as EditorialMediaKind,
     title:item?.title ?? '',
@@ -114,21 +114,40 @@ export function EditorialItemModal({
 
   const hasYoutube=draft.platforms.includes('youtube')
   const hasWhatsapp=draft.platforms.includes('whatsapp')
+  const canUseWhatsapp=draft.accounts.length===1 && draft.accounts[0]==='casaro'
   const mediaLocked: EditorialMediaKind | null = hasYoutube ? 'video' : hasWhatsapp ? 'photo' : null
   const currentStatus=item?.status ?? 'to_produce'
   const accept=draft.mediaKind==='video' ? 'video/*' : 'image/*'
 
-  function setAccount(account:EditorialAccount) {
+  function toggleAccount(account:EditorialAccount) {
+    if(item) {
+      let platforms=draft.platforms
+      if(account==='autoscuola_susa' && platforms.includes('whatsapp')) {
+        platforms=platforms.filter(value=>value!=='whatsapp')
+        if(!platforms.length) platforms=['facebook']
+      }
+      setDraft({...draft,accounts:[account],platforms})
+      return
+    }
+
+    const active=draft.accounts.includes(account)
+    let accounts=active
+      ? draft.accounts.filter(value=>value!==account)
+      : [...draft.accounts,account]
+
+    if(!accounts.length) return
+
     let platforms=draft.platforms
-    if(account==='autoscuola_susa' && platforms.includes('whatsapp')) {
+    if((accounts.includes('autoscuola_susa') || accounts.length>1) && platforms.includes('whatsapp')) {
       platforms=platforms.filter(value=>value!=='whatsapp')
       if(!platforms.length) platforms=['facebook']
     }
-    setDraft({...draft,account,platforms})
+
+    setDraft({...draft,accounts,platforms})
   }
 
   function togglePlatform(platform:EditorialPlatform) {
-    if(platform==='whatsapp' && draft.account!=='casaro') return
+    if(platform==='whatsapp' && !canUseWhatsapp) return
 
     const active=draft.platforms.includes(platform)
     if(active) {
@@ -198,12 +217,11 @@ export function EditorialItemModal({
 
   async function submit(event:FormEvent) {
     event.preventDefault()
-    if(!draft.title.trim() || !draft.platforms.length) return
+    if(!draft.title.trim() || !draft.platforms.length || !draft.accounts.length) return
     setSaving(true)
     setLocalError(null)
     try{
-      const payload={
-        account:draft.account,
+      const sharedPayload={
         platforms:draft.platforms,
         mediaKind:draft.mediaKind,
         title:draft.title.trim(),
@@ -212,13 +230,17 @@ export function EditorialItemModal({
         publishTime:draft.publishTime || '18:00',
       }
 
-      const saved=item
-        ? await actions.updateItem(item.id,payload)
-        : await actions.createItem({...payload,sortOrder:Date.now()})
+      const savedItems = item
+        ? [await actions.updateItem(item.id,{...sharedPayload,account:draft.accounts[0]})]
+        : await Promise.all(draft.accounts.map((account,index)=>
+            actions.createItem({...sharedPayload,account,sortOrder:Date.now()+index})
+          ))
 
-      for(const queuedFile of queued){
-        setUploadProgress({name:queuedFile.file.name,value:0})
-        await actions.uploadAsset(saved.id,queuedFile.file,'contenuto',value=>setUploadProgress({name:queuedFile.file.name,value}))
+      for(const saved of savedItems){
+        for(const queuedFile of queued){
+          setUploadProgress({name:queuedFile.file.name,value:0})
+          await actions.uploadAsset(saved.id,queuedFile.file,'contenuto',value=>setUploadProgress({name:queuedFile.file.name,value}))
+        }
       }
       setUploadProgress(null)
       onClose()
@@ -253,13 +275,13 @@ export function EditorialItemModal({
 
       <div className="task-editor-body editorial-form-v5">
         <div className="editorial-choice-block">
-          <span className="editorial-choice-label">Profilo</span>
+          <span className="editorial-choice-label">Profilo{item ? '' : ' · puoi selezionarne più di uno'}</span>
           <div className="editorial-choice-chips account-choice-chips">
             {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
               type="button"
               key={value}
-              className={`editorial-choice-chip account-chip account-${value} ${draft.account===value?'active':''}`}
-              onClick={()=>setAccount(value)}
+              className={`editorial-choice-chip account-chip account-${value} ${draft.accounts.includes(value)?'active':''}`}
+              onClick={()=>toggleAccount(value)}
             >{label}</button>)}
           </div>
         </div>
@@ -276,7 +298,7 @@ export function EditorialItemModal({
         <div className="editorial-choice-block">
           <span className="editorial-choice-label">Canali</span>
           <div className="editorial-choice-chips platform-choice-chips">
-            {PLATFORM_ORDER.filter(platform=>platform!=='whatsapp' || draft.account==='casaro').map(platform=><button
+            {PLATFORM_ORDER.filter(platform=>platform!=='whatsapp' || canUseWhatsapp).map(platform=><button
               type="button"
               key={platform}
               className={`editorial-choice-chip platform-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
