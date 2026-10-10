@@ -7631,3 +7631,19 @@ body.editorial-touch-dragging .editorial-drag-handle{
     opacity:.18;
   }
 }
+
+
+/* Piano Editoriale — autosave bozza */
+.editorial-draft-saved{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-top:5px;
+  color:rgba(5,5,5,.38);
+  font-size:7.5px;
+  font-weight:750;
+  letter-spacing:.01em;
+}
+.editorial-draft-saved svg{
+  color:#167e55;
+}
