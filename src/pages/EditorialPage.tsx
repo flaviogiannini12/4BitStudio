@@ -15,7 +15,7 @@ import type { TeamMember } from '../types/studio'
 type Actions=ReturnType<typeof useEditorial>['actions']
 type View='calendar'|'archive'
 
-const PLATFORM_ORDER: EditorialPlatform[]=['facebook','tiktok','youtube','whatsapp']
+const PLATFORM_ORDER: EditorialPlatform[]=['facebook','instagram','facebook_only','tiktok','youtube','whatsapp']
 const STATUS_FILTERS: EditorialStatus[]=['to_produce','review','ready']
 
 function dateKey(date:Date){
@@ -73,6 +73,12 @@ function BrandIcon({brand}:{brand:keyof typeof BRAND_PATHS}) {
 function PlatformPreviewIcon({platform}:{platform:EditorialPlatform}) {
   if(platform==='facebook') return <span className="editorial-platform-logo platform-meta" title="Instagram + Facebook" aria-label="Instagram + Facebook">
     <span className="brand-instagram"><BrandIcon brand="instagram"/></span>
+    <span className="brand-facebook"><BrandIcon brand="facebook"/></span>
+  </span>
+  if(platform==='instagram') return <span className="editorial-platform-logo platform-instagram" title="Solo Instagram" aria-label="Solo Instagram">
+    <span className="brand-instagram"><BrandIcon brand="instagram"/></span>
+  </span>
+  if(platform==='facebook_only') return <span className="editorial-platform-logo platform-facebook-only" title="Solo Facebook" aria-label="Solo Facebook">
     <span className="brand-facebook"><BrandIcon brand="facebook"/></span>
   </span>
   return <span className={`editorial-platform-logo platform-${platform}`} title={editorialPlatformLabel[platform]} aria-label={editorialPlatformLabel[platform]}>
