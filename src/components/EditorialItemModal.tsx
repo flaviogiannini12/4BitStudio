@@ -215,26 +215,24 @@ export function EditorialItemModal({
     if(platform==='whatsapp' && !canUseWhatsapp) return
 
     const active=draft.platforms.includes(platform)
+
+    if(platform==='whatsapp') {
+      if(active) return
+      setDraft({...draft,platforms:['whatsapp'],mediaKind:'photo'})
+      return
+    }
+
     if(active) {
       if(draft.platforms.length===1) return
       const next=draft.platforms.filter(value=>value!==platform)
-      const nextKind=next.includes('youtube') ? 'video' : next.includes('whatsapp') ? 'photo' : draft.mediaKind
+      const nextKind=next.includes('youtube') ? 'video' : draft.mediaKind
       setDraft({...draft,platforms:next,mediaKind:nextKind})
       return
     }
 
-    let next=[...draft.platforms,platform]
-    let nextKind=draft.mediaKind
-
-    if(platform==='youtube') {
-      next=next.filter(value=>value!=='whatsapp')
-      nextKind='video'
-    }
-    if(platform==='whatsapp') {
-      next=next.filter(value=>value!=='youtube')
-      nextKind='photo'
-    }
-
+    const withoutWhatsapp=draft.platforms.filter(value=>value!=='whatsapp')
+    const next=[...withoutWhatsapp,platform]
+    const nextKind=platform==='youtube' ? 'video' : draft.mediaKind
     setDraft({...draft,platforms:next,mediaKind:nextKind})
   }
 
