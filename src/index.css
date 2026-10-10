@@ -7533,3 +7533,101 @@ body.editorial-touch-dragging .editorial-drag-handle{
     flex-basis:21px;
   }
 }
+
+
+/* =========================================================
+   4BIT LOGO LOADER — ScoutLens approved motion
+   ========================================================= */
+@keyframes fourbit-logo-reveal {
+  0% {
+    opacity:0;
+    transform:scale(.985);
+    clip-path:inset(0 100% 0 0 round 8px);
+    filter:blur(7px);
+  }
+  24% {
+    opacity:.42;
+    transform:scale(.992);
+    clip-path:inset(0 62% 0 0 round 8px);
+    filter:blur(4px);
+  }
+  52% {
+    opacity:1;
+    transform:scale(1);
+    clip-path:inset(0 0 0 0 round 8px);
+    filter:blur(0);
+  }
+  72% {
+    opacity:1;
+    transform:scale(1);
+    clip-path:inset(0 0 0 0 round 8px);
+    filter:blur(0);
+  }
+  100% {
+    opacity:0;
+    transform:scale(1.015);
+    clip-path:inset(0 0 0 0 round 8px);
+    filter:blur(4px);
+  }
+}
+@keyframes fourbit-logo-glow {
+  0%,100% { opacity:0; transform:scale(.82); }
+  48%,74% { opacity:.34; transform:scale(1); }
+}
+.fourbit-logo-loader-screen{
+  position:fixed;
+  z-index:260;
+  inset:0;
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#f6f3f1;
+}
+.fourbit-logo-loader-shell{
+  position:relative;
+  width:min(300px,72vw);
+  display:grid;
+  place-items:center;
+  isolation:isolate;
+}
+.fourbit-logo-loader-reveal{
+  width:100%;
+  animation:fourbit-logo-reveal 2.2s cubic-bezier(.22,.72,.18,1) infinite;
+  will-change:opacity,transform,clip-path,filter;
+}
+.fourbit-logo-loader-image{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  mix-blend-mode:multiply;
+  filter:drop-shadow(0 10px 30px rgba(5,5,5,.10));
+}
+.fourbit-logo-loader-glow{
+  position:absolute;
+  inset:18% 10%;
+  z-index:-1;
+  border-radius:999px;
+  background:radial-gradient(circle,rgba(242,86,35,.18),rgba(242,86,35,0) 68%);
+  filter:blur(26px);
+  animation:fourbit-logo-glow 2.2s ease-in-out infinite;
+}
+@media(max-width:640px){
+  .fourbit-logo-loader-shell{
+    width:min(250px,68vw);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .fourbit-logo-loader-reveal{
+    animation:none;
+    opacity:1;
+    clip-path:none;
+    filter:none;
+    transform:none;
+  }
+  .fourbit-logo-loader-glow{
+    animation:none;
+    opacity:.18;
+  }
+}
