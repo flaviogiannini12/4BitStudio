@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent, type PointerEvent } from 'react'
-import { Archive, CalendarDays, GripVertical, Paperclip, Plus } from 'lucide-react'
+import { Archive, CalendarDays, ChevronDown, GripVertical, Paperclip, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
   editorialAccountLabel,
@@ -22,11 +22,26 @@ function dateKey(date:Date){
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 }
 
-function currentMonthDaysFromToday(todayKey:string){
+function calendarDaysFromToday(todayKey:string,extraMonths:number){
   const [year,month,day]=todayKey.split('-').map(Number)
-  const now=new Date(year,month-1,day)
-  const last=new Date(year,month,0).getDate()
-  return Array.from({length:last-day+1},(_,index)=>new Date(year,month-1,day+index))
+  const days:Date[]=[]
+  const lastCurrent=new Date(year,month,0).getDate()
+
+  for(let value=day;value<=lastCurrent;value++) days.push(new Date(year,month-1,value))
+
+  for(let offset=1;offset<=extraMonths;offset++){
+    const first=new Date(year,month-1+offset,1)
+    const last=new Date(first.getFullYear(),first.getMonth()+1,0).getDate()
+    for(let value=1;value<=last;value++) days.push(new Date(first.getFullYear(),first.getMonth(),value))
+  }
+
+  return days
+}
+
+function nextMonthLabel(todayKey:string,extraMonths:number){
+  const [year,month]=todayKey.split('-').map(Number)
+  const date=new Date(year,month-1+extraMonths+1,1)
+  return date.toLocaleDateString('it-IT',{month:'long',year:'numeric'})
 }
 
 function shouldBeInArchive(item:EditorialItem,today:string){
@@ -85,9 +100,11 @@ export function EditorialPage({
   const [editing,setEditing]=useState<EditorialItem|null>(null)
   const [newDate,setNewDate]=useState<string|null>(null)
   const [dragOverDate,setDragOverDate]=useState<string|null>(null)
+  const [extraMonths,setExtraMonths]=useState(0)
 
   const [today,setToday]=useState(()=>dateKey(new Date()))
-  const days=useMemo(()=>currentMonthDaysFromToday(today),[today])
+  const days=useMemo(()=>calendarDaysFromToday(today,extraMonths),[today,extraMonths])
+  const nextMonth=useMemo(()=>nextMonthLabel(today,extraMonths),[today,extraMonths])
 
   useEffect(()=>{
     let timer:number | null=null
@@ -266,6 +283,16 @@ export function EditorialPage({
             </div>
           </section>
         })}
+        <div className="editorial-load-more-wrap">
+          <button
+            type="button"
+            className="editorial-load-more-month"
+            onClick={()=>setExtraMonths(current=>current+1)}
+          >
+            <ChevronDown size={16}/>
+            <span>Mostra {nextMonth}</span>
+          </button>
+        </div>
       </div> : <section className="todo-completed-panel editorial-archive-tasklike">
         <div className="todo-completed-head">
           <h3>Archivio</h3>
