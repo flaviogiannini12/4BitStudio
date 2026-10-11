@@ -7707,3 +7707,110 @@ body.editorial-touch-dragging .editorial-drag-handle{
 .editorial-platform-logo.platform-facebook-only{
   background:rgba(24,119,242,.06);
 }
+
+
+/* =========================================================
+   PIANO EDITORIALE — contenuto ispirazionale
+   ========================================================= */
+.editorial-inspiration-zone{
+  display:grid;
+  gap:11px;
+  padding:14px;
+  border:1px solid rgba(5,5,5,.065);
+  border-radius:18px;
+  background:rgba(255,255,255,.62);
+}
+.editorial-inspiration-head strong,
+.editorial-inspiration-head small{
+  display:block;
+}
+.editorial-inspiration-head strong{
+  font-size:10px;
+}
+.editorial-inspiration-head small{
+  margin-top:2px;
+  color:rgba(5,5,5,.38);
+  font-size:8px;
+  line-height:1.4;
+}
+.editorial-inspiration-link-row{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+}
+.editorial-inspiration-link-icon{
+  display:grid;
+  width:34px;
+  height:34px;
+  place-items:center;
+  border:1px solid rgba(5,5,5,.06);
+  border-radius:11px;
+  background:rgba(5,5,5,.04);
+  color:rgba(5,5,5,.58);
+}
+.editorial-inspiration-link-row .field{
+  min-width:0;
+}
+.editorial-inspiration-open{
+  display:inline-flex;
+  min-height:36px;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:8px 11px;
+  border-radius:11px;
+  background:#050505;
+  color:#fff;
+  font-size:8px;
+  font-weight:850;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.editorial-inspiration-paste{
+  display:grid;
+  min-height:88px;
+  place-items:center;
+  align-content:center;
+  gap:4px;
+  padding:14px;
+  border:1px dashed rgba(5,5,5,.13);
+  border-radius:14px;
+  background:rgba(5,5,5,.018);
+  color:rgba(5,5,5,.46);
+  outline:none;
+  text-align:center;
+  cursor:text;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.editorial-inspiration-paste:focus{
+  border-color:rgba(5,5,5,.3);
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(5,5,5,.035);
+}
+.editorial-inspiration-paste strong{
+  color:#050505;
+  font-size:9px;
+}
+.editorial-inspiration-paste span{
+  font-size:8px;
+}
+.editorial-asset-row.inspiration{
+  background:rgba(243,236,54,.055);
+}
+@media(max-width:640px){
+  .editorial-inspiration-zone{
+    padding:12px;
+  }
+  .editorial-inspiration-link-row{
+    grid-template-columns:30px minmax(0,1fr);
+  }
+  .editorial-inspiration-link-icon{
+    width:30px;
+    height:30px;
+  }
+  .editorial-inspiration-open{
+    grid-column:1/-1;
+    width:100%;
+  }
+}
