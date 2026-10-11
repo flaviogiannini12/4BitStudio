@@ -7814,3 +7814,64 @@ body.editorial-touch-dragging .editorial-drag-handle{
     width:100%;
   }
 }
+
+
+/* =========================================================
+   ECONOMIA — movimenti semplificati e collegati agli incassi
+   ========================================================= */
+.ledger-form-type{
+  display:grid;
+  gap:7px;
+}
+.ledger-type-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.ledger-type-chip{
+  display:inline-flex;
+  min-height:38px;
+  align-items:center;
+  justify-content:center;
+  padding:8px 14px;
+  border:1px solid rgba(5,5,5,.08);
+  border-radius:999px;
+  background:rgba(255,255,255,.7);
+  color:rgba(5,5,5,.58);
+  font:inherit;
+  font-size:9px;
+  font-weight:850;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.ledger-type-chip:hover{
+  transform:translateY(-1px);
+  border-color:rgba(5,5,5,.15);
+}
+.ledger-type-chip.active{
+  border-color:#050505;
+  background:#050505;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(5,5,5,.11);
+}
+.ledger-type-chip.income.active{
+  border-color:#167e55;
+  background:#167e55;
+}
+.ledger-row.linked-payment{
+  background:linear-gradient(90deg,rgba(24,140,91,.035),rgba(255,255,255,.72) 34%);
+}
+.ledger-row .status-chip.linked{
+  border-color:rgba(24,140,91,.08);
+  background:rgba(24,140,91,.08);
+  color:#167e55;
+}
+@media(max-width:640px){
+  .ledger-type-chips{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .ledger-type-chip{
+    width:100%;
+  }
+}
