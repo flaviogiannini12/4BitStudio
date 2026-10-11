@@ -93,6 +93,8 @@ export interface Payment {
 export interface LedgerEntry {
   id: string
   paymentId?: string | null
+  compensationId?: string | null
+  debtId?: string | null
   entryDate: string | null
   direction: 'income' | 'expense'
   clientId: string | null
@@ -106,6 +108,7 @@ export interface LedgerEntry {
 export interface Compensation {
   id: string
   entryDate: string | null
+  paidAt?: string | null
   memberId: string | null
   memberName: string
   clientId: string | null
@@ -257,6 +260,7 @@ export interface LedgerEntryInput {
 
 export interface CompensationInput {
   entryDate?: string | null
+  paidAt?: string | null
   memberId?: string | null
   memberName: string
   clientId?: string | null
