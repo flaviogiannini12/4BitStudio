@@ -11,6 +11,7 @@ export interface EditorialItem {
   mediaKind: EditorialMediaKind
   title: string
   description: string
+  inspirationUrl: string
   status: EditorialStatus
   publishDate: string | null
   publishTime: string | null
@@ -57,6 +58,7 @@ export interface EditorialItemInput {
   mediaKind: EditorialMediaKind
   title: string
   description?: string
+  inspirationUrl?: string
   status?: EditorialStatus
   publishDate?: string | null
   publishTime?: string | null
