@@ -453,8 +453,9 @@ export function EditorialItemModal({
             {steps.map(step=>{
               const owner=members.find(member=>member.id===step.ownerMemberId)
               const name=owner?.name ?? 'Team'
-              const manualPhotoEditing=step.label==='Photo editing / Grafiche social'
-              const automatic=manualPhotoEditing ? false : isAutomaticEditorialStep(step.label)
+              const normalizedLabel=step.label.trim().toLowerCase()
+              const manualPhotoEditing=normalizedLabel.includes('photo editing')
+              const automatic=!manualPhotoEditing && isAutomaticEditorialStep(step.label)
               const willPublish = !step.done
                 && ['Pubblicazione social','WhatsApp · Invio'].includes(step.label)
                 && steps.every(other=>other.id===step.id || other.done)
@@ -462,7 +463,7 @@ export function EditorialItemModal({
                 type="button"
                 key={step.id}
                 disabled={automatic}
-                className={`editorial-check-row ${memberToneClass(name)} ${step.done?'done':'pending'} ${automatic?'automatic':''}`}
+                className={`editorial-check-row ${memberToneClass(name)} ${step.done?'done':'pending'} ${automatic?'automatic':''} ${manualPhotoEditing?'manual-photo-editing':''}`}
                 onClick={()=>{
                   if(automatic) return
                   if(willPublish) onCelebrate()
@@ -471,7 +472,7 @@ export function EditorialItemModal({
               >
                 <span className="editorial-step-check">{step.done && <Check size={12}/>}</span>
                 <span className="editorial-check-copy"><strong>{step.label}</strong><small>{name}</small></span>
-                <span className="editorial-check-state">{step.done?'Fatto':automatic?'Automatico':'Da fare'}</span>
+                <span className="editorial-check-state">{step.done?'Fatto':manualPhotoEditing?'Da fare':automatic?'Automatico':'Da fare'}</span>
               </button>
             })}
           </div>
