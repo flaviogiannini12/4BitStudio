@@ -287,17 +287,28 @@ export function PaymentsPage({
         <div className="section-heading responsive-heading"><div><p className="eyebrow">Cassa</p><h2>Movimenti</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'ledger',record:null})}><Plus size={14}/> Movimento</button></div>
         <div className="ledger-summary">
           <div><small>Entrate incassate</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
-          <div><small>Da incassare</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status !== 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
+          <div><small>Da incassare</small><strong>{money(pendingTotal)}</strong></div>
           <div><small>Uscite</small><strong>{money(ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
         </div>
         <div className="ledger-list">
-          {movements.map(m => <button type="button" className="ledger-row ledger-row-edit" key={m.id} onClick={() => setEditor({kind:'ledger',record:m})}>
-            <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
-            <div><strong>{m.description || m.category}</strong><small>{client(m.clientId)} · {m.category}{m.notes ? ' · ' + m.notes : ''}</small></div>
-            <time>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</time>
-            <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
-            <span className="status-chip">{m.status}</span>
-          </button>)}
+          {movements.map(m => {
+            const linkedPayment=m.paymentId ? payments.find(p=>p.id===m.paymentId) : null
+            return <button
+              type="button"
+              className={`ledger-row ledger-row-edit ${linkedPayment ? 'linked-payment' : ''}`}
+              key={m.id}
+              onClick={() => linkedPayment ? setEditor({kind:'payment',record:linkedPayment}) : setEditor({kind:'ledger',record:m})}
+            >
+              <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
+              <div>
+                <strong>{m.description || m.category}</strong>
+                <small>{client(m.clientId)}{linkedPayment ? ' · Incasso collegato' : m.category ? ' · ' + m.category : ''}{m.notes ? ' · ' + m.notes : ''}</small>
+              </div>
+              <time>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</time>
+              <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
+              <span className={`status-chip ${linkedPayment ? 'linked' : ''}`}>{linkedPayment ? 'Da incasso' : m.status}</span>
+            </button>
+          })}
         </div>
       </section>
 
