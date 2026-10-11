@@ -8227,3 +8227,11 @@ body.editorial-touch-dragging .editorial-drag-handle{
     display:none!important;
   }
 }
+
+
+/* Home mobile — nasconde Ricorrenze attive */
+@media(max-width:760px){
+  .home-stack>.recurrences-preview{
+    display:none!important;
+  }
+}
