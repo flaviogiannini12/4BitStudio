@@ -8219,3 +8219,11 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:8px!important;
   }
 }
+
+
+/* Home mobile — nasconde Pagamenti imminenti */
+@media(max-width:760px){
+  .home-payments-focus{
+    display:none!important;
+  }
+}
