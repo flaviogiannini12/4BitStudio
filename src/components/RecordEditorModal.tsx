@@ -33,6 +33,7 @@ export function RecordEditorModal({
   const [invoiceEnabled,setInvoiceEnabled] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Boolean((record as Payment | Recurrence | null)?.invoiced) : false)
   const [invoiceAmount,setInvoiceAmount] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Number((record as Payment | Recurrence | null)?.amount ?? 0) : 0)
   const [debtCreditor,setDebtCreditor] = useState(() => kind === 'debt' ? ((record as Debt | null)?.creditor ?? '') : '')
+  const [ledgerDirection,setLedgerDirection] = useState<LedgerEntry['direction']>(() => kind === 'ledger' ? ((record as LedgerEntry | null)?.direction ?? 'expense') : 'expense')
   const invoiceContribution = invoiceAmount * .04
   const invoiceGross = invoiceAmount + invoiceContribution + 2
   const invoiceNet = invoiceGross * .40
@@ -105,7 +106,16 @@ export function RecordEditorModal({
       }
 
       if (kind === 'ledger') {
-        const payload = { entryDate:nullable('entryDate'), direction:s('direction') as LedgerEntry['direction'], clientId:nullable('clientId'), description:s('description'), amount:n('amount'), status:s('status'), category:s('category'), notes:s('notes') }
+        const payload = {
+          entryDate:nullable('entryDate'),
+          direction:ledgerDirection,
+          clientId:nullable('clientId'),
+          description:s('description'),
+          amount:n('amount'),
+          status:ledgerDirection === 'income' ? 'Incassato' : 'Pagato',
+          category:'',
+          notes:s('notes'),
+        }
         if (record) await actions.updateLedger(record.id,payload)
         else await actions.createLedger(payload)
       }
@@ -221,12 +231,20 @@ export function RecordEditorModal({
       </>}
 
       {kind === 'ledger' && <>
-        <div className="field-grid two"><Field name="entryDate" label="Data" type="date" defaultValue={v('entryDate')}/><Select name="direction" label="Tipo" defaultValue={v('direction') || 'income'} options={[['income','Entrata'],['expense','Uscita']]}/></div>
+        <div className="ledger-form-type">
+          <span className="editorial-choice-label">Tipo movimento</span>
+          <div className="ledger-type-chips">
+            <button type="button" className={`ledger-type-chip expense ${ledgerDirection === 'expense' ? 'active' : ''}`} onClick={() => setLedgerDirection('expense')}>− Uscita</button>
+            <button type="button" className={`ledger-type-chip income ${ledgerDirection === 'income' ? 'active' : ''}`} onClick={() => setLedgerDirection('income')}>+ Entrata extra</button>
+          </div>
+        </div>
+        <div className="field-grid two">
+          <Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/>
+          <Field name="entryDate" label="Data" type="date" defaultValue={v('entryDate') || new Date().toLocaleDateString('en-CA')}/>
+        </div>
+        <Field name="description" label="Descrizione" defaultValue={v('description')} placeholder={ledgerDirection === 'expense' ? 'Es. fotografo, hosting, pranzo…' : 'Es. rimborso, quota team…'} required/>
         <ClientSelect data={data} defaultValue={v('clientId') || presetClientId || ''} allowEmpty/>
-        <Field name="description" label="Descrizione" defaultValue={v('description')} required/>
-        <div className="field-grid two"><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/><Field name="status" label="Stato" defaultValue={v('status')} placeholder="Incassato, Da incassare, Pagato…"/></div>
-        <Field name="category" label="Categoria" defaultValue={v('category')}/>
-        <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
+        <TextArea name="notes" label="Note (facoltative)" defaultValue={v('notes')}/>
       </>}
 
       {kind === 'deadline' && <>
