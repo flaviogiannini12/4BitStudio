@@ -8035,3 +8035,187 @@ body.editorial-touch-dragging .editorial-drag-handle{
     display:none!important;
   }
 }
+
+
+/* =========================================================
+   TASK MOBILE — header e toolbar compatti
+   ========================================================= */
+@media(max-width:760px){
+  .page-tasks>.page-header.page-header-clean{
+    grid-template-columns:1fr!important;
+    justify-items:end!important;
+    align-items:center!important;
+    padding:14px 4px 0!important;
+    margin-bottom:8px!important;
+  }
+
+  .page-tasks>.page-header.page-header-clean>div:first-child{
+    display:none!important;
+  }
+
+  .page-tasks>.page-header .header-actions{
+    width:auto!important;
+    justify-self:end!important;
+  }
+
+  .page-tasks>.page-header .add-main{
+    width:auto!important;
+    min-width:156px!important;
+    min-height:46px!important;
+    padding:0 17px!important;
+    border-radius:999px!important;
+  }
+
+  .page-tasks>.page-header .add-main span{
+    display:inline!important;
+  }
+
+  .page-tasks .todo-planner-page{
+    gap:10px!important;
+  }
+
+  .page-tasks .todo-planner-head{
+    min-height:0!important;
+    align-items:center!important;
+    padding:0 4px!important;
+    margin:0!important;
+  }
+
+  .page-tasks .todo-planner-head .eyebrow{
+    display:none!important;
+  }
+
+  .page-tasks .todo-planner-head h2{
+    margin:0!important;
+    font-size:28px!important;
+    line-height:1!important;
+  }
+
+  .page-tasks .todo-toolbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:7px!important;
+    align-items:stretch!important;
+  }
+
+  .page-tasks .task-filter-with-count{
+    grid-column:1/-1!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:stretch!important;
+    gap:7px!important;
+  }
+
+  .page-tasks .todo-toolbar .task-filter{
+    grid-column:auto!important;
+    width:100%!important;
+    margin:0!important;
+  }
+
+  .page-tasks .task-filter-counter{
+    width:auto!important;
+    min-width:70px!important;
+    min-height:40px!important;
+    justify-content:center!important;
+    padding:0 10px!important;
+    border-radius:14px!important;
+    background:rgba(255,255,255,.72)!important;
+    font-size:8.5px!important;
+  }
+
+  .page-tasks .task-filter-counter strong{
+    font-size:13px!important;
+  }
+
+  .page-tasks .todo-filter-select{
+    width:100%!important;
+    min-width:0!important;
+    min-height:44px!important;
+    padding:5px 8px 5px 10px!important;
+    gap:6px!important;
+  }
+
+  .page-tasks .todo-filter-select select{
+    min-width:0!important;
+    max-width:none!important;
+    width:100%!important;
+    font-size:9px!important;
+  }
+
+  .page-tasks .todo-toolbar .planner-toggle,
+  .page-tasks .todo-toolbar .date-jump{
+    grid-column:auto!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:44px!important;
+    margin:0!important;
+  }
+
+  .page-tasks .planner-toggle{
+    gap:6px!important;
+    padding:5px 8px!important;
+    font-size:8.5px!important;
+    line-height:1.15!important;
+  }
+
+  .page-tasks .planner-switch{
+    width:31px!important;
+    height:20px!important;
+    flex:0 0 31px!important;
+  }
+
+  .page-tasks .planner-switch span{
+    width:14px!important;
+    height:14px!important;
+  }
+
+  .page-tasks .planner-toggle input:checked + .planner-switch span{
+    transform:translateX(11px)!important;
+  }
+
+  .page-tasks .date-jump{
+    gap:5px!important;
+    padding:5px 6px 5px 9px!important;
+  }
+
+  .page-tasks .date-jump>svg{
+    flex:0 0 auto!important;
+  }
+
+  .page-tasks .date-jump input{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    font-size:8.5px!important;
+  }
+
+  .page-tasks .date-jump button{
+    width:29px!important;
+    height:29px!important;
+    flex:0 0 29px!important;
+  }
+
+  .page-tasks .todo-calendar-panel{
+    border-radius:22px!important;
+  }
+}
+
+@media(max-width:390px){
+  .page-tasks>.page-header .add-main{
+    min-width:148px!important;
+    min-height:44px!important;
+    padding-inline:15px!important;
+  }
+
+  .page-tasks .todo-filter-select>span{
+    font-size:7px!important;
+  }
+
+  .page-tasks .planner-toggle{
+    font-size:8px!important;
+  }
+
+  .page-tasks .date-jump input{
+    font-size:8px!important;
+  }
+}
