@@ -14,6 +14,27 @@ const STORAGE_KEY = '4bit-studio-v1'
 const EXCEL_MIGRATION_KEY = '4bit-studio-excel-seed-2026-09'
 const cloneDemo = () => JSON.parse(JSON.stringify(demoData)) as StudioData
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID()}`
+const grossPaymentAmount = (payment: Pick<Payment,'amount'|'invoiced'>) => payment.invoiced ? Math.round((payment.amount * 1.04 + 2) * 100) / 100 : payment.amount
+
+function syncLocalPaymentLedger(entries: LedgerEntry[], payment: Payment): LedgerEntry[] {
+  const existing=entries.find(entry=>entry.paymentId===payment.id)
+  const without=entries.filter(entry=>entry.paymentId!==payment.id)
+  if(payment.status!=='paid') return without
+
+  const linked:LedgerEntry={
+    id:existing?.id ?? id('ledger'),
+    paymentId:payment.id,
+    entryDate:payment.paidAt ? payment.paidAt.slice(0,10) : payment.dueDate,
+    direction:'income',
+    clientId:payment.clientId,
+    description:payment.label,
+    amount:grossPaymentAmount(payment),
+    status:'Incassato',
+    category:'Incasso',
+    notes:'',
+  }
+  return [...without,linked]
+}
 
 function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
   const seed = cloneDemo()
@@ -302,8 +323,16 @@ export function useStudio(user: User | null, ready: boolean) {
       saveLocal(current => ({ ...current, payments: [...current.payments, value] }))
     },
     async updatePayment(paymentId: string, input: Partial<Payment>) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updatePayment(paymentId, input); await reload(true) })
-      saveLocal(current => ({ ...current, payments: current.payments.map(x => x.id === paymentId ? { ...x, ...input } : x) }))
+      if (cloudEnabled && user) return protect(async () => {
+        await cloudRepo.updatePayment(paymentId, input)
+        await cloudRepo.syncPaymentLedger(paymentId)
+        await reload(true)
+      })
+      saveLocal(current => {
+        const payments=current.payments.map(x => x.id === paymentId ? { ...x, ...input } : x)
+        const payment=payments.find(x=>x.id===paymentId)
+        return payment ? {...current,payments,ledgerEntries:syncLocalPaymentLedger(current.ledgerEntries,payment)} : {...current,payments}
+      })
     },
     async markPaymentPaid(paymentId: string) {
       const payment = data.payments.find(x => x.id === paymentId)
@@ -312,6 +341,7 @@ export function useStudio(user: User | null, ready: boolean) {
       const paidAt = new Date().toISOString()
       if (cloudEnabled && user) return protect(async () => {
         await cloudRepo.updatePayment(paymentId, { status: 'paid', paidAt })
+        await cloudRepo.syncPaymentLedger(paymentId)
         if (recurrence?.active) {
           const nextDue = addMonths(payment.dueDate, recurrence.intervalMonths, recurrence.dueDay)
           const exists = data.payments.some(x => x.recurrenceId === recurrence.id && x.status === 'pending' && x.id !== paymentId)
@@ -330,7 +360,9 @@ export function useStudio(user: User | null, ready: boolean) {
           }
           recurrences = recurrences.map(x => x.id === recurrence.id ? { ...x, nextDueDate: nextDue } : x)
         }
-        return { ...current, payments, recurrences }
+        const paidPayment=payments.find(x=>x.id===paymentId)
+        const ledgerEntries=paidPayment ? syncLocalPaymentLedger(current.ledgerEntries,paidPayment) : current.ledgerEntries
+        return { ...current, payments, recurrences, ledgerEntries }
       })
     },
     async recordReminder(paymentId: string) {
