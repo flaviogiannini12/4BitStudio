@@ -252,7 +252,9 @@ export async function setEditorialStepDone(id:string,done:boolean) {
   const db=client()
   const {data,error}=await db.from('editorial_steps').select('id,label,editorial_item_id').eq('id',id).single()
   if(error) throw error
-  if(isAutomaticEditorialStep(String(data.label))) {
+  const label=String(data.label)
+  const manualPhotoEditing=label==='Photo editing / Grafiche social'
+  if(!manualPhotoEditing && isAutomaticEditorialStep(label)) {
     await syncEditorialAutomation(String(data.editorial_item_id))
     const {data:fresh,error:freshError}=await db.from('editorial_steps').select('*').eq('id',id).single()
     if(freshError) throw freshError
