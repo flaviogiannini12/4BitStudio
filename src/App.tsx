@@ -6,7 +6,6 @@ import { CompletionConfetti } from './components/CompletionConfetti'
 import { PremiumLoader } from './components/PremiumLoader'
 import { AuthScreen } from './components/AuthScreen'
 import { PageHeader } from './components/PageHeader'
-import { PaymentReminderModal } from './components/PaymentReminderModal'
 import { QuickCreateModal } from './components/QuickCreateModal'
 import { WorkspaceJoin } from './components/WorkspaceJoin'
 import { useAuth } from './hooks/useAuth'
@@ -46,7 +45,6 @@ export default function App() {
   const [homeHeadline] = useState(() => getNextUsefulFact())
   const [createKind, setCreateKind] = useState<CreateKind | null>(null)
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
-  const [reminderId, setReminderId] = useState<string | null>(null)
   const [confettiBurst, setConfettiBurst] = useState(0)
   const [bootReady, setBootReady] = useState(false)
 
@@ -86,8 +84,6 @@ export default function App() {
   if (auth.cloudEnabled && !auth.user) return <AuthScreen/>
   if (auth.cloudEnabled && studio.needsWorkspace) return <WorkspaceJoin onJoin={studio.joinStudio}/>
 
-  const reminder = studio.data.payments.find(p => p.id === reminderId) ?? null
-  const reminderClient = reminder ? studio.data.clients.find(c => c.id === reminder.clientId) : undefined
   const current = page === 'home' ? { title: homeHeadline, eyebrow: '' } : titles[page]
 
   return <>
@@ -102,13 +98,12 @@ export default function App() {
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
         {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
         {page === 'editorial' && (editorial.loading ? <PremiumLoader/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
-        {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions} onReminder={setReminderId}/>} 
+        {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
     </main>
     {page !== 'editorial' && <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuova attività</button>}
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
-    {reminder && <PaymentReminderModal payment={reminder} client={reminderClient} onRecord={() => studio.actions.recordReminder(reminder.id)} onClose={() => setReminderId(null)}/>} 
   </>
 }
