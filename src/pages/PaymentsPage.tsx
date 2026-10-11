@@ -249,7 +249,7 @@ export function PaymentsPage({
         <div><span>Debito aperto totale</span><strong>{money(openDebtsTotal)}</strong><small>{openDebts.length ? openDebts.length + ' voci da restituire' : 'Nessun importo da restituire'}</small></div>
         <Landmark size={28}/>
       </div>
-      <div className="list-toolbar"><p>Inserisci qui anticipi, prestiti, rimborsi o qualsiasi somma da restituire.</p><label className="switch-label"><input type="checkbox" checked={showClosedDebts} onChange={e => setShowClosedDebts(e.target.checked)}/><span/>Mostra restituiti</label></div>
+      <div className="list-toolbar"><label className="switch-label"><input type="checkbox" checked={showClosedDebts} onChange={e => setShowClosedDebts(e.target.checked)}/><span/>Mostra restituiti</label></div>
       <div className="economy-record-list">
         {visibleDebts.map(d => {
           const paid = d.status === 'paid'
