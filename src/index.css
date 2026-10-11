@@ -8235,3 +8235,32 @@ body.editorial-touch-dragging .editorial-drag-handle{
     display:none!important;
   }
 }
+
+
+/* Task senza data — collapsible solo mobile */
+.todo-backlog-mobile{
+  display:none;
+}
+
+@media(max-width:760px){
+  .todo-backlog-desktop{
+    display:none!important;
+  }
+
+  .todo-backlog-mobile{
+    display:block!important;
+    margin-bottom:10px;
+  }
+
+  .todo-backlog-mobile .todo-overdue-toggle{
+    width:100%;
+  }
+
+  .todo-backlog-mobile .todo-overdue-list{
+    margin-top:10px;
+  }
+
+  .todo-backlog-mobile-add{
+    margin-top:8px!important;
+  }
+}
