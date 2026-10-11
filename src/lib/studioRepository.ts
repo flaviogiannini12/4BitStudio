@@ -56,7 +56,7 @@ const fromProject = (r: any): Project => ({ id: r.id, clientId: r.client_id, nam
 const fromTask = (r: any): Task => ({ id: r.id, title: r.title, clientId: r.client_id, projectId: r.project_id, assigneeId: r.assignee_id, dueDate: r.due_date, status: r.status, description: r.description ?? '', checklist: r.checklist ?? [], createdAt: r.created_at, completedAt: r.completed_at, sortOrder: Number(r.sort_order ?? 0) })
 const fromRecurrence = (r: any): Recurrence => ({ id: r.id, clientId: r.client_id, label: r.label, amount: Number(r.amount), intervalMonths: r.interval_months, dueDay: r.due_day, nextDueDate: r.next_due_date, active: r.active, invoiced: Boolean(r.invoiced), notes: r.notes ?? '', createdAt: r.created_at })
 const fromPayment = (r: any): Payment => ({ id: r.id, clientId: r.client_id, projectId: r.project_id, recurrenceId: r.recurrence_id, label: r.label, amount: Number(r.amount), dueDate: r.due_date, status: r.status, invoiced: Boolean(r.invoiced), paidAt: r.paid_at, reminderCount: r.reminder_count ?? 0, lastReminderAt: r.last_reminder_at, notes: r.notes ?? '', createdAt: r.created_at })
-const fromLedger = (r: any): LedgerEntry => ({ id:r.id, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
+const fromLedger = (r: any): LedgerEntry => ({ id:r.id, paymentId:r.payment_id ?? null, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
 const fromComp = (r: any): Compensation => ({ id:r.id, entryDate:r.entry_date, memberId:r.member_id, memberName:r.member_name ?? '', clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', notes:r.notes ?? '' })
 const fromDebt = (r: any): Debt => ({ id:r.id, creditor:r.creditor ?? '', description:r.description ?? '', amount:Number(r.amount), dueDate:r.due_date, status:r.status, paidAt:r.paid_at, notes:r.notes ?? '', createdAt:r.created_at })
 const fromDeadline = (r: any): Deadline => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', provider:r.provider ?? '', dueDate:r.due_date, cost:r.cost == null ? null : Number(r.cost), status:r.status ?? '', notes:r.notes ?? '' })
@@ -133,6 +133,41 @@ export const cloudRepo = {
   deleteTask: (id: string) => remove('tasks', id),
   async createPayment(user: User, input: PaymentInput) { const workspaceId = await currentWorkspaceId(); return fromPayment(await insert('payments', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, project_id: input.projectId || null, recurrence_id: input.recurrenceId || null, label: input.label, amount: input.amount, due_date: input.dueDate, status: 'pending', invoiced: input.invoiced ?? false, notes: input.notes ?? '' })) },
   async updatePayment(id: string, input: Partial<Payment>) { return fromPayment(await update('payments', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.projectId !== undefined ? { project_id: input.projectId || null } : {}), ...(input.recurrenceId !== undefined ? { recurrence_id: input.recurrenceId || null } : {}), ...(input.label !== undefined ? { label: input.label } : {}), ...(input.amount !== undefined ? { amount: input.amount } : {}), ...(input.dueDate !== undefined ? { due_date: input.dueDate } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.invoiced !== undefined ? { invoiced: input.invoiced } : {}), ...(input.paidAt !== undefined ? { paid_at: input.paidAt } : {}), ...(input.reminderCount !== undefined ? { reminder_count: input.reminderCount } : {}), ...(input.lastReminderAt !== undefined ? { last_reminder_at: input.lastReminderAt } : {}), ...(input.notes !== undefined ? { notes: input.notes } : {}) })) },
+  async syncPaymentLedger(paymentId: string) {
+    const db=requireCloud()
+    const {data:payment,error:paymentError}=await db
+      .from('payments')
+      .select('id,workspace_id,client_id,label,amount,status,paid_at,due_date,invoiced')
+      .eq('id',paymentId)
+      .single()
+    if(paymentError) throw paymentError
+
+    if(payment.status!=='paid') {
+      const {error}=await db.from('ledger_entries').delete().eq('payment_id',paymentId)
+      if(error) throw error
+      return null
+    }
+
+    const amount=Number(payment.amount ?? 0)
+    const gross=payment.invoiced ? Math.round((amount*1.04+2)*100)/100 : amount
+    const payload={
+      workspace_id:payment.workspace_id,
+      payment_id:payment.id,
+      entry_date:payment.paid_at ? String(payment.paid_at).slice(0,10) : payment.due_date,
+      direction:'income',
+      client_id:payment.client_id,
+      description:payment.label,
+      amount:gross,
+      status:'Incassato',
+      category:'Incasso',
+      notes:'',
+    }
+
+    const {data:existing,error:existingError}=await db.from('ledger_entries').select('id').eq('payment_id',paymentId).maybeSingle()
+    if(existingError) throw existingError
+    if(existing?.id) return fromLedger(await update('ledger_entries',existing.id,payload))
+    return fromLedger(await insert('ledger_entries',payload))
+  },
   deletePayment: (id: string) => remove('payments', id),
   async createRecurrence(user: User, input: RecurrenceInput) { const workspaceId = await currentWorkspaceId(); return fromRecurrence(await insert('recurrences', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, label: input.label, amount: input.amount, interval_months: input.intervalMonths, due_day: input.dueDay ?? null, next_due_date: input.nextDueDate, active: true, invoiced: input.invoiced ?? false, notes: input.notes ?? '' })) },
   async updateRecurrence(id: string, input: Partial<Recurrence>) { return fromRecurrence(await update('recurrences', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.label !== undefined ? { label: input.label } : {}), ...(input.amount !== undefined ? { amount: input.amount } : {}), ...(input.intervalMonths !== undefined ? { interval_months: input.intervalMonths } : {}), ...(input.dueDay !== undefined ? { due_day: input.dueDay } : {}), ...(input.nextDueDate !== undefined ? { next_due_date: input.nextDueDate } : {}), ...(input.active !== undefined ? { active: input.active } : {}), ...(input.invoiced !== undefined ? { invoiced: input.invoiced } : {}), ...(input.notes !== undefined ? { notes: input.notes } : {}) })) },
