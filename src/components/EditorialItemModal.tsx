@@ -4,7 +4,6 @@ import {
   editorialAccountLabel,
   editorialPlatformLabel,
   isAutomaticEditorialStep,
-  statusLabelForItem,
 } from '../lib/editorialConfig'
 import { memberToneClass } from '../lib/memberTone'
 import type { useEditorial } from '../hooks/useEditorial'
@@ -86,13 +85,6 @@ function assetIcon(asset:Pick<EditorialAsset,'mimeType'>) {
   if(asset.mimeType.startsWith('image/')) return FileImage
   if(asset.mimeType.startsWith('video/')) return FileVideo
   return File
-}
-
-function statusClass(status:string) {
-  if(status==='published') return 'published'
-  if(status==='ready') return 'ready'
-  if(status==='review') return 'review'
-  return 'produce'
 }
 
 export function EditorialItemModal({
@@ -389,11 +381,6 @@ export function EditorialItemModal({
           </div>
           {hasYoutube && <small>YouTube richiede un contenuto video.</small>}
           {hasWhatsapp && <small>WhatsApp usa foto/visual: i video sono esclusi.</small>}
-        </div>
-
-        <div className="editorial-auto-state">
-          <span>Stato automatico</span>
-          <b className={`editorial-status-chip ${statusClass(currentStatus)}`}>{statusLabelForItem(currentStatus,draft.platforms)}</b>
         </div>
 
         <div className="task-editor-grid editorial-date-grid-v5">
