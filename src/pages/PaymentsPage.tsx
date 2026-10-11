@@ -58,11 +58,9 @@ const invoiceNet = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(i
 export function PaymentsPage({
   data,
   actions,
-  onReminder,
 }: {
   data: StudioData
   actions: Actions
-  onReminder: (id: string) => void
 }) {
   const [tab,setTab] = useState<Tab>('overview')
   const [showPaid,setShowPaid] = useState(false)
@@ -203,7 +201,7 @@ export function PaymentsPage({
             : <div className="payment-amount">{money(p.amount)}</div>}
           <div className="row-actions">
             {p.status === 'pending'
-              ? <><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna incassato</button></>
+              ? <button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna incassato</button>
               : <span className="paid-badge"><CheckCircle2 size={14}/> Incassato</span>}
             <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'payment',record:p})}><Pencil size={13}/></button>
           </div>
@@ -293,20 +291,30 @@ export function PaymentsPage({
         <div className="ledger-list">
           {movements.map(m => {
             const linkedPayment=m.paymentId ? payments.find(p=>p.id===m.paymentId) : null
+            const linkedCompensation=m.compensationId ? compensations.find(c=>c.id===m.compensationId) : null
+            const linkedDebt=m.debtId ? debts.find(d=>d.id===m.debtId) : null
+            const linkedSource=Boolean(linkedPayment || linkedCompensation || linkedDebt)
+            const sourceLabel=linkedPayment ? 'Da incasso' : linkedCompensation ? 'Da compenso' : linkedDebt ? 'Da debito' : m.status
+            const sourceNote=linkedPayment ? 'Incasso collegato' : linkedCompensation ? 'Compenso collegato' : linkedDebt ? 'Debito collegato' : m.category
             return <button
               type="button"
-              className={`ledger-row ledger-row-edit ${linkedPayment ? 'linked-payment' : ''}`}
+              className={`ledger-row ledger-row-edit ${linkedSource ? 'linked-payment' : ''}`}
               key={m.id}
-              onClick={() => linkedPayment ? setEditor({kind:'payment',record:linkedPayment}) : setEditor({kind:'ledger',record:m})}
+              onClick={() => {
+                if(linkedPayment) return setEditor({kind:'payment',record:linkedPayment})
+                if(linkedCompensation) return setEditor({kind:'compensation',record:linkedCompensation})
+                if(linkedDebt) return setEditor({kind:'debt',record:linkedDebt})
+                setEditor({kind:'ledger',record:m})
+              }}
             >
               <span className={`ledger-sign ${m.direction}`}>{m.direction === 'income' ? '+' : '−'}</span>
               <div>
                 <strong>{m.description || m.category}</strong>
-                <small>{client(m.clientId)}{linkedPayment ? ' · Incasso collegato' : m.category ? ' · ' + m.category : ''}{m.notes ? ' · ' + m.notes : ''}</small>
+                <small>{client(m.clientId)}{sourceNote ? ' · ' + sourceNote : ''}{m.notes ? ' · ' + m.notes : ''}</small>
               </div>
               <time>{m.entryDate ? formatShortDate(m.entryDate) : 'Data da confermare'}</time>
               <b>{m.direction === 'income' ? '+' : '−'}{money(m.amount)}</b>
-              <span className={`status-chip ${linkedPayment ? 'linked' : ''}`}>{linkedPayment ? 'Da incasso' : m.status}</span>
+              <span className={`status-chip ${linkedSource ? 'linked' : ''}`}>{sourceLabel}</span>
             </button>
           })}
         </div>
