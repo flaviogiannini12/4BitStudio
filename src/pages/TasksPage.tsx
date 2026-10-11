@@ -51,6 +51,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
   const [newTaskDate, setNewTaskDate] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [overdueOpen, setOverdueOpen] = useState(false)
+  const [backlogOpen, setBacklogOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('4bit.tasks.onlyDays', onlyDaysWithTasks ? '1' : '0')
@@ -308,6 +309,32 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
             {overdueOpen && <div className="todo-task-stack todo-overdue-list">{overdue.map(task => taskCard(task, task.dueDate))}</div>}
           </section>}
 
+          {statusFilter === 'open' && backlog.length > 0 && <section
+            className={`todo-overdue-panel todo-overdue-collapsible todo-backlog-mobile ${backlogOpen?'is-open':''}`}
+            onDragOver={event => {
+              if (event.dataTransfer.types.includes('text/4bit-task')) event.preventDefault()
+            }}
+            onDrop={event => {
+              const id = event.dataTransfer.getData('text/4bit-task')
+              if (id) void moveTask(id,null)
+            }}
+          >
+            <button
+              type="button"
+              className="todo-overdue-toggle"
+              onClick={()=>setBacklogOpen(value=>!value)}
+              aria-expanded={backlogOpen}
+            >
+              <div><p className="eyebrow">Da pianificare</p><h3>Senza data</h3></div>
+              <span className="todo-overdue-count">{backlog.length}</span>
+              <ChevronDown size={17} className="todo-overdue-chevron"/>
+            </button>
+            {backlogOpen && <>
+              <div className="todo-task-stack todo-overdue-list">{backlog.map(task => taskCard(task,null))}</div>
+              <button className="todo-backlog-add todo-backlog-mobile-add" onClick={() => openCreate(null)}><Plus size={15}/> Nuova attività senza data</button>
+            </>}
+          </section>}
+
           <div className="todo-calendar-panel">
             {visibleDays.map(date => {
               const key = dateKey(date)
@@ -346,7 +373,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
         </main>
 
         <aside
-          className="todo-backlog"
+          className="todo-backlog todo-backlog-desktop"
           onDragOver={event => {
             if (event.dataTransfer.types.includes('text/4bit-task')) event.preventDefault()
           }}
