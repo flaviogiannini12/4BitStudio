@@ -349,7 +349,7 @@ export function EditorialItemModal({
 
       <div className="task-editor-body editorial-form-v5">
         <div className="editorial-choice-block">
-          <span className="editorial-choice-label">Profilo{item ? '' : ' · puoi selezionarne più di uno'}</span>
+          <span className="editorial-choice-label">Profilo</span>
           <div className="editorial-choice-chips account-choice-chips">
             {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
               type="button"
@@ -423,7 +423,7 @@ export function EditorialItemModal({
 
         <section className="editorial-upload-zone-v5">
           <div className="editorial-upload-zone-head">
-            <div><strong>Contenuto</strong><span>{draft.mediaKind==='video'?'Video originale':'Foto / grafica originale'} · nessuna compressione</span></div>
+            <div><strong>Contenuto</strong></div>
             <label className="editorial-upload-button"><Upload size={14}/> Allega<input type="file" accept={accept} multiple onChange={e=>{addFiles(e.target.files);e.currentTarget.value=''}}/></label>
           </div>
 
