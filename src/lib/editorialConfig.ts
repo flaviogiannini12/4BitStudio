@@ -54,7 +54,7 @@ export function editorialWorkflow(
     if (mediaKind === 'video') {
       pushUnique(steps,{ label:'Video editing social', ownerName:'Francesco', done:false, automatic:true })
     } else {
-      pushUnique(steps,{ label:'Photo editing / Grafiche social', ownerName:'Edoardo', done:false, automatic:true })
+      pushUnique(steps,{ label:'Photo editing / Grafiche social', ownerName:'Edoardo', done:false })
     }
 
     pushUnique(steps,{ label:'Description / Copy social', ownerName:'Francesco', done:false })
@@ -75,7 +75,6 @@ export function isAutomaticEditorialStep(label:string) {
   return [
     'Ideazione / Script social',
     'Video editing social',
-    'Photo editing / Grafiche social',
     'WhatsApp · Ideazione',
     'WhatsApp · Preparazione contenuto',
   ].includes(label)
