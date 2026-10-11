@@ -92,17 +92,17 @@ export function HomePage({ data, editorialData, onClient, onEditorial, onPayment
       </div>
     </section>
 
-    <section className="section-block payments-focus">
-      <div className="section-heading"><h2>Pagamenti imminenti</h2><button className="text-link" onClick={onPayments}>Vedi tutti <ArrowRight size={14}/></button></div>
-      <div className="payment-list">
+    <section className="section-block payments-focus home-payments-focus">
+      <div className="section-heading home-payments-heading"><h2>Pagamenti imminenti</h2><button className="text-link" onClick={onPayments}>Vedi tutti <ArrowRight size={14}/></button></div>
+      <div className="payment-list home-payment-list">
         {pendingPayments.slice(0,5).map(p => {
           const c = client(p.clientId)
           const tone = countdownTone(p.dueDate)
-          return <article className={`payment-row tone-${tone}`} key={p.id}>
-            <div className="countdown-box"><small>scadenza</small><strong>{countdownLabel(p.dueDate)}</strong></div>
-            <div className="payment-main"><h3>{c?.name ?? 'Cliente'}</h3><p>{p.label}</p>{p.reminderCount > 0 && <small>{p.reminderCount} {p.reminderCount === 1 ? 'sollecito' : 'solleciti'} inviati</small>}</div>
-            <div className="payment-amount">{money(p.amount)}</div>
-            <div className="row-actions"><button className="primary-button compact" onClick={() => onPaid(p.id)}>Segna pagato</button></div>
+          return <article className={`payment-row home-payment-row tone-${tone}`} key={p.id}>
+            <div className="countdown-box home-payment-countdown"><small>scadenza</small><strong>{countdownLabel(p.dueDate)}</strong></div>
+            <div className="payment-amount home-payment-amount">{money(p.amount)}</div>
+            <div className="payment-main home-payment-main"><h3>{c?.name ?? 'Cliente'}</h3><p>{p.label}</p></div>
+            <div className="row-actions home-payment-actions"><button className="primary-button compact" onClick={() => onPaid(p.id)}>Segna incassato</button></div>
           </article>
         })}
         {pendingPayments.length === 0 && <div className="empty-inline">Nessun pagamento in sospeso.</div>}
