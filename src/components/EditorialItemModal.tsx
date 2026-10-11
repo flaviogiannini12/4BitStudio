@@ -453,7 +453,8 @@ export function EditorialItemModal({
             {steps.map(step=>{
               const owner=members.find(member=>member.id===step.ownerMemberId)
               const name=owner?.name ?? 'Team'
-              const automatic=isAutomaticEditorialStep(step.label)
+              const manualPhotoEditing=step.label==='Photo editing / Grafiche social'
+              const automatic=manualPhotoEditing ? false : isAutomaticEditorialStep(step.label)
               const willPublish = !step.done
                 && ['Pubblicazione social','WhatsApp · Invio'].includes(step.label)
                 && steps.every(other=>other.id===step.id || other.done)
