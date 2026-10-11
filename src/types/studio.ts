@@ -92,6 +92,7 @@ export interface Payment {
 
 export interface LedgerEntry {
   id: string
+  paymentId: string | null
   entryDate: string | null
   direction: 'income' | 'expense'
   clientId: string | null
