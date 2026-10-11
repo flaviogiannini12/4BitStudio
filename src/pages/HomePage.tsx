@@ -7,7 +7,7 @@ import type { EditorialData } from '../types/editorial'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
-export function HomePage({ data, editorialData, onClient, onEditorial, onPayments, onTasks: _onTasks, onReminder, onPaid, onReorderClients }: { data: StudioData; editorialData: EditorialData; onClient: (id: string) => void; onEditorial: () => void; onPayments: () => void; onTasks: () => void; onReminder: (paymentId: string) => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
+export function HomePage({ data, editorialData, onClient, onEditorial, onPayments, onTasks: _onTasks, onPaid, onReorderClients }: { data: StudioData; editorialData: EditorialData; onClient: (id: string) => void; onEditorial: () => void; onPayments: () => void; onTasks: () => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const datedOpenTasks = openTasks.filter(t => Boolean(t.dueDate))
@@ -102,7 +102,7 @@ export function HomePage({ data, editorialData, onClient, onEditorial, onPayment
             <div className="countdown-box"><small>scadenza</small><strong>{countdownLabel(p.dueDate)}</strong></div>
             <div className="payment-main"><h3>{c?.name ?? 'Cliente'}</h3><p>{p.label}</p>{p.reminderCount > 0 && <small>{p.reminderCount} {p.reminderCount === 1 ? 'sollecito' : 'solleciti'} inviati</small>}</div>
             <div className="payment-amount">{money(p.amount)}</div>
-            <div className="row-actions"><button className="secondary-button" onClick={() => onReminder(p.id)}>Sollecita</button><button className="primary-button compact" onClick={() => onPaid(p.id)}>Segna pagato</button></div>
+            <div className="row-actions"><button className="primary-button compact" onClick={() => onPaid(p.id)}>Segna pagato</button></div>
           </article>
         })}
         {pendingPayments.length === 0 && <div className="empty-inline">Nessun pagamento in sospeso.</div>}
