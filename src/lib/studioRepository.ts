@@ -56,8 +56,8 @@ const fromProject = (r: any): Project => ({ id: r.id, clientId: r.client_id, nam
 const fromTask = (r: any): Task => ({ id: r.id, title: r.title, clientId: r.client_id, projectId: r.project_id, assigneeId: r.assignee_id, dueDate: r.due_date, status: r.status, description: r.description ?? '', checklist: r.checklist ?? [], createdAt: r.created_at, completedAt: r.completed_at, sortOrder: Number(r.sort_order ?? 0) })
 const fromRecurrence = (r: any): Recurrence => ({ id: r.id, clientId: r.client_id, label: r.label, amount: Number(r.amount), intervalMonths: r.interval_months, dueDay: r.due_day, nextDueDate: r.next_due_date, active: r.active, invoiced: Boolean(r.invoiced), notes: r.notes ?? '', createdAt: r.created_at })
 const fromPayment = (r: any): Payment => ({ id: r.id, clientId: r.client_id, projectId: r.project_id, recurrenceId: r.recurrence_id, label: r.label, amount: Number(r.amount), dueDate: r.due_date, status: r.status, invoiced: Boolean(r.invoiced), paidAt: r.paid_at, reminderCount: r.reminder_count ?? 0, lastReminderAt: r.last_reminder_at, notes: r.notes ?? '', createdAt: r.created_at })
-const fromLedger = (r: any): LedgerEntry => ({ id:r.id, paymentId:r.payment_id ?? null, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
-const fromComp = (r: any): Compensation => ({ id:r.id, entryDate:r.entry_date, memberId:r.member_id, memberName:r.member_name ?? '', clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', notes:r.notes ?? '' })
+const fromLedger = (r: any): LedgerEntry => ({ id:r.id, paymentId:r.payment_id ?? null, compensationId:r.compensation_id ?? null, debtId:r.debt_id ?? null, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
+const fromComp = (r: any): Compensation => ({ id:r.id, entryDate:r.entry_date, paidAt:r.paid_at ?? null, memberId:r.member_id, memberName:r.member_name ?? '', clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', notes:r.notes ?? '' })
 const fromDebt = (r: any): Debt => ({ id:r.id, creditor:r.creditor ?? '', description:r.description ?? '', amount:Number(r.amount), dueDate:r.due_date, status:r.status, paidAt:r.paid_at, notes:r.notes ?? '', createdAt:r.created_at })
 const fromDeadline = (r: any): Deadline => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', provider:r.provider ?? '', dueDate:r.due_date, cost:r.cost == null ? null : Number(r.cost), status:r.status ?? '', notes:r.notes ?? '' })
 const fromMaintenance = (r: any): MaintenancePeriod => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', periodicity:r.periodicity ?? '', amount:Number(r.amount), periodFrom:r.period_from, periodTo:r.period_to, status:r.status ?? '', notes:r.notes ?? '' })
@@ -208,6 +208,7 @@ export const cloudRepo = {
     return fromComp(await insert('compensations', {
       workspace_id: workspaceId,
       entry_date: input.entryDate || null,
+      paid_at: input.paidAt ?? null,
       member_id: input.memberId || null,
       member_name: input.memberName,
       client_id: input.clientId || null,
@@ -220,6 +221,7 @@ export const cloudRepo = {
   async updateCompensation(id: string, input: Partial<Compensation>) {
     return fromComp(await update('compensations', id, {
       ...(input.entryDate !== undefined ? { entry_date: input.entryDate || null } : {}),
+      ...(input.paidAt !== undefined ? { paid_at: input.paidAt } : {}),
       ...(input.memberId !== undefined ? { member_id: input.memberId || null } : {}),
       ...(input.memberName !== undefined ? { member_name: input.memberName } : {}),
       ...(input.clientId !== undefined ? { client_id: input.clientId || null } : {}),
@@ -254,6 +256,74 @@ export const cloudRepo = {
       ...(input.paidAt !== undefined ? { paid_at: input.paidAt } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     }))
+  },
+  async syncCompensationLedger(compensationId: string) {
+    const db=requireCloud()
+    const {data:comp,error}=await db
+      .from('compensations')
+      .select('id,workspace_id,entry_date,paid_at,member_name,client_id,description,amount,status,notes,created_at')
+      .eq('id',compensationId)
+      .single()
+    if(error) throw error
+
+    const paid=['pagato','paid','saldato'].includes(String(comp.status ?? '').trim().toLowerCase())
+    if(!paid) {
+      const {error:deleteError}=await db.from('ledger_entries').delete().eq('compensation_id',compensationId)
+      if(deleteError) throw deleteError
+      return null
+    }
+
+    const payload={
+      workspace_id:comp.workspace_id,
+      compensation_id:comp.id,
+      entry_date:comp.paid_at ? String(comp.paid_at).slice(0,10) : (comp.entry_date || String(comp.created_at).slice(0,10)),
+      direction:'expense',
+      client_id:comp.client_id || null,
+      description:`Compenso pagato · ${comp.member_name || 'Collaboratore'}${comp.description ? ' — ' + comp.description : ''}`,
+      amount:Number(comp.amount ?? 0),
+      status:'Pagato',
+      category:'Stipendi / compensi',
+      notes:comp.notes ?? '',
+    }
+
+    const {data:existing,error:existingError}=await db.from('ledger_entries').select('id').eq('compensation_id',compensationId).maybeSingle()
+    if(existingError) throw existingError
+    if(existing?.id) return fromLedger(await update('ledger_entries',existing.id,payload))
+    return fromLedger(await insert('ledger_entries',payload))
+  },
+
+  async syncDebtLedger(debtId: string) {
+    const db=requireCloud()
+    const {data:debt,error}=await db
+      .from('debts')
+      .select('id,workspace_id,creditor,description,amount,due_date,status,paid_at,notes,created_at')
+      .eq('id',debtId)
+      .single()
+    if(error) throw error
+
+    if(debt.status!=='paid') {
+      const {error:deleteError}=await db.from('ledger_entries').delete().eq('debt_id',debtId)
+      if(deleteError) throw deleteError
+      return null
+    }
+
+    const payload={
+      workspace_id:debt.workspace_id,
+      debt_id:debt.id,
+      entry_date:debt.paid_at ? String(debt.paid_at).slice(0,10) : (debt.due_date || String(debt.created_at).slice(0,10)),
+      direction:'expense',
+      client_id:null,
+      description:`Debito sanato · ${debt.creditor}${debt.description ? ' — ' + debt.description : ''}`,
+      amount:Number(debt.amount ?? 0),
+      status:'Pagato',
+      category:'Debiti',
+      notes:debt.notes ?? '',
+    }
+
+    const {data:existing,error:existingError}=await db.from('ledger_entries').select('id').eq('debt_id',debtId).maybeSingle()
+    if(existingError) throw existingError
+    if(existing?.id) return fromLedger(await update('ledger_entries',existing.id,payload))
+    return fromLedger(await insert('ledger_entries',payload))
   },
   deleteDebt: (id: string) => remove('debts', id),
 
