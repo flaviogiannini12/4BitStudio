@@ -36,6 +36,44 @@ function syncLocalPaymentLedger(entries: LedgerEntry[], payment: Payment): Ledge
   return [...without,linked]
 }
 
+const paidCompensationStatus = (status:string) => ['pagato','paid','saldato'].includes(status.trim().toLowerCase())
+
+function syncLocalCompensationLedger(entries:LedgerEntry[], compensation:Compensation):LedgerEntry[] {
+  const existing=entries.find(entry=>entry.compensationId===compensation.id)
+  const without=entries.filter(entry=>entry.compensationId!==compensation.id)
+  if(!paidCompensationStatus(compensation.status)) return without
+  return [...without,{
+    id:existing?.id ?? id('ledger'),
+    compensationId:compensation.id,
+    entryDate:compensation.paidAt ? compensation.paidAt.slice(0,10) : (compensation.entryDate ?? new Date().toLocaleDateString('en-CA')),
+    direction:'expense',
+    clientId:compensation.clientId,
+    description:`Compenso pagato · ${compensation.memberName || 'Collaboratore'}${compensation.description ? ' — ' + compensation.description : ''}`,
+    amount:compensation.amount,
+    status:'Pagato',
+    category:'Stipendi / compensi',
+    notes:compensation.notes,
+  }]
+}
+
+function syncLocalDebtLedger(entries:LedgerEntry[], debt:Debt):LedgerEntry[] {
+  const existing=entries.find(entry=>entry.debtId===debt.id)
+  const without=entries.filter(entry=>entry.debtId!==debt.id)
+  if(debt.status!=='paid') return without
+  return [...without,{
+    id:existing?.id ?? id('ledger'),
+    debtId:debt.id,
+    entryDate:debt.paidAt ? debt.paidAt.slice(0,10) : (debt.dueDate ?? new Date().toLocaleDateString('en-CA')),
+    direction:'expense',
+    clientId:null,
+    description:`Debito sanato · ${debt.creditor}${debt.description ? ' — ' + debt.description : ''}`,
+    amount:debt.amount,
+    status:'Pagato',
+    category:'Debiti',
+    notes:debt.notes,
+  }]
+}
+
 function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
   const seed = cloneDemo()
   const source = value ?? {}
@@ -421,13 +459,30 @@ export function useStudio(user: User | null, ready: boolean) {
     },
 
     async createCompensation(input: CompensationInput) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createCompensation(input); await reload(true) })
-      const value: Compensation = { id:id('comp'), entryDate:input.entryDate ?? null, memberId:input.memberId ?? null, memberName:input.memberName, clientId:input.clientId ?? null, description:input.description, amount:input.amount, status:input.status ?? '', notes:input.notes ?? '' }
-      saveLocal(current => ({ ...current, compensations:[...current.compensations,value] }))
+      const paidAt=paidCompensationStatus(input.status ?? '') ? (input.paidAt ?? new Date().toISOString()) : null
+      if (cloudEnabled && user) return protect(async () => {
+        const compensation=await cloudRepo.createCompensation({...input,paidAt})
+        await cloudRepo.syncCompensationLedger(compensation.id)
+        await reload(true)
+      })
+      const value: Compensation = { id:id('comp'), entryDate:input.entryDate ?? null, paidAt, memberId:input.memberId ?? null, memberName:input.memberName, clientId:input.clientId ?? null, description:input.description, amount:input.amount, status:input.status ?? '', notes:input.notes ?? '' }
+      saveLocal(current => ({ ...current, compensations:[...current.compensations,value], ledgerEntries:syncLocalCompensationLedger(current.ledgerEntries,value) }))
     },
     async updateCompensation(compId: string, input: Partial<Compensation>) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateCompensation(compId,input); await reload(true) })
-      saveLocal(current => ({ ...current, compensations:current.compensations.map(x => x.id === compId ? {...x,...input} : x) }))
+      const currentComp=data.compensations.find(x=>x.id===compId)
+      const nextStatus=input.status ?? currentComp?.status ?? ''
+      const paidAt=paidCompensationStatus(nextStatus) ? (input.paidAt ?? currentComp?.paidAt ?? new Date().toISOString()) : null
+      const nextInput={...input,paidAt}
+      if (cloudEnabled && user) return protect(async () => {
+        await cloudRepo.updateCompensation(compId,nextInput)
+        await cloudRepo.syncCompensationLedger(compId)
+        await reload(true)
+      })
+      saveLocal(current => {
+        const compensations=current.compensations.map(x => x.id === compId ? {...x,...nextInput} : x)
+        const compensation=compensations.find(x=>x.id===compId)
+        return compensation ? {...current,compensations,ledgerEntries:syncLocalCompensationLedger(current.ledgerEntries,compensation)} : {...current,compensations}
+      })
     },
     async deleteCompensation(compId: string) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteCompensation(compId); await reload(true) })
@@ -435,13 +490,30 @@ export function useStudio(user: User | null, ready: boolean) {
     },
 
     async createDebt(input: DebtInput) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.createDebt(input); await reload(true) })
-      const value: Debt = { id:id('debt'), creditor:input.creditor, description:input.description ?? '', amount:input.amount, dueDate:input.dueDate ?? null, status:input.status ?? 'open', paidAt:input.paidAt ?? null, notes:input.notes ?? '', createdAt:new Date().toISOString() }
-      saveLocal(current => ({ ...current, debts:[...current.debts,value] }))
+      const paidAt=(input.status ?? 'open')==='paid' ? (input.paidAt ?? new Date().toISOString()) : null
+      if (cloudEnabled && user) return protect(async () => {
+        const debt=await cloudRepo.createDebt({...input,paidAt})
+        await cloudRepo.syncDebtLedger(debt.id)
+        await reload(true)
+      })
+      const value: Debt = { id:id('debt'), creditor:input.creditor, description:input.description ?? '', amount:input.amount, dueDate:input.dueDate ?? null, status:input.status ?? 'open', paidAt, notes:input.notes ?? '', createdAt:new Date().toISOString() }
+      saveLocal(current => ({ ...current, debts:[...current.debts,value], ledgerEntries:syncLocalDebtLedger(current.ledgerEntries,value) }))
     },
     async updateDebt(debtId: string, input: Partial<Debt>) {
-      if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateDebt(debtId,input); await reload(true) })
-      saveLocal(current => ({ ...current, debts:current.debts.map(x => x.id === debtId ? {...x,...input} : x) }))
+      const currentDebt=data.debts.find(x=>x.id===debtId)
+      const nextStatus=input.status ?? currentDebt?.status ?? 'open'
+      const paidAt=nextStatus==='paid' ? (input.paidAt ?? currentDebt?.paidAt ?? new Date().toISOString()) : null
+      const nextInput={...input,paidAt}
+      if (cloudEnabled && user) return protect(async () => {
+        await cloudRepo.updateDebt(debtId,nextInput)
+        await cloudRepo.syncDebtLedger(debtId)
+        await reload(true)
+      })
+      saveLocal(current => {
+        const debts=current.debts.map(x => x.id === debtId ? {...x,...nextInput} : x)
+        const debt=debts.find(x=>x.id===debtId)
+        return debt ? {...current,debts,ledgerEntries:syncLocalDebtLedger(current.ledgerEntries,debt)} : {...current,debts}
+      })
     },
     async deleteDebt(debtId: string) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteDebt(debtId); await reload(true) })
