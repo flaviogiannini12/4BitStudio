@@ -8027,3 +8027,11 @@ body.editorial-touch-dragging .editorial-drag-handle{
     min-width:110px!important;
   }
 }
+
+
+/* Task mobile — evita il doppio pulsante Nuova attività */
+@media(max-width:760px){
+  .todo-planner-head .todo-new-task{
+    display:none!important;
+  }
+}
