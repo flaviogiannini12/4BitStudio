@@ -244,7 +244,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
           <p className="eyebrow">Planner operativo</p>
           <h2>Task</h2>
         </div>
-        <button className="primary-button todo-new-task" onClick={() => openCreate(todayKey)}><Plus size={16}/> Nuova attività</button>
+        <button className="primary-button todo-new-task icon-only-add" title="Nuova attività" aria-label="Nuova attività" onClick={() => openCreate(todayKey)}><Plus size={16}/></button>
       </div>
 
       <div className="todo-toolbar">
@@ -304,7 +304,14 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
               <span className="todo-overdue-count">{overdue.length}</span>
               <ChevronDown size={17} className="todo-overdue-chevron"/>
             </button>
-            {overdueOpen && <div className="todo-task-stack todo-overdue-list">{overdue.map(task => taskCard(task, task.dueDate))}</div>}
+            {overdueOpen && <div className="task-assignee-groups todo-overdue-list">
+              {[...new Set(overdue.map(task=>task.assigneeId ?? '__unassigned'))].map(assigneeKey=>{
+                const assigneeTasks=overdue.filter(task=>(task.assigneeId ?? '__unassigned')===assigneeKey)
+                return <div className="task-assignee-card-grid" key={assigneeKey}>
+                  {assigneeTasks.map(task=>taskCard(task,task.dueDate))}
+                </div>
+              })}
+            </div>}
           </section>}
 
           {statusFilter === 'open' && backlog.length > 0 && <section
@@ -329,7 +336,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
             </button>
             {backlogOpen && <>
               <div className="todo-task-stack todo-overdue-list">{backlog.map(task => taskCard(task,null))}</div>
-              <button className="todo-backlog-add todo-backlog-mobile-add" onClick={() => openCreate(null)}><Plus size={15}/> Nuova attività senza data</button>
+              <button className="todo-backlog-add todo-backlog-mobile-add icon-only-add" title="Nuova attività senza data" aria-label="Nuova attività senza data" onClick={() => openCreate(null)}><Plus size={15}/></button>
             </>}
           </section>}
 
@@ -360,8 +367,15 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
                 </div>
 
                 <div className="todo-day-body">
-                  <div className="todo-task-stack">{tasks.map(task => taskCard(task,key))}</div>
-                  <button className="todo-add-row" onClick={() => openCreate(key)}><Plus size={15}/><span>{tasks.length ? 'Aggiungi attività' : 'Nuova attività'}</span></button>
+                  <div className="task-assignee-groups">
+                    {[...new Set(tasks.map(task=>task.assigneeId ?? '__unassigned'))].map(assigneeKey=>{
+                      const assigneeTasks=tasks.filter(task=>(task.assigneeId ?? '__unassigned')===assigneeKey)
+                      return <div className="task-assignee-card-grid" key={assigneeKey}>
+                        {assigneeTasks.map(task=>taskCard(task,key))}
+                      </div>
+                    })}
+                  </div>
+                  <button className="todo-add-row icon-only-add" title="Aggiungi attività" aria-label="Aggiungi attività" onClick={() => openCreate(key)}><Plus size={15}/></button>
                 </div>
               </section>
             })}
@@ -385,7 +399,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
             <b>{backlog.length}</b>
           </div>
           <div className="todo-backlog-list">{backlog.map(task => taskCard(task,null))}</div>
-          <button className="todo-backlog-add" onClick={() => openCreate(null)}><Plus size={15}/> Nuova attività senza data</button>
+          <button className="todo-backlog-add icon-only-add" title="Nuova attività senza data" aria-label="Nuova attività senza data" onClick={() => openCreate(null)}><Plus size={15}/></button>
         </aside>
       </div> : <section className="todo-completed-panel">
         <div className="todo-completed-head">
