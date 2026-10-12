@@ -8386,3 +8386,111 @@ body.editorial-touch-dragging .editorial-drag-handle{
     min-height:44px!important;
   }
 }
+
+
+/* =========================================================
+   TEAM — card richiudibili con soli contatori in chiusura
+   ========================================================= */
+.team-card-collapsible{
+  align-self:start;
+  transition:min-height .18s ease,box-shadow .18s ease,background .18s ease,transform .18s ease;
+}
+
+.team-card-summary{
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 34px;
+  align-items:center;
+  gap:10px;
+}
+
+.team-card-name{
+  min-width:0;
+}
+
+.team-card-name h3{
+  margin:0!important;
+  font-size:16px!important;
+  line-height:1.08;
+}
+
+.team-card-toggle{
+  display:grid;
+  width:34px;
+  height:34px;
+  place-items:center;
+  border-radius:11px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.42);
+  transition:transform .18s ease,background .18s ease,color .18s ease;
+}
+
+.team-card-toggle:hover{
+  background:#050505;
+  color:#fff;
+}
+
+.team-card-toggle svg{
+  transition:transform .18s ease;
+}
+
+.team-card-collapsible.is-expanded .team-card-toggle svg{
+  transform:rotate(180deg);
+}
+
+.team-numbers-summary{
+  margin-top:13px!important;
+}
+
+.team-numbers-summary>div{
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.team-card-details{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid rgba(5,5,5,.055);
+}
+
+.team-card-detail-head{
+  margin-bottom:10px;
+}
+
+.team-card-detail-head p{
+  margin:0!important;
+}
+
+.team-card-collapsible:not(.is-expanded){
+  padding-bottom:15px;
+}
+
+.team-card-collapsible:not(.is-expanded) .team-numbers-summary{
+  margin-bottom:0;
+}
+
+@media(max-width:640px){
+  .team-card-summary{
+    grid-template-columns:40px minmax(0,1fr) 32px;
+  }
+
+  .team-card-summary .team-avatar{
+    width:40px;
+    height:40px;
+    border-radius:13px;
+  }
+
+  .team-card-toggle{
+    width:32px;
+    height:32px;
+  }
+
+  .team-numbers-summary{
+    gap:7px!important;
+  }
+
+  .team-numbers-summary>div{
+    min-height:54px;
+  }
+}
