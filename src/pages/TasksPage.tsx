@@ -199,7 +199,6 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
           {c
             ? <span className="task-client-chip" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
             : <span className="task-internal-chip">4Bit Studio</span>}
-          <span className={`task-status-inline ${task.status}`}>{task.status === 'doing' ? 'In corso' : task.status === 'done' ? 'Completata' : 'Da fare'}</span>
         </div>
         {task.description && <p>{task.description}</p>}
       </button>
@@ -229,7 +228,6 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
           {c
             ? <span className="task-client-chip" style={clientChipStyle(c.id, data.clients)}><ClientLogo logoUrl={c.logoUrl} name={c.name} size="sm"/>{c.name}</span>
             : <span className="task-internal-chip">4Bit Studio</span>}
-          <span className="task-status-inline done">Completata</span>
         </div>
         {task.description && <p>{task.description}</p>}
       </button>
