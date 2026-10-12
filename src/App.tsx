@@ -103,7 +103,7 @@ export default function App() {
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
     </main>
-    {page !== 'editorial' && <button className="desktop-floating-add" onClick={() => setCreateKind('task')}>+ Nuova attività</button>}
+    {page !== 'editorial' && page !== 'payments' && <button className={`desktop-floating-add ${page === 'tasks' ? 'icon-only-add' : ''}`} title="Nuova attività" aria-label="Nuova attività" onClick={() => setCreateKind('task')}>{page === 'tasks' ? '+' : '+ Nuova attività'}</button>}
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
   </>
 }
