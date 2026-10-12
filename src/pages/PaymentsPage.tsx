@@ -116,7 +116,11 @@ export function PaymentsPage({
       return (a.dueDate ?? '9999-12-31').localeCompare(b.dueDate ?? '9999-12-31')
     })
   const movements = [...ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
-  const sortedCompensations = [...compensations].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
+  const sortedCompensations = [...compensations].sort((a,b) => {
+    const aDate = a.entryDate ?? a.paidAt?.slice(0,10) ?? ''
+    const bDate = b.entryDate ?? b.paidAt?.slice(0,10) ?? ''
+    return bDate.localeCompare(aDate)
+  })
   const sortedDeadlines = [...deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
 
   return <div className="economy-page">
