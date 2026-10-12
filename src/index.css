@@ -8264,3 +8264,30 @@ body.editorial-touch-dragging .editorial-drag-handle{
     margin-top:8px!important;
   }
 }
+
+
+/* =========================================================
+   Piano Editoriale — griglia 2 colonne per brand
+   ========================================================= */
+.editorial-day-content-groups{
+  display:grid;
+  gap:8px;
+}
+
+.editorial-account-card-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  min-width:0;
+}
+
+.editorial-account-card-grid>.editorial-todo-card{
+  min-width:0;
+  height:100%;
+}
+
+@media(max-width:760px){
+  .editorial-account-card-grid{
+    grid-template-columns:1fr;
+  }
+}
