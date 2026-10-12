@@ -193,7 +193,7 @@ export function EditorialPage({
     <section className="todo-planner-page editorial-task-page">
       <div className="todo-planner-head editorial-planner-head">
         <div><h2>Editoriale</h2></div>
-        <button className="primary-button todo-new-task" onClick={()=>openCreate(today)}><Plus size={16}/> Nuovo contenuto</button>
+        <button className="primary-button todo-new-task icon-only-add" title="Nuovo contenuto" aria-label="Nuovo contenuto" onClick={()=>openCreate(today)}><Plus size={16}/></button>
       </div>
 
       <div className="todo-toolbar editorial-task-toolbar">
@@ -290,7 +290,7 @@ export function EditorialPage({
                   </div>
                 })}
               </div>
-              <button className="todo-add-row" onClick={()=>openCreate(key)}><Plus size={15}/><span>{items.length?'Aggiungi contenuto':'Nuovo contenuto'}</span></button>
+              <button className="todo-add-row icon-only-add" title="Aggiungi contenuto" aria-label="Aggiungi contenuto" onClick={()=>openCreate(key)}><Plus size={15}/></button>
             </div>
           </section>
         })}
