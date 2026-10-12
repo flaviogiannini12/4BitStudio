@@ -269,21 +269,26 @@ export function EditorialPage({
             </div>
 
             <div className="todo-day-body">
-              <div className="todo-task-stack">
-                {items.map(item=><EditorialCard
-                  key={item.id}
-                  item={item}
-                  data={data}
-                  members={members}
-                  onClick={()=>openEdit(item)}
-                  onDragStart={event=>{
-                    event.dataTransfer.setData('text/4bit-editorial',item.id)
-                    event.dataTransfer.effectAllowed='move'
-                  }}
-                  onDragEnd={()=>setDragOverDate(null)}
-                  onMove={moveEditorialItem}
-                  onDragHover={setDragOverDate}
-                />)}
+              <div className="editorial-day-content-groups">
+                {[...new Set(items.map(item=>item.account))].map(accountKey=>{
+                  const accountItems=items.filter(item=>item.account===accountKey)
+                  return <div className={`editorial-account-card-grid account-${accountKey}`} key={accountKey}>
+                    {accountItems.map(item=><EditorialCard
+                      key={item.id}
+                      item={item}
+                      data={data}
+                      members={members}
+                      onClick={()=>openEdit(item)}
+                      onDragStart={event=>{
+                        event.dataTransfer.setData('text/4bit-editorial',item.id)
+                        event.dataTransfer.effectAllowed='move'
+                      }}
+                      onDragEnd={()=>setDragOverDate(null)}
+                      onMove={moveEditorialItem}
+                      onDragHover={setDragOverDate}
+                    />)}
+                  </div>
+                })}
               </div>
               <button className="todo-add-row" onClick={()=>openCreate(key)}><Plus size={15}/><span>{items.length?'Aggiungi contenuto':'Nuovo contenuto'}</span></button>
             </div>
