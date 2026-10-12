@@ -1,4 +1,4 @@
-import { CheckSquare2, Pencil, Plus } from 'lucide-react'
+import { CheckSquare2, ChevronDown, Pencil, Plus } from 'lucide-react'
 import { money } from '../lib/date'
 import { memberToneClass } from '../lib/memberTone'
 import { StudioAccessSection } from '../components/StudioAccessSection'
@@ -11,6 +11,16 @@ type Actions = ReturnType<typeof useStudio>['actions']
 
 export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; actions: Actions; onNew: () => void }) {
   const [editor, setEditor] = useState<{kind:'member'|'compensation'; record:any} | null>(null)
+  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(() => new Set())
+
+  function toggleMember(memberId:string) {
+    setExpandedMembers(current => {
+      const next=new Set(current)
+      if(next.has(memberId)) next.delete(memberId)
+      else next.add(memberId)
+      return next
+    })
+  }
   const sortedCompensations = [...data.compensations].sort((a,b) => {
     const aDate = a.entryDate ?? a.paidAt?.slice(0,10) ?? ''
     const bDate = b.entryDate ?? b.paidAt?.slice(0,10) ?? ''
@@ -28,13 +38,29 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
       <div className="team-grid">
         {data.members.map(member => {
           const open = data.tasks.filter(t => t.assigneeId === member.id && t.status !== 'done')
-          const doing = open.filter(t => t.status === 'doing').length
-          return <article className={`team-card ${memberToneClass(member.name)} ${member.active ? '' : 'inactive'}`} key={member.id}>
-            <div className={`team-avatar ${memberToneClass(member.name)}`}>{member.name.slice(0,2).toUpperCase()}</div>
-            <div className="team-card-head"><div><h3>{member.name}</h3><p>{member.role}</p></div><span className={`member-state ${member.active ? 'active' : ''}`}>{member.active ? 'Attivo' : 'Non attivo'}</span></div>
-            <div className="team-numbers"><div><strong>{open.length}</strong><span>Task aperte</span></div><div><strong>{doing}</strong><span>In corso</span></div></div>
-            <div className="member-task-preview">{open.slice(0,3).map(t => <div key={t.id}><CheckSquare2 size={13}/><span>{t.title}</span></div>)}{open.length === 0 && <small>Nessuna task aperta</small>}</div>
-            <button className="secondary-button full" onClick={() => setEditor({kind:'member',record:member})}><Pencil size={15}/> Modifica persona</button>
+          const completed = data.tasks.filter(t => t.assigneeId === member.id && t.status === 'done')
+          const expanded=expandedMembers.has(member.id)
+          return <article className={`team-card team-card-collapsible ${memberToneClass(member.name)} ${member.active ? '' : 'inactive'} ${expanded ? 'is-expanded' : ''}`} key={member.id}>
+            <div className="team-card-summary">
+              <div className={`team-avatar ${memberToneClass(member.name)}`}>{member.name.slice(0,2).toUpperCase()}</div>
+              <div className="team-card-name"><h3>{member.name}</h3></div>
+              <button
+                type="button"
+                className="team-card-toggle"
+                onClick={() => toggleMember(member.id)}
+                aria-expanded={expanded}
+                aria-label={expanded ? `Chiudi scheda di ${member.name}` : `Apri scheda di ${member.name}`}
+              ><ChevronDown size={17}/></button>
+            </div>
+            <div className="team-numbers team-numbers-summary">
+              <div><strong>{open.length}</strong><span>Task aperte</span></div>
+              <div><strong>{completed.length}</strong><span>Task completate</span></div>
+            </div>
+            {expanded && <div className="team-card-details">
+              <div className="team-card-head team-card-detail-head"><div><p>{member.role}</p></div><span className={`member-state ${member.active ? 'active' : ''}`}>{member.active ? 'Attivo' : 'Non attivo'}</span></div>
+              <div className="member-task-preview">{open.slice(0,3).map(t => <div key={t.id}><CheckSquare2 size={13}/><span>{t.title}</span></div>)}{open.length === 0 && <small>Nessuna task aperta</small>}</div>
+              <button className="secondary-button full" onClick={() => setEditor({kind:'member',record:member})}><Pencil size={15}/> Modifica persona</button>
+            </div>}
           </article>
         })}
       </div>
