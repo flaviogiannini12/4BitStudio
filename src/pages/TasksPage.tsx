@@ -41,7 +41,7 @@ function sortTasks(tasks: Task[]) {
   })
 }
 
-export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data: StudioData; actions: Actions; onNew: () => void; onCelebrate: () => void }) {
+export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: StudioData; actions: Actions; createSignal: number; onCelebrate: () => void }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open')
   const [clientFilter, setClientFilter] = useState('all')
   const [memberFilter, setMemberFilter] = useState('all')
@@ -56,6 +56,10 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
   useEffect(() => {
     localStorage.setItem('4bit.tasks.onlyDays', onlyDaysWithTasks ? '1' : '0')
   }, [onlyDaysWithTasks])
+
+  useEffect(() => {
+    if (createSignal > 0) openCreate(null)
+  }, [createSignal])
 
   const today = useMemo(() => new Date(), [])
   const todayKey = todayISO(today)
@@ -244,7 +248,7 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
           <p className="eyebrow">Planner operativo</p>
           <h2>Task</h2>
         </div>
-        <button className="primary-button todo-new-task icon-only-add" title="Nuova attività" aria-label="Nuova attività" onClick={() => openCreate(todayKey)}><Plus size={16}/></button>
+        <button className="primary-button todo-new-task icon-only-add" title="Nuova attività" aria-label="Nuova attività" onClick={() => openCreate(null)}><Plus size={16}/></button>
       </div>
 
       <div className="todo-toolbar">
@@ -419,7 +423,6 @@ export function TasksPage({ data, actions, onNew: _onNew, onCelebrate }: { data:
       initialDate={newTaskDate}
       data={data}
       actions={actions}
-      onCelebrate={onCelebrate}
       onClose={() => setEditorOpen(false)}
     />
   </>
