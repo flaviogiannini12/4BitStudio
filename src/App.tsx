@@ -44,6 +44,7 @@ export default function App() {
   const [page, setPage] = useState<AppPage>(readPage)
   const [homeHeadline] = useState(() => getNextUsefulFact())
   const [createKind, setCreateKind] = useState<CreateKind | null>(null)
+  const [taskCreateSignal,setTaskCreateSignal] = useState(0)
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [confettiBurst, setConfettiBurst] = useState(0)
   const [bootReady, setBootReady] = useState(false)
@@ -90,20 +91,20 @@ export default function App() {
     <CompletionConfetti burst={confettiBurst}/>
     <AppNav page={page} onChange={navigate}/>
     <main className={`app-shell page-${page}`}>
-      {page !== 'editorial' && <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => setCreateKind('task')} user={auth.user} showLogout={page === 'home'}/>} 
+      {page !== 'editorial' && <PageHeader title={current.title} eyebrow={current.eyebrow} onAdd={() => page === 'tasks' ? setTaskCreateSignal(value=>value+1) : setCreateKind('task')} user={auth.user} showLogout={page === 'home'}/>} 
       {studio.error && <div className="global-error"><AlertCircle size={15}/><span>{studio.error}</span><button onClick={() => void studio.reload()}><RefreshCw size={14}/></button></div>}
       {page === 'editorial' && editorial.error && <div className="global-error"><AlertCircle size={15}/><span>{editorial.error}</span><button onClick={() => void editorial.reload()}><RefreshCw size={14}/></button></div>}
       {studio.loading ? <PremiumLoader/> : <>
         {page === 'home' && <HomePage data={studio.data} editorialData={editorial.data} onClient={openClient} onEditorial={() => navigate('editorial')} onPayments={() => navigate('payments')} onTasks={() => navigate('tasks')} onPaid={id => void studio.actions.markPaymentPaid(id)} onReorderClients={studio.actions.reorderClients}/>} 
         {page === 'clients' && <ClientsPage data={studio.data} actions={studio.actions} selectedId={selectedClient} onSelect={setSelectedClient} onNew={() => setCreateKind('client')}/>} 
-        {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('task')} onCelebrate={celebrateCompletion}/>} 
+        {page === 'tasks' && <TasksPage data={studio.data} actions={studio.actions} createSignal={taskCreateSignal} onCelebrate={celebrateCompletion}/>} 
         {page === 'editorial' && (editorial.loading ? <PremiumLoader/> : <EditorialPage data={editorial.data} members={studio.data.members} actions={editorial.actions} onCelebrate={celebrateCompletion}/>)} 
         {page === 'payments' && <PaymentsPage data={studio.data} actions={studio.actions}/>} 
         {page === 'team' && <TeamPage data={studio.data} actions={studio.actions} onNew={() => setCreateKind('member')}/>} 
         {page === 'stats' && <StatsPage data={studio.data}/>} 
       </>}
     </main>
-    {page !== 'editorial' && page !== 'payments' && <button className={`desktop-floating-add ${page === 'tasks' ? 'icon-only-add' : ''}`} title="Nuova attività" aria-label="Nuova attività" onClick={() => setCreateKind('task')}>{page === 'tasks' ? '+' : '+ Nuova attività'}</button>}
+    {page !== 'editorial' && page !== 'payments' && <button className={`desktop-floating-add ${page === 'tasks' ? 'icon-only-add' : ''}`} title="Nuova attività" aria-label="Nuova attività" onClick={() => page === 'tasks' ? setTaskCreateSignal(value=>value+1) : setCreateKind('task')}>{page === 'tasks' ? '+' : '+ Nuova attività'}</button>}
     {createKind && <QuickCreateModal data={studio.data} actions={studio.actions} initialKind={createKind} onClose={() => setCreateKind(null)}/>} 
   </>
 }
