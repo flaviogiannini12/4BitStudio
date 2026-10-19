@@ -12,6 +12,7 @@ export interface EditorialItem {
   title: string
   description: string
   inspirationUrl: string
+  definitiveUrl: string
   status: EditorialStatus
   publishDate: string | null
   publishTime: string | null
@@ -59,6 +60,7 @@ export interface EditorialItemInput {
   title: string
   description?: string
   inspirationUrl?: string
+  definitiveUrl?: string
   status?: EditorialStatus
   publishDate?: string | null
   publishTime?: string | null
