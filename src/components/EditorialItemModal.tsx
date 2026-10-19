@@ -32,10 +32,11 @@ type EditorialDraft = {
 const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','instagram','facebook_only','tiktok','youtube','whatsapp']
 const META_PLATFORMS: EditorialPlatform[] = ['facebook','instagram','facebook_only']
 const EDITORIAL_DRAFT_KEY = '4bit-editorial-draft-v1'
+const EDITORIAL_EDIT_DRAFT_PREFIX = '4bit-editorial-edit-draft-v1:'
 
-function readEditorialDraft(): EditorialDraft | null {
+function readEditorialDraft(key=EDITORIAL_DRAFT_KEY): EditorialDraft | null {
   try {
-    const raw=window.localStorage.getItem(EDITORIAL_DRAFT_KEY)
+    const raw=window.localStorage.getItem(key)
     if(!raw) return null
     const parsed=JSON.parse(raw) as Partial<EditorialDraft>
     const accounts=(parsed.accounts ?? []).filter((value): value is EditorialAccount => value==='casaro' || value==='autoscuola_susa')
@@ -57,16 +58,16 @@ function readEditorialDraft(): EditorialDraft | null {
   }
 }
 
-function writeEditorialDraft(draft: EditorialDraft) {
+function writeEditorialDraft(draft: EditorialDraft,key=EDITORIAL_DRAFT_KEY) {
   try {
-    window.localStorage.setItem(EDITORIAL_DRAFT_KEY,JSON.stringify(draft))
+    window.localStorage.setItem(key,JSON.stringify(draft))
   } catch {
     // La bozza resta comunque nello stato React della sessione corrente.
   }
 }
 
-function clearEditorialDraft() {
-  try { window.localStorage.removeItem(EDITORIAL_DRAFT_KEY) } catch {}
+function clearEditorialDraft(key=EDITORIAL_DRAFT_KEY) {
+  try { window.localStorage.removeItem(key) } catch {}
 }
 
 function todayISO() {
@@ -122,42 +123,81 @@ export function EditorialItemModal({
   const [saving,setSaving]=useState(false)
   const [localError,setLocalError]=useState<string|null>(null)
   const [descriptionCopied,setDescriptionCopied]=useState(false)
-  const [draftSaved,setDraftSaved]=useState(false)
   const formRef=useRef<HTMLFormElement>(null)
+  const lastSavedSnapshot=useRef('')
+  const autosaveTimer=useRef<number|null>(null)
+  const autosaveQueue=useRef<Promise<void>>(Promise.resolve())
+  const storageKey=item ? `${EDITORIAL_EDIT_DRAFT_PREFIX}${item.id}` : EDITORIAL_DRAFT_KEY
 
   const steps=useMemo(()=>item ? data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder) : [],[data.steps,item])
 
   useEffect(()=>{
     if(!open) return
-    if(item) {
-      setDraft(initial)
-    } else {
-      const saved=readEditorialDraft()
-      setDraft(saved ?? initial)
-      setDraftSaved(Boolean(saved))
-    }
+    const saved=readEditorialDraft(storageKey)
+    const next=saved ?? initial
+    setDraft(next)
+    lastSavedSnapshot.current=JSON.stringify(initial)
     setLocalError(null)
     setDescriptionCopied(false)
-  },[open,initial,item])
+  },[open,item?.id,storageKey])
 
   useEffect(()=>{
-    if(!open || item) return
-    writeEditorialDraft(draft)
-    setDraftSaved(true)
-  },[draft,item,open])
+    if(!open) return
+    writeEditorialDraft(draft,storageKey)
+  },[draft,open,storageKey])
+
+  useEffect(()=>{
+    if(!open || !item) return
+    const snapshot=JSON.stringify(draft)
+    if(snapshot===lastSavedSnapshot.current) return
+    if(!draft.title.trim() || !draft.platforms.length || !draft.accounts.length) return
+
+    if(autosaveTimer.current!==null) window.clearTimeout(autosaveTimer.current)
+    autosaveTimer.current=window.setTimeout(()=>{
+      const payload={
+        platforms:draft.platforms,
+        mediaKind:draft.mediaKind,
+        title:draft.title.trim(),
+        description:draft.description.trim(),
+        inspirationUrl:draft.inspirationUrl.trim(),
+        definitiveUrl:draft.definitiveUrl.trim(),
+        publishDate:draft.publishDate || todayISO(),
+        publishTime:draft.publishTime || '18:00',
+        account:draft.accounts[0],
+      }
+
+      autosaveQueue.current=autosaveQueue.current
+        .catch(()=>{})
+        .then(async()=>{
+          await actions.updateItem(item.id,payload)
+          lastSavedSnapshot.current=snapshot
+          setLocalError(null)
+        })
+        .catch(err=>{
+          setLocalError(err instanceof Error ? err.message : 'Salvataggio automatico non riuscito')
+        })
+    },650)
+
+    return ()=>{
+      if(autosaveTimer.current!==null){
+        window.clearTimeout(autosaveTimer.current)
+        autosaveTimer.current=null
+      }
+    }
+  },[actions,draft,item?.id,open])
 
   useEffect(()=>{
     if(!open) return
     const handler=(event:KeyboardEvent)=>{
-      if(event.key==='Escape' && !saving) onClose()
-      if(event.key==='Enter' && (event.metaKey || event.ctrlKey)){
+      if(event.key==='Escape' && !saving) void closeEditor()
+      if(!item && event.key==='Enter' && (event.metaKey || event.ctrlKey)){
         event.preventDefault()
         formRef.current?.requestSubmit()
       }
     }
     document.addEventListener('keydown',handler)
     return ()=>document.removeEventListener('keydown',handler)
-  },[open,onClose,saving])
+  },[draft,item?.id,open,saving])
 
   if(!open) return null
 
@@ -256,9 +296,59 @@ export function EditorialItemModal({
     }
   }
 
+  async function saveExistingNow() {
+    if(!item || !draft.title.trim() || !draft.platforms.length || !draft.accounts.length) return
+    if(autosaveTimer.current!==null){
+      window.clearTimeout(autosaveTimer.current)
+      autosaveTimer.current=null
+    }
+
+    const snapshot=JSON.stringify(draft)
+    if(snapshot===lastSavedSnapshot.current) return
+
+    const payload={
+      platforms:draft.platforms,
+      mediaKind:draft.mediaKind,
+      title:draft.title.trim(),
+      description:draft.description.trim(),
+      inspirationUrl:draft.inspirationUrl.trim(),
+      definitiveUrl:draft.definitiveUrl.trim(),
+      publishDate:draft.publishDate || todayISO(),
+      publishTime:draft.publishTime || '18:00',
+      account:draft.accounts[0],
+    }
+
+    const task=autosaveQueue.current
+      .catch(()=>{})
+      .then(async()=>{
+        await actions.updateItem(item.id,payload)
+        lastSavedSnapshot.current=snapshot
+        setLocalError(null)
+      })
+
+    autosaveQueue.current=task.catch(err=>{
+      setLocalError(err instanceof Error ? err.message : 'Salvataggio automatico non riuscito')
+    })
+    await autosaveQueue.current
+  }
+
+  async function closeEditor() {
+    if(item){
+      await saveExistingNow()
+      if(lastSavedSnapshot.current===JSON.stringify(draft)) clearEditorialDraft(storageKey)
+    }
+    onClose()
+  }
+
   async function submit(event:FormEvent) {
     event.preventDefault()
     if(!draft.title.trim() || !draft.platforms.length || !draft.accounts.length) return
+
+    if(item){
+      await saveExistingNow()
+      return
+    }
+
     setSaving(true)
     setLocalError(null)
     try{
@@ -273,19 +363,14 @@ export function EditorialItemModal({
         publishTime:draft.publishTime || '18:00',
       }
 
-      const savedItems = item
-        ? [await actions.updateItem(item.id,{...sharedPayload,account:draft.accounts[0]})]
-        : await Promise.all(draft.accounts.map((account,index)=>
-            actions.createItem({...sharedPayload,account,sortOrder:Date.now()+index})
-          ))
+      await Promise.all(draft.accounts.map((account,index)=>
+        actions.createItem({...sharedPayload,account,sortOrder:Date.now()+index})
+      ))
 
-      if(!item) {
-        clearEditorialDraft()
-        setDraftSaved(false)
-      }
+      clearEditorialDraft()
       onClose()
     }catch(err){
-      setLocalError(err instanceof Error ? err.message : 'Salvataggio non riuscito')
+      setLocalError(err instanceof Error ? err.message : 'Creazione non riuscita')
     }finally{
       setSaving(false)
     }
@@ -303,15 +388,14 @@ export function EditorialItemModal({
   }
 
   return <div className="task-editor-backdrop editorial-modal-backdrop">
-    <button className="task-editor-scrim" onClick={()=>!saving && onClose()} aria-label="Chiudi"/>
+    <button className="task-editor-scrim" onClick={()=>!saving && void closeEditor()} aria-label="Chiudi"/>
     <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel-v5">
       <div className="task-editor-head editorial-editor-head-v5">
         <div>
           <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
           <h2>{item ? item.title : 'Contenuto social'}</h2>
-          {!item && draftSaved && <span className="editorial-draft-saved"><Check size={11}/> Bozza salvata automaticamente</span>}
         </div>
-        <button type="button" className="icon-button" onClick={onClose} disabled={saving}><X size={18}/></button>
+        <button type="button" className="icon-button" onClick={()=>void closeEditor()} disabled={saving}><X size={18}/></button>
       </div>
 
       <div className="task-editor-body editorial-form-v5">
@@ -462,8 +546,8 @@ export function EditorialItemModal({
       <div className="task-editor-actions editorial-editor-actions-v5">
         {item ? <button type="button" className="danger-button" disabled={saving} onClick={()=>void removeItem()}><Trash2 size={15}/> Elimina</button> : <span/>}
         <div>
-          <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annulla</button>
-          <button className="primary-button" disabled={saving || !draft.title.trim() || !draft.platforms.length}>{saving ? 'Salvataggio…' : item ? 'Salva' : 'Aggiungi'}</button>
+          <button type="button" className="secondary-button" onClick={()=>void closeEditor()} disabled={saving}>Chiudi</button>
+          {!item && <button className="primary-button" disabled={saving || !draft.title.trim() || !draft.platforms.length}>{saving ? 'Creazione…' : 'Aggiungi'}</button>}
         </div>
       </div>
     </form>
