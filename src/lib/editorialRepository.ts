@@ -58,6 +58,7 @@ const fromItem = (r:any): EditorialItem => ({
   title:r.title,
   description:r.description ?? '',
   inspirationUrl:r.inspiration_url ?? '',
+  definitiveUrl:r.definitive_url ?? '',
   status:r.status,
   publishDate:r.publish_date ?? null,
   publishTime:r.publish_time ? String(r.publish_time).slice(0,5) : null,
@@ -133,7 +134,7 @@ async function syncEditorialAutomation(itemId:string) {
     {data:assetRows,error:assetError},
     {data:stepRows,error:stepError},
   ]=await Promise.all([
-    db.from('editorial_items').select('id,platforms,platform,media_kind,status').eq('id',itemId).single(),
+    db.from('editorial_items').select('id,platforms,platform,media_kind,status,definitive_url').eq('id',itemId).single(),
     db.from('editorial_assets').select('id,asset_role').eq('editorial_item_id',itemId),
     db.from('editorial_steps').select('id,label,done').eq('editorial_item_id',itemId).order('sort_order',{ascending:true}),
   ])
@@ -142,7 +143,7 @@ async function syncEditorialAutomation(itemId:string) {
   if(assetError) throw assetError
   if(stepError) throw stepError
 
-  const hasFinalAsset=(assetRows ?? []).some(row=>String(row.asset_role ?? 'contenuto')!=='inspiration')
+  const hasDefinitiveLink=Boolean(String(itemRow.definitive_url ?? '').trim())
   const steps=(stepRows ?? []).map(row=>({
     id:String(row.id),
     label:String(row.label),
@@ -152,7 +153,7 @@ async function syncEditorialAutomation(itemId:string) {
   for(const step of steps) {
     let desired: boolean | null = null
     if(['Ideazione / Script social','WhatsApp · Ideazione'].includes(step.label)) desired=true
-    if(step.label==='WhatsApp · Preparazione contenuto') desired=hasFinalAsset
+    if(step.label==='WhatsApp · Preparazione contenuto') desired=hasDefinitiveLink
     if(desired !== null && desired !== step.done) {
       const {error}=await db.from('editorial_steps').update({done:desired}).eq('id',step.id)
       if(error) throw error
@@ -202,6 +203,7 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
     title:input.title,
     description:input.description ?? '',
     inspiration_url:input.inspirationUrl ?? '',
+    definitive_url:input.definitiveUrl ?? '',
     hook:'',
     script:'',
     caption:'',
@@ -242,6 +244,7 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
   if(input.title !== undefined) payload.title=input.title
   if(input.description !== undefined) payload.description=input.description
   if(input.inspirationUrl !== undefined) payload.inspiration_url=input.inspirationUrl
+  if(input.definitiveUrl !== undefined) payload.definitive_url=input.definitiveUrl
   if(input.publishDate !== undefined) payload.publish_date=input.publishDate || null
   if(input.publishTime !== undefined) payload.publish_time=input.publishTime || '18:00'
   if(input.sortOrder !== undefined) payload.sort_order=input.sortOrder
