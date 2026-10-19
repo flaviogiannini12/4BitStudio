@@ -470,7 +470,7 @@ export function EditorialItemModal({
         <section className="editorial-drive-links">
           <div className="editorial-drive-link-card inspiration">
             <div className="editorial-inspiration-head">
-              <div><strong>Contenuto ispirazionale</strong><small>Link Drive del riferimento da usare come ispirazione.</small></div>
+              <div><strong>Contenuto ispirazionale</strong></div>
             </div>
             <div className="editorial-inspiration-link-row">
               <span className="editorial-inspiration-link-icon"><Link2 size={16}/></span>
@@ -478,7 +478,7 @@ export function EditorialItemModal({
                 className="field"
                 type="text"
                 inputMode="url"
-                placeholder="Incolla il link Google Drive"
+                placeholder="Incolla link"
                 value={draft.inspirationUrl}
                 onChange={e=>setDraft({...draft,inspirationUrl:e.target.value})}
               />
@@ -488,7 +488,7 @@ export function EditorialItemModal({
 
           <div className="editorial-drive-link-card definitive">
             <div className="editorial-inspiration-head">
-              <div><strong>Contenuto definitivo</strong><small>Link Drive del file finale pronto per pubblicazione o invio.</small></div>
+              <div><strong>Contenuto definitivo</strong></div>
             </div>
             <div className="editorial-inspiration-link-row">
               <span className="editorial-inspiration-link-icon"><Link2 size={16}/></span>
@@ -496,7 +496,7 @@ export function EditorialItemModal({
                 className="field"
                 type="text"
                 inputMode="url"
-                placeholder="Incolla il link Google Drive definitivo"
+                placeholder="Incolla link"
                 value={draft.definitiveUrl}
                 onChange={e=>setDraft({...draft,definitiveUrl:e.target.value})}
               />
