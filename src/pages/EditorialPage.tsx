@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent, type PointerEvent } from 'react'
-import { Archive, CalendarDays, ChevronDown, GripVertical, Paperclip, Plus } from 'lucide-react'
+import { Archive, CalendarDays, ChevronDown, GripVertical, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
   editorialAccountLabel,
@@ -310,7 +310,7 @@ export function EditorialPage({
           <span>{archiveItems.length}</span>
         </div>
         <div className="todo-completed-list">
-          {archiveItems.map(item=><EditorialArchiveRow key={item.id} item={item} data={data} onClick={()=>openEdit(item)}/>)}
+          {archiveItems.map(item=><EditorialArchiveRow key={item.id} item={item} onClick={()=>openEdit(item)}/>)}
           {!archiveItems.length && <div className="empty-page-mini">Nessun contenuto pubblicato con questi filtri.</div>}
         </div>
       </section>}
@@ -349,7 +349,6 @@ function EditorialCard({
   onDragHover:(publishDate:string|null)=>void
 }) {
   const steps=data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder)
-  const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
   const pendingPeople=[...new Set(
     steps
       .filter(step=>!step.done)
@@ -400,7 +399,6 @@ function EditorialCard({
         {item.platforms.map(value=><PlatformPreviewIcon key={value} platform={value}/>)}
         <span className={`editorial-status-chip ${statusTone(item.status)}`}>{statusLabelForItem(item.status,item.platforms)}</span>
         <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
-        <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
 
 
@@ -413,8 +411,7 @@ function EditorialCard({
   </article>
 }
 
-function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:EditorialData;onClick:()=>void}) {
-  const assets=data.assets.filter(asset=>asset.editorialItemId===item.id)
+function EditorialArchiveRow({item,onClick}:{item:EditorialItem;onClick:()=>void}) {
   return <article className={`todo-task-card completed-task-card editorial-todo-card editorial-archive-card account-${item.account} is-published`}>
     <button className="todo-task-content editorial-todo-content" onClick={onClick}>
       <div className="todo-task-topline">
@@ -425,7 +422,6 @@ function EditorialArchiveRow({item,data,onClick}:{item:EditorialItem;data:Editor
         {item.platforms.map(value=><PlatformPreviewIcon key={value} platform={value}/>)}
         <span className="editorial-status-chip published">Pubblicato</span>
         <span className={`editorial-media-chip ${item.mediaKind}`}>{item.mediaKind==='video'?'Video':'Foto'}</span>
-        <span className="editorial-inline-meta"><Paperclip size={11}/>{assets.length}</span>
       </div>
     </button>
   </article>
