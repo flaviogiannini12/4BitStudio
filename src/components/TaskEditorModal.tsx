@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { CalendarDays, Trash2, UserRound, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Trash2, UserRound, X } from 'lucide-react'
+import { clientChipStyle } from '../lib/clientTone'
+import { memberToneClass } from '../lib/memberTone'
 import type { StudioData, Task } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 
@@ -48,11 +50,43 @@ export function TaskEditorModal({
 
   const [draft, setDraft] = useState(initial)
   const [saving, setSaving] = useState(false)
+  const [showAllClients,setShowAllClients] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+
+  const activeMembers = useMemo(
+    () => data.members.filter(member=>member.active),
+    [data.members],
+  )
+
+  const clientChoices = useMemo(() => {
+    const selected = orderedClients.filter(client=>draft.clientIds.includes(client.id))
+    const remaining = orderedClients.filter(client=>!draft.clientIds.includes(client.id))
+    if (draft.clientIds.length) return [...selected,...remaining]
+    return orderedClients
+  }, [orderedClients,draft.clientIds])
+
+  const visibleClientChoices = showAllClients ? clientChoices : clientChoices.slice(0,3)
+  const hiddenClientCount = Math.max(0,clientChoices.length-visibleClientChoices.length)
+
+  const taskClientStyle = (client:{id:string;name:string}) => {
+    const name=client.name.trim().toLowerCase()
+    if(name.includes('casaro')) return {
+      '--client-chip-bg':'rgba(255,214,50,.22)',
+      '--client-chip-ink':'#6B5400',
+      '--client-chip-accent':'#FFD632',
+    } as React.CSSProperties
+    if(name.includes('autoscuola susa')) return {
+      '--client-chip-bg':'rgba(11,111,159,.12)',
+      '--client-chip-ink':'#07577E',
+      '--client-chip-accent':'#0B6F9F',
+    } as React.CSSProperties
+    return clientChipStyle(client.id,data.clients)
+  }
 
   useEffect(() => {
     if (!open) return
     setDraft(initial)
+    setShowAllClients(false)
   }, [open, initial])
 
   useEffect(() => {
@@ -148,16 +182,33 @@ export function TaskEditorModal({
             </div>
           </label>
 
-          <label className="setting-field task-editor-setting">
-            <span className="task-setting-icon"><UserRound size={16}/></span>
-            <div>
-              <span className="setting-label">Assegnata a</span>
-              <select value={draft.assigneeId} onChange={e => setDraft({...draft,assigneeId:e.target.value})}>
-                <option value="">Non assegnata</option>
-                {data.members.filter(m => m.active).map(m => <option value={m.id} key={m.id}>{m.name}</option>)}
-              </select>
+          <div className="task-team-picker">
+            <div className="task-team-picker-label"><UserRound size={16}/><span>Assegnata a</span></div>
+            <div className="task-team-chips" role="group" aria-label="Assegna la task">
+              <button
+                type="button"
+                className={`task-team-chip task-team-unassigned ${!draft.assigneeId ? 'selected' : ''}`}
+                aria-pressed={!draft.assigneeId}
+                onClick={()=>setDraft({...draft,assigneeId:''})}
+              >
+                <span className="task-team-avatar">—</span>
+                <span>Non assegnata</span>
+              </button>
+              {activeMembers.map(member=>{
+                const selected=draft.assigneeId===member.id
+                return <button
+                  type="button"
+                  key={member.id}
+                  className={`task-team-chip ${memberToneClass(member.name)} ${selected ? 'selected' : ''}`}
+                  aria-pressed={selected}
+                  onClick={()=>setDraft({...draft,assigneeId:member.id})}
+                >
+                  <span className="task-team-avatar">{member.name.slice(0,1).toUpperCase()}</span>
+                  <span>{member.name}</span>
+                </button>
+              })}
             </div>
-          </label>
+          </div>
         </div>
 
         <div className="task-editor-grid">
@@ -169,27 +220,45 @@ export function TaskEditorModal({
             </select>
           </label> : <div className="form-field task-client-multi-field">
             <span>Lavori / clienti</span>
-            <div className="task-client-chips" role="group" aria-label="Seleziona uno o più lavori">
-              <button
-                type="button"
-                className={`task-client-chip ${draft.clientIds.length===0 ? 'selected' : ''}`}
-                onClick={()=>setDraft({...draft,clientIds:[]})}
-              >4Bit Studio / Interno</button>
-              {orderedClients.map(client=>{
-                const selected=draft.clientIds.includes(client.id)
-                return <button
+            <div className="task-editor-client-picker">
+              <div className="task-editor-client-chips" role="group" aria-label="Seleziona uno o più lavori">
+                {!draft.clientIds.length && <button
                   type="button"
-                  className={`task-client-chip ${selected ? 'selected' : ''}`}
-                  key={client.id}
-                  aria-pressed={selected}
-                  onClick={()=>setDraft({
-                    ...draft,
-                    clientIds:selected
-                      ? draft.clientIds.filter(id=>id!==client.id)
-                      : [...draft.clientIds,client.id],
-                  })}
-                >{client.name}</button>
-              })}
+                  className="task-editor-client-chip task-editor-client-internal selected"
+                  aria-pressed="true"
+                  onClick={()=>setDraft({...draft,clientIds:[]})}
+                ><span className="task-editor-client-dot"/>4Bit Studio / Interno</button>}
+                {visibleClientChoices.map(client=>{
+                  const selected=draft.clientIds.includes(client.id)
+                  return <button
+                    type="button"
+                    style={taskClientStyle(client)}
+                    className={`task-editor-client-chip ${selected ? 'selected' : ''}`}
+                    key={client.id}
+                    aria-pressed={selected}
+                    onClick={()=>setDraft({
+                      ...draft,
+                      clientIds:selected
+                        ? draft.clientIds.filter(id=>id!==client.id)
+                        : [...draft.clientIds,client.id],
+                    })}
+                  ><span className="task-editor-client-dot"/>{client.name}</button>
+                })}
+                {draft.clientIds.length>0 && !showAllClients && visibleClientChoices.length<3 && <button
+                  type="button"
+                  className="task-editor-client-chip task-editor-client-internal"
+                  onClick={()=>setDraft({...draft,clientIds:[]})}
+                ><span className="task-editor-client-dot"/>4Bit Studio / Interno</button>}
+              </div>
+              {clientChoices.length>3 && <button
+                type="button"
+                className="task-client-more"
+                onClick={()=>setShowAllClients(value=>!value)}
+                aria-expanded={showAllClients}
+              >
+                <span>{showAllClients ? 'Mostra meno' : `+${hiddenClientCount} altre`}</span>
+                <ChevronDown size={14}/>
+              </button>}
             </div>
             <small>{draft.clientIds.length > 1 ? `${draft.clientIds.length} attività selezionate · verrà creata una task per ciascuna` : draft.clientIds.length === 1 ? '1 attività selezionata' : 'Task interna 4Bit Studio'}</small>
           </div>}
