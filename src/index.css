@@ -8494,3 +8494,68 @@ body.editorial-touch-dragging .editorial-drag-handle{
     min-height:54px;
   }
 }
+
+
+/* =========================================================
+   TASK EDITOR — selezione multipla lavori
+   ========================================================= */
+.task-client-multi-field{
+  min-width:0;
+}
+
+.task-client-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:10px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:16px;
+  background:rgba(255,255,255,.76);
+}
+
+.task-client-chip{
+  display:inline-flex;
+  min-height:32px;
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border:1px solid rgba(5,5,5,.07);
+  border-radius:999px;
+  background:rgba(5,5,5,.035);
+  color:rgba(5,5,5,.58);
+  font:inherit;
+  font-size:9px;
+  font-weight:780;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,border-color .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+
+.task-client-chip:hover{
+  transform:translateY(-1px);
+  border-color:rgba(5,5,5,.14);
+  background:#fff;
+}
+
+.task-client-chip.selected{
+  border-color:#050505;
+  background:#050505;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(5,5,5,.10);
+}
+
+.task-client-multi-field>small{
+  margin-top:6px;
+}
+
+@media(max-width:640px){
+  .task-client-chips{
+    gap:6px;
+    padding:9px;
+  }
+
+  .task-client-chip{
+    min-height:31px;
+    padding:6px 9px;
+    font-size:8.5px;
+  }
+}
