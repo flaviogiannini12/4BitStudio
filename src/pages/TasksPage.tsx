@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarSearch, Check, ChevronDown, GripVertical, Inbox, MoreHorizontal, MoveRight, Plus, UserRound } from 'lucide-react'
 import { ClientLogo } from '../components/ClientLogo'
 import { TaskEditorModal } from '../components/TaskEditorModal'
@@ -9,6 +9,38 @@ import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 type StatusFilter = 'open' | 'done'
+
+const TASK_EDITOR_SESSION_KEY='4bit-task-editor-session-v1'
+
+type TaskEditorSession={
+  mode:'create'|'edit'
+  taskId?:string
+  date:string|null
+}
+
+function readTaskEditorSession():TaskEditorSession|null {
+  try{
+    const raw=sessionStorage.getItem(TASK_EDITOR_SESSION_KEY)
+    if(!raw) return null
+    const parsed=JSON.parse(raw) as Partial<TaskEditorSession>
+    if(parsed.mode!=='create' && parsed.mode!=='edit') return null
+    return {
+      mode:parsed.mode,
+      taskId:typeof parsed.taskId==='string' ? parsed.taskId : undefined,
+      date:typeof parsed.date==='string' ? parsed.date : null,
+    }
+  }catch{
+    return null
+  }
+}
+
+function writeTaskEditorSession(session:TaskEditorSession) {
+  try{ sessionStorage.setItem(TASK_EDITOR_SESSION_KEY,JSON.stringify(session)) }catch{}
+}
+
+function clearTaskEditorSession() {
+  try{ sessionStorage.removeItem(TASK_EDITOR_SESSION_KEY) }catch{}
+}
 
 function dateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
@@ -52,6 +84,7 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
   const [editorOpen, setEditorOpen] = useState(false)
   const [overdueOpen, setOverdueOpen] = useState(false)
   const [backlogOpen, setBacklogOpen] = useState(false)
+  const editorRestoreAttempted=useRef(false)
 
   useEffect(() => {
     localStorage.setItem('4bit.tasks.onlyDays', onlyDaysWithTasks ? '1' : '0')
@@ -60,6 +93,36 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
   useEffect(() => {
     if (createSignal > 0) openCreate(null)
   }, [createSignal])
+
+  useEffect(()=>{
+    if(editorRestoreAttempted.current || editorOpen) return
+    const session=readTaskEditorSession()
+    if(!session){
+      editorRestoreAttempted.current=true
+      return
+    }
+
+    if(session.mode==='create'){
+      setEditingTask(null)
+      setNewTaskDate(session.date)
+      setEditorOpen(true)
+      editorRestoreAttempted.current=true
+      return
+    }
+
+    if(session.taskId){
+      const found=data.tasks.find(task=>task.id===session.taskId)
+      if(found){
+        setEditingTask(found)
+        setNewTaskDate(found.dueDate ?? session.date)
+        setEditorOpen(true)
+        editorRestoreAttempted.current=true
+      }else if(data.tasks.length){
+        clearTaskEditorSession()
+        editorRestoreAttempted.current=true
+      }
+    }
+  },[data.tasks,editorOpen])
 
   const today = useMemo(() => new Date(), [])
   const todayKey = todayISO(today)
@@ -114,12 +177,20 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
     setEditingTask(null)
     setNewTaskDate(date)
     setEditorOpen(true)
+    writeTaskEditorSession({mode:'create',date})
   }
 
   function openEdit(task: Task) {
     setEditingTask(task)
     setNewTaskDate(task.dueDate)
     setEditorOpen(true)
+    writeTaskEditorSession({mode:'edit',taskId:task.id,date:task.dueDate})
+  }
+
+  function closeEditor() {
+    clearTaskEditorSession()
+    setEditorOpen(false)
+    setEditingTask(null)
   }
 
   async function toggleComplete(task: Task) {
@@ -423,7 +494,7 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
       initialDate={newTaskDate}
       data={data}
       actions={actions}
-      onClose={() => setEditorOpen(false)}
+      onClose={closeEditor}
     />
   </>
 }
