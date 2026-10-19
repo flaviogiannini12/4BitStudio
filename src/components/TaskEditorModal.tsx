@@ -14,7 +14,6 @@ export function TaskEditorModal({
   initialClientId,
   data,
   actions,
-  onCelebrate,
   onClose,
 }: {
   open: boolean
@@ -23,7 +22,6 @@ export function TaskEditorModal({
   initialClientId?: string | null
   data: StudioData
   actions: Actions
-  onCelebrate?: () => void
   onClose: () => void
 }) {
   const defaultFlavioId = useMemo(
@@ -45,7 +43,6 @@ export function TaskEditorModal({
     clientIds: task ? (task.clientId ? [task.clientId] : []) : (initialClientId ? [initialClientId] : []),
     assigneeId: task ? (task.assigneeId ?? '') : defaultFlavioId,
     dueDate: task?.dueDate ?? initialDate ?? '',
-    status: task?.status ?? 'todo',
   }), [task, initialDate, initialClientId, defaultFlavioId])
 
   const [draft, setDraft] = useState(initial)
@@ -57,6 +54,8 @@ export function TaskEditorModal({
     () => data.members.filter(member=>member.active),
     [data.members],
   )
+
+  const showDateField = Boolean(task) || initialDate === null
 
   const clientChoices = useMemo(() => {
     const internal={id:'__internal',name:'4Bit Studio / Interno',internal:true as const}
@@ -120,10 +119,8 @@ export function TaskEditorModal({
         clientId: draft.clientId || null,
         assigneeId: draft.assigneeId || null,
         dueDate: draft.dueDate || null,
-        status: draft.status as Task['status'],
       }
       if (task) {
-        if (task.status !== 'done' && payload.status === 'done') onCelebrate?.()
         await actions.updateTask(task.id, payload)
       } else {
         const targets = draft.clientIds.length ? draft.clientIds : [null]
@@ -178,15 +175,15 @@ export function TaskEditorModal({
           onChange={e => setDraft({...draft,description:e.target.value})}
         />
 
-        <div className="task-editor-grid">
-          <label className="setting-field task-editor-setting">
-            <span className="task-setting-icon"><CalendarDays size={16}/></span>
-            <div>
-              <span className="setting-label">Data</span>
-              <input type="date" value={draft.dueDate} onChange={e => setDraft({...draft,dueDate:e.target.value})}/>
-            </div>
-          </label>
+        {showDateField && <label className="setting-field task-editor-setting task-editor-date-card">
+          <span className="task-setting-icon"><CalendarDays size={16}/></span>
+          <div>
+            <span className="setting-label">Data</span>
+            <input type="date" value={draft.dueDate} onChange={e => setDraft({...draft,dueDate:e.target.value})}/>
+          </div>
+        </label>}
 
+        <div className="task-editor-choice-grid">
           <div className="task-team-picker">
             <div className="task-team-picker-label"><UserRound size={16}/><span>Assegnata a</span></div>
             <div className="task-team-chips" role="group" aria-label="Assegna la task">
@@ -214,17 +211,15 @@ export function TaskEditorModal({
               })}
             </div>
           </div>
-        </div>
 
-        <div className="task-editor-grid">
-          {task ? <label className="form-field">
-            <span>Lavoro / cliente</span>
+          {task ? <div className="task-client-single-card">
+            <span className="task-client-single-label">Lavoro / cliente</span>
             <select className="field" value={draft.clientId} onChange={e => setDraft({...draft,clientId:e.target.value})}>
               <option value="">4Bit Studio / Interno</option>
               {orderedClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-          </label> : <div className="form-field task-client-multi-field">
-            <span>Lavori / clienti</span>
+          </div> : <div className="task-client-multi-field">
+            <span className="task-client-single-label">Lavori / clienti</span>
             <div className="task-editor-client-picker">
               <div className="task-editor-client-chips" role="group" aria-label="Seleziona uno o più lavori">
                 {visibleClientChoices.map(client=>{
@@ -260,15 +255,6 @@ export function TaskEditorModal({
             </div>
             <small>{draft.clientIds.length > 1 ? `${draft.clientIds.length} attività selezionate · verrà creata una task per ciascuna` : draft.clientIds.length === 1 ? '1 attività selezionata' : 'Task interna 4Bit Studio'}</small>
           </div>}
-
-          <label className="form-field">
-            <span>Stato</span>
-            <select className="field" value={draft.status} onChange={e => setDraft({...draft,status:e.target.value as Task['status']})}>
-              <option value="todo">Da fare</option>
-              <option value="doing">In corso</option>
-              <option value="done">Completata</option>
-            </select>
-          </label>
         </div>
       </div>
 
