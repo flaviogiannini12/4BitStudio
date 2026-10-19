@@ -131,16 +131,13 @@ async function syncEditorialAutomation(itemId:string) {
   const db=client()
   const [
     {data:itemRow,error:itemError},
-    {data:assetRows,error:assetError},
     {data:stepRows,error:stepError},
   ]=await Promise.all([
     db.from('editorial_items').select('id,platforms,platform,media_kind,status,definitive_url').eq('id',itemId).single(),
-    db.from('editorial_assets').select('id,asset_role').eq('editorial_item_id',itemId),
     db.from('editorial_steps').select('id,label,done').eq('editorial_item_id',itemId).order('sort_order',{ascending:true}),
   ])
 
   if(itemError) throw itemError
-  if(assetError) throw assetError
   if(stepError) throw stepError
 
   const hasDefinitiveLink=Boolean(String(itemRow.definitive_url ?? '').trim())
