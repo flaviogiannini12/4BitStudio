@@ -77,11 +77,13 @@ export function TaskEditorModal({
       '--client-chip-bg':'rgba(255,214,50,.22)',
       '--client-chip-ink':'#6B5400',
       '--client-chip-accent':'#FFD632',
+      '--task-client-selected-ink':'#050505',
     } as CSSProperties
     if(name.includes('autoscuola susa')) return {
       '--client-chip-bg':'rgba(11,111,159,.12)',
       '--client-chip-ink':'#07577E',
       '--client-chip-accent':'#0B6F9F',
+      '--task-client-selected-ink':'#fff',
     } as CSSProperties
     return clientChipStyle(client.id,data.clients)
   }
