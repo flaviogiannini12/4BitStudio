@@ -8848,3 +8848,37 @@ body.editorial-touch-dragging .editorial-drag-handle{
     width:100%;
   }
 }
+
+
+/* =========================================================
+   PIANO EDITORIALE — link Drive ispirazionale e definitivo
+   ========================================================= */
+.editorial-drive-links{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.editorial-drive-link-card{
+  display:grid;
+  gap:10px;
+  min-width:0;
+  padding:14px;
+  border:1px solid rgba(5,5,5,.065);
+  border-radius:18px;
+  background:rgba(255,255,255,.62);
+}
+
+.editorial-drive-link-card.definitive{
+  background:rgba(255,255,255,.78);
+}
+
+@media(max-width:760px){
+  .editorial-drive-links{
+    grid-template-columns:1fr;
+  }
+
+  .editorial-drive-link-card{
+    padding:12px;
+  }
+}
