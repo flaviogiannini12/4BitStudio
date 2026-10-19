@@ -7,6 +7,44 @@ import type { useStudio } from '../hooks/useStudio'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 
+type TaskEditorDraft = {
+  title:string
+  description:string
+  clientId:string
+  clientIds:string[]
+  assigneeId:string
+  dueDate:string
+}
+
+const TASK_DRAFT_KEY='4bit-task-draft-v1'
+const TASK_EDIT_DRAFT_PREFIX='4bit-task-edit-draft-v1:'
+
+function readTaskDraft(key:string):TaskEditorDraft|null {
+  try{
+    const raw=window.localStorage.getItem(key)
+    if(!raw) return null
+    const parsed=JSON.parse(raw) as Partial<TaskEditorDraft>
+    return {
+      title:typeof parsed.title==='string' ? parsed.title : '',
+      description:typeof parsed.description==='string' ? parsed.description : '',
+      clientId:typeof parsed.clientId==='string' ? parsed.clientId : '',
+      clientIds:Array.isArray(parsed.clientIds) ? parsed.clientIds.filter((value): value is string => typeof value==='string') : [],
+      assigneeId:typeof parsed.assigneeId==='string' ? parsed.assigneeId : '',
+      dueDate:typeof parsed.dueDate==='string' ? parsed.dueDate : '',
+    }
+  }catch{
+    return null
+  }
+}
+
+function writeTaskDraft(key:string,draft:TaskEditorDraft) {
+  try{ window.localStorage.setItem(key,JSON.stringify(draft)) }catch{}
+}
+
+function clearTaskDraft(key:string) {
+  try{ window.localStorage.removeItem(key) }catch{}
+}
+
 export function TaskEditorModal({
   open,
   task,
@@ -45,10 +83,15 @@ export function TaskEditorModal({
     dueDate: task?.dueDate ?? initialDate ?? '',
   }), [task, initialDate, initialClientId, defaultFlavioId])
 
-  const [draft, setDraft] = useState(initial)
+  const [draft, setDraft] = useState<TaskEditorDraft>(initial)
   const [saving, setSaving] = useState(false)
   const [showAllClients,setShowAllClients] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const autosaveTimer=useRef<number|null>(null)
+  const autosaveQueue=useRef<Promise<void>>(Promise.resolve())
+  const lastSavedSnapshot=useRef('')
+  const latestDraftRef=useRef<TaskEditorDraft>(initial)
+  const storageKey=task ? `${TASK_EDIT_DRAFT_PREFIX}${task.id}` : TASK_DRAFT_KEY
 
   const activeMembers = useMemo(
     () => data.members.filter(member=>member.active),
@@ -89,28 +132,130 @@ export function TaskEditorModal({
 
   useEffect(() => {
     if (!open) return
-    setDraft(initial)
+    const saved=readTaskDraft(storageKey)
+    const next=saved ?? initial
+    setDraft(next)
+    latestDraftRef.current=next
+    lastSavedSnapshot.current=JSON.stringify(initial)
     setShowAllClients(false)
-  }, [open, initial])
+  }, [open, task?.id, storageKey])
+
+  useEffect(() => {
+    latestDraftRef.current=draft
+    if(!open) return
+    writeTaskDraft(storageKey,draft)
+  }, [draft,open,storageKey])
+
+  useEffect(() => {
+    if(!open || !task) return
+    const snapshot=JSON.stringify(draft)
+    if(snapshot===lastSavedSnapshot.current || !draft.title.trim()) return
+
+    if(autosaveTimer.current!==null) window.clearTimeout(autosaveTimer.current)
+    autosaveTimer.current=window.setTimeout(()=>{
+      const payload={
+        title:draft.title.trim(),
+        description:draft.description.trim(),
+        clientId:draft.clientId || null,
+        assigneeId:draft.assigneeId || null,
+        dueDate:draft.dueDate || null,
+      }
+
+      autosaveQueue.current=autosaveQueue.current
+        .catch(()=>{})
+        .then(async()=>{
+          await actions.updateTask(task.id,payload)
+          lastSavedSnapshot.current=snapshot
+        })
+    },500)
+
+    return ()=>{
+      if(autosaveTimer.current!==null){
+        window.clearTimeout(autosaveTimer.current)
+        autosaveTimer.current=null
+      }
+    }
+  },[actions,draft,open,task?.id])
 
   useEffect(() => {
     if (!open) return
     const handler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      if (event.key === 'Escape') void closeEditor()
+      if (!task && event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
         formRef.current?.requestSubmit()
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
+  }, [draft,open,task?.id])
+
+  useEffect(()=>{
+    return ()=>{
+      if(task && latestDraftRef.current.title.trim()){
+        const current=latestDraftRef.current
+        const snapshot=JSON.stringify(current)
+        if(snapshot!==lastSavedSnapshot.current){
+          void actions.updateTask(task.id,{
+            title:current.title.trim(),
+            description:current.description.trim(),
+            clientId:current.clientId || null,
+            assigneeId:current.assigneeId || null,
+            dueDate:current.dueDate || null,
+          })
+        }
+      }
+    }
+  },[actions,task?.id])
 
   if (!open) return null
+
+  async function saveExistingNow() {
+    if(!task || !draft.title.trim()) return
+    if(autosaveTimer.current!==null){
+      window.clearTimeout(autosaveTimer.current)
+      autosaveTimer.current=null
+    }
+
+    const snapshot=JSON.stringify(draft)
+    if(snapshot===lastSavedSnapshot.current) return
+
+    const payload={
+      title:draft.title.trim(),
+      description:draft.description.trim(),
+      clientId:draft.clientId || null,
+      assigneeId:draft.assigneeId || null,
+      dueDate:draft.dueDate || null,
+    }
+
+    const taskSave=autosaveQueue.current
+      .catch(()=>{})
+      .then(async()=>{
+        await actions.updateTask(task.id,payload)
+        lastSavedSnapshot.current=snapshot
+      })
+
+    autosaveQueue.current=taskSave.catch(()=>{})
+    await taskSave
+  }
+
+  async function closeEditor() {
+    if(task){
+      await saveExistingNow()
+      if(lastSavedSnapshot.current===JSON.stringify(draft)) clearTaskDraft(storageKey)
+    }
+    onClose()
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!draft.title.trim()) return
+
+    if(task){
+      await saveExistingNow()
+      return
+    }
+
     setSaving(true)
     try {
       const payload = {
@@ -120,15 +265,12 @@ export function TaskEditorModal({
         assigneeId: draft.assigneeId || null,
         dueDate: draft.dueDate || null,
       }
-      if (task) {
-        await actions.updateTask(task.id, payload)
-      } else {
-        const targets = draft.clientIds.length ? draft.clientIds : [null]
-        const baseSortOrder = Date.now()
-        for (const [index,clientId] of targets.entries()) {
-          await actions.createTask({ ...payload, clientId, sortOrder: baseSortOrder + index })
-        }
+      const targets = draft.clientIds.length ? draft.clientIds : [null]
+      const baseSortOrder = Date.now()
+      for (const [index,clientId] of targets.entries()) {
+        await actions.createTask({ ...payload, clientId, sortOrder: baseSortOrder + index })
       }
+      clearTaskDraft(TASK_DRAFT_KEY)
       onClose()
     } finally {
       setSaving(false)
@@ -147,14 +289,14 @@ export function TaskEditorModal({
   }
 
   return <div className="task-editor-backdrop">
-    <button className="task-editor-scrim" onClick={onClose} aria-label="Chiudi"/>
+    <button className="task-editor-scrim" onClick={()=>void closeEditor()} aria-label="Chiudi"/>
     <form ref={formRef} onSubmit={submit} className="task-editor-panel">
       <div className="task-editor-head">
         <div>
           <p className="eyebrow">{task ? 'Modifica attività' : 'Nuova attività'}</p>
           <h2>{task ? 'Dettagli task' : 'Aggiungi al planner'}</h2>
         </div>
-        <button type="button" className="icon-button" onClick={onClose}><X size={18}/></button>
+        <button type="button" className="icon-button" onClick={()=>void closeEditor()}><X size={18}/></button>
       </div>
 
       <div className="task-editor-body">
@@ -260,8 +402,8 @@ export function TaskEditorModal({
       <div className="task-editor-actions">
         {task ? <button type="button" className="danger-button" disabled={saving} onClick={() => void remove()}><Trash2 size={15}/> Elimina</button> : <span/>}
         <div>
-          <button type="button" className="secondary-button" onClick={onClose}>Annulla</button>
-          <button className="primary-button" disabled={saving || !draft.title.trim()}>{saving ? 'Salvataggio…' : task ? 'Salva modifiche' : 'Aggiungi'}</button>
+          <button type="button" className="secondary-button" onClick={()=>void closeEditor()}>Chiudi</button>
+          {!task && <button className="primary-button" disabled={saving || !draft.title.trim()}>{saving ? 'Creazione…' : 'Aggiungi'}</button>}
         </div>
       </div>
     </form>
