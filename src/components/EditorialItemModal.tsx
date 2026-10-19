@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type FormEvent } from 'react'
-import { Archive, Check, ClipboardPaste, Copy, Download, ExternalLink, FileImage, Link2, Trash2, Upload, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { Archive, Check, Copy, ExternalLink, Link2, Trash2, X } from 'lucide-react'
 import {
   editorialAccountLabel,
   editorialPlatformLabel,
@@ -9,7 +9,6 @@ import { memberToneClass } from '../lib/memberTone'
 import type { useEditorial } from '../hooks/useEditorial'
 import type {
   EditorialAccount,
-  EditorialAsset,
   EditorialData,
   EditorialItem,
   EditorialMediaKind,
@@ -18,7 +17,6 @@ import type {
 import type { TeamMember } from '../types/studio'
 
 type Actions = ReturnType<typeof useEditorial>['actions']
-type QueuedFile = { id:string; file:File; role:'contenuto'|'inspiration' }
 type EditorialDraft = {
   accounts: EditorialAccount[]
   platforms: EditorialPlatform[]
@@ -26,6 +24,7 @@ type EditorialDraft = {
   title: string
   description: string
   inspirationUrl: string
+  definitiveUrl: string
   publishDate: string
   publishTime: string
 }
@@ -33,7 +32,6 @@ type EditorialDraft = {
 const PLATFORM_ORDER: EditorialPlatform[] = ['facebook','instagram','facebook_only','tiktok','youtube','whatsapp']
 const META_PLATFORMS: EditorialPlatform[] = ['facebook','instagram','facebook_only']
 const EDITORIAL_DRAFT_KEY = '4bit-editorial-draft-v1'
-let editorialDraftFiles: QueuedFile[] = []
 
 function readEditorialDraft(): EditorialDraft | null {
   try {
@@ -50,6 +48,7 @@ function readEditorialDraft(): EditorialDraft | null {
       title:typeof parsed.title==='string' ? parsed.title : '',
       description:typeof parsed.description==='string' ? parsed.description : '',
       inspirationUrl:typeof parsed.inspirationUrl==='string' ? parsed.inspirationUrl : '',
+      definitiveUrl:typeof parsed.definitiveUrl==='string' ? parsed.definitiveUrl : '',
       publishDate:typeof parsed.publishDate==='string' && parsed.publishDate ? parsed.publishDate : todayISO(),
       publishTime:typeof parsed.publishTime==='string' && parsed.publishTime ? parsed.publishTime : '18:00',
     }
@@ -68,7 +67,6 @@ function writeEditorialDraft(draft: EditorialDraft) {
 
 function clearEditorialDraft() {
   try { window.localStorage.removeItem(EDITORIAL_DRAFT_KEY) } catch {}
-  editorialDraftFiles=[]
 }
 
 function todayISO() {
@@ -76,12 +74,6 @@ function todayISO() {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
 }
 
-function bytes(value:number) {
-  if(value < 1024) return `${value} B`
-  if(value < 1024*1024) return `${(value/1024).toFixed(1)} KB`
-  if(value < 1024*1024*1024) return `${(value/1024/1024).toFixed(1)} MB`
-  return `${(value/1024/1024/1024).toFixed(2)} GB`
-}
 
 function externalHref(value:string) {
   const raw=value.trim()
@@ -121,36 +113,29 @@ export function EditorialItemModal({
     title:item?.title ?? '',
     description:item?.description ?? '',
     inspirationUrl:item?.inspirationUrl ?? '',
+    definitiveUrl:item?.definitiveUrl ?? '',
     publishDate:item?.publishDate ?? initialDate ?? todayISO(),
     publishTime:item?.publishTime ?? '18:00',
   }),[item,initialDate])
 
   const [draft,setDraft]=useState(initial)
-  const [queued,setQueued]=useState<QueuedFile[]>([])
   const [saving,setSaving]=useState(false)
-  const [uploadProgress,setUploadProgress]=useState<{name:string;value:number}|null>(null)
   const [localError,setLocalError]=useState<string|null>(null)
   const [descriptionCopied,setDescriptionCopied]=useState(false)
   const [draftSaved,setDraftSaved]=useState(false)
   const formRef=useRef<HTMLFormElement>(null)
 
   const steps=useMemo(()=>item ? data.steps.filter(step=>step.editorialItemId===item.id).sort((a,b)=>a.sortOrder-b.sortOrder) : [],[data.steps,item])
-  const assets=useMemo(()=>item ? data.assets.filter(asset=>asset.editorialItemId===item.id) : [],[data.assets,item])
-  const inspirationAssets=useMemo(()=>assets.filter(asset=>asset.assetRole==='inspiration'),[assets])
-  const finalAssets=useMemo(()=>assets.filter(asset=>asset.assetRole!=='inspiration'),[assets])
 
   useEffect(()=>{
     if(!open) return
     if(item) {
       setDraft(initial)
-      setQueued([])
     } else {
       const saved=readEditorialDraft()
       setDraft(saved ?? initial)
-      setQueued(editorialDraftFiles)
       setDraftSaved(Boolean(saved))
     }
-    setUploadProgress(null)
     setLocalError(null)
     setDescriptionCopied(false)
   },[open,initial,item])
@@ -160,11 +145,6 @@ export function EditorialItemModal({
     writeEditorialDraft(draft)
     setDraftSaved(true)
   },[draft,item,open])
-
-  useEffect(()=>{
-    if(!open || item) return
-    editorialDraftFiles=queued
-  },[item,open,queued])
 
   useEffect(()=>{
     if(!open) return
@@ -187,6 +167,7 @@ export function EditorialItemModal({
   const mediaLocked: EditorialMediaKind | null = hasYoutube ? 'video' : hasWhatsapp ? 'photo' : null
   const currentStatus=item?.status ?? 'to_produce'
   const inspirationHref=externalHref(draft.inspirationUrl)
+  const definitiveHref=externalHref(draft.definitiveUrl)
 
   function toggleAccount(account:EditorialAccount) {
     if(item) {
@@ -250,34 +231,6 @@ export function EditorialItemModal({
     setDraft({...draft,mediaKind})
   }
 
-  function addFinalFiles(files:FileList|null) {
-    if(!files?.length) return
-    const selected=Array.from(files)
-    const invalid=selected.find(file=>!file.type.startsWith('image/'))
-    if(invalid){
-      setLocalError('Per WhatsApp puoi allegare un’immagine.')
-      return
-    }
-    setLocalError(null)
-    setQueued(current=>[...current,...selected.map(file=>({id:crypto.randomUUID(),file,role:'contenuto' as const}))])
-  }
-
-  function pasteInspiration(event:ClipboardEvent<HTMLElement>) {
-    if(hasWhatsapp) return
-    const images=Array.from(event.clipboardData.files).filter(file=>file.type.startsWith('image/'))
-    if(!images.length) return
-    event.preventDefault()
-    setLocalError(null)
-    setQueued(current=>[
-      ...current,
-      ...images.map((file,index)=>({
-        id:crypto.randomUUID(),
-        file:new File([file],file.name || `screenshot-ispirazione-${Date.now()}-${index+1}.png`,{type:file.type || 'image/png'}),
-        role:'inspiration' as const,
-      })),
-    ])
-  }
-
   async function copyDescription() {
     const value=draft.description.trim()
     if(!value) return
@@ -315,6 +268,7 @@ export function EditorialItemModal({
         title:draft.title.trim(),
         description:draft.description.trim(),
         inspirationUrl:draft.inspirationUrl.trim(),
+        definitiveUrl:draft.definitiveUrl.trim(),
         publishDate:draft.publishDate || todayISO(),
         publishTime:draft.publishTime || '18:00',
       }
@@ -325,14 +279,6 @@ export function EditorialItemModal({
             actions.createItem({...sharedPayload,account,sortOrder:Date.now()+index})
           ))
 
-      const filesForCurrentFlow=queued.filter(entry=>hasWhatsapp ? entry.role==='contenuto' : entry.role==='inspiration')
-      for(const saved of savedItems){
-        for(const queuedFile of filesForCurrentFlow){
-          setUploadProgress({name:queuedFile.file.name,value:0})
-          await actions.uploadAsset(saved.id,queuedFile.file,queuedFile.role,value=>setUploadProgress({name:queuedFile.file.name,value}))
-        }
-      }
-      setUploadProgress(null)
       if(!item) {
         clearEditorialDraft()
         setDraftSaved(false)
@@ -346,7 +292,7 @@ export function EditorialItemModal({
   }
 
   async function removeItem() {
-    if(!item || !window.confirm(`Eliminare definitivamente "${item.title}" e tutti i relativi allegati?`)) return
+    if(!item || !window.confirm(`Eliminare definitivamente "${item.title}"?`)) return
     setSaving(true)
     try{
       await actions.deleteItem(item.id)
@@ -437,74 +383,43 @@ export function EditorialItemModal({
           <textarea className="field" rows={4} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Descrivi il contenuto e le indicazioni utili al team."/>
         </label>
 
-        {hasWhatsapp ? <section className="editorial-upload-zone-v5">
-          <div className="editorial-upload-zone-head">
-            <div><strong>Contenuto definitivo</strong></div>
-            <label className="editorial-upload-button"><Upload size={14}/> Allega<input type="file" accept="image/*" multiple onChange={e=>{addFinalFiles(e.target.files);e.currentTarget.value=''}}/></label>
+        <section className="editorial-drive-links">
+          <div className="editorial-drive-link-card inspiration">
+            <div className="editorial-inspiration-head">
+              <div><strong>Contenuto ispirazionale</strong><small>Link Drive del riferimento da usare come ispirazione.</small></div>
+            </div>
+            <div className="editorial-inspiration-link-row">
+              <span className="editorial-inspiration-link-icon"><Link2 size={16}/></span>
+              <input
+                className="field"
+                type="text"
+                inputMode="url"
+                placeholder="Incolla il link Google Drive"
+                value={draft.inspirationUrl}
+                onChange={e=>setDraft({...draft,inspirationUrl:e.target.value})}
+              />
+              {inspirationHref && <a className="editorial-inspiration-open" href={inspirationHref} target="_blank" rel="noreferrer"><ExternalLink size={14}/> Apri</a>}
+            </div>
           </div>
 
-          <div className="editorial-assets-list">
-            {finalAssets.map(asset=><div className="editorial-asset-row" key={asset.id}>
-              <span className="editorial-asset-icon"><FileImage size={17}/></span>
-              <button type="button" className="editorial-asset-name" onClick={()=>void actions.openAsset(asset)}><strong>{asset.fileName}</strong><small>{bytes(asset.sizeBytes)}</small></button>
-              <button type="button" className="icon-button" title="Scarica originale" onClick={()=>void actions.downloadAsset(asset)}><Download size={14}/></button>
-              <button type="button" className="icon-button danger-mini" title="Elimina" onClick={()=>window.confirm('Eliminare questo allegato?') && void actions.deleteAsset(asset)}><Trash2 size={14}/></button>
-            </div>)}
-
-            {queued.filter(file=>file.role==='contenuto').map(file=><div className="editorial-asset-row queued editorial-asset-row-v2" key={file.id}>
-              <span className="editorial-asset-icon"><FileImage size={17}/></span>
-              <div className="editorial-asset-name"><strong>{file.file.name}</strong><small>{bytes(file.file.size)} · pronto per upload</small></div>
-              <button type="button" className="icon-button" onClick={()=>setQueued(current=>current.filter(entry=>entry.id!==file.id))}><X size={14}/></button>
-            </div>)}
+          <div className="editorial-drive-link-card definitive">
+            <div className="editorial-inspiration-head">
+              <div><strong>Contenuto definitivo</strong><small>Link Drive del file finale pronto per pubblicazione o invio.</small></div>
+            </div>
+            <div className="editorial-inspiration-link-row">
+              <span className="editorial-inspiration-link-icon"><Link2 size={16}/></span>
+              <input
+                className="field"
+                type="text"
+                inputMode="url"
+                placeholder="Incolla il link Google Drive definitivo"
+                value={draft.definitiveUrl}
+                onChange={e=>setDraft({...draft,definitiveUrl:e.target.value})}
+              />
+              {definitiveHref && <a className="editorial-inspiration-open" href={definitiveHref} target="_blank" rel="noreferrer"><ExternalLink size={14}/> Apri</a>}
+            </div>
           </div>
-
-          {uploadProgress && <div className="editorial-upload-progress">
-            <div><span>{uploadProgress.name}</span><strong>{uploadProgress.value}%</strong></div>
-            <span><i style={{width:`${uploadProgress.value}%`}}/></span>
-          </div>}
-        </section> : <section className="editorial-inspiration-zone" onPaste={pasteInspiration}>
-          <div className="editorial-inspiration-head">
-            <div><strong>Contenuto ispirazionale</strong><small>Link di riferimento o screenshot da usare come ispirazione.</small></div>
-          </div>
-
-          <div className="editorial-inspiration-link-row">
-            <span className="editorial-inspiration-link-icon"><Link2 size={16}/></span>
-            <input
-              className="field"
-              type="text"
-              inputMode="url"
-              placeholder="Incolla un link, ad esempio Google Drive"
-              value={draft.inspirationUrl}
-              onChange={e=>setDraft({...draft,inspirationUrl:e.target.value})}
-            />
-            {inspirationHref && <a className="editorial-inspiration-open" href={inspirationHref} target="_blank" rel="noreferrer"><ExternalLink size={14}/> Apri</a>}
-          </div>
-
-          <div className="editorial-inspiration-paste" tabIndex={0}>
-            <ClipboardPaste size={20}/>
-            <strong>Incolla uno screenshot</strong>
-            <span>Clicca qui e usa Ctrl+V o Cmd+V.</span>
-          </div>
-
-          <div className="editorial-assets-list">
-            {inspirationAssets.map(asset=><div className="editorial-asset-row inspiration" key={asset.id}>
-              <span className="editorial-asset-icon"><FileImage size={17}/></span>
-              <button type="button" className="editorial-asset-name" onClick={()=>void actions.openAsset(asset)}><strong>{asset.fileName}</strong><small>Screenshot ispirazionale · {bytes(asset.sizeBytes)}</small></button>
-              <button type="button" className="icon-button danger-mini" title="Elimina" onClick={()=>window.confirm('Eliminare questo riferimento?') && void actions.deleteAsset(asset)}><Trash2 size={14}/></button>
-            </div>)}
-
-            {queued.filter(file=>file.role==='inspiration').map(file=><div className="editorial-asset-row queued inspiration" key={file.id}>
-              <span className="editorial-asset-icon"><FileImage size={17}/></span>
-              <div className="editorial-asset-name"><strong>{file.file.name}</strong><small>Screenshot incollato · pronto per il salvataggio</small></div>
-              <button type="button" className="icon-button" onClick={()=>setQueued(current=>current.filter(entry=>entry.id!==file.id))}><X size={14}/></button>
-            </div>)}
-          </div>
-
-          {uploadProgress && <div className="editorial-upload-progress">
-            <div><span>{uploadProgress.name}</span><strong>{uploadProgress.value}%</strong></div>
-            <span><i style={{width:`${uploadProgress.value}%`}}/></span>
-          </div>}
-        </section>}
+        </section>
 
         {item && steps.length>0 && <section className="editorial-checklist-v5">
           <div className="editorial-checklist-title">
@@ -548,7 +463,7 @@ export function EditorialItemModal({
         {item ? <button type="button" className="danger-button" disabled={saving} onClick={()=>void removeItem()}><Trash2 size={15}/> Elimina</button> : <span/>}
         <div>
           <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annulla</button>
-          <button className="primary-button" disabled={saving || !draft.title.trim() || !draft.platforms.length}>{saving ? uploadProgress ? `Upload ${uploadProgress.value}%` : 'Salvataggio…' : item ? 'Salva' : 'Aggiungi'}</button>
+          <button className="primary-button" disabled={saving || !draft.title.trim() || !draft.platforms.length}>{saving ? 'Salvataggio…' : item ? 'Salva' : 'Aggiungi'}</button>
         </div>
       </div>
     </form>
