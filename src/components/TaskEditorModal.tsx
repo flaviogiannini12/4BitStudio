@@ -253,7 +253,6 @@ export function TaskEditorModal({
                 <ChevronDown size={14}/>
               </button>}
             </div>
-            <small>{draft.clientIds.length > 1 ? `${draft.clientIds.length} attività selezionate · verrà creata una task per ciascuna` : draft.clientIds.length === 1 ? '1 attività selezionata' : 'Task interna 4Bit Studio'}</small>
           </div>}
         </div>
       </div>
