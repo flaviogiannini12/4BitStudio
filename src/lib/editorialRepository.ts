@@ -248,7 +248,9 @@ export async function updateEditorialItem(id:string,input:Partial<EditorialItem>
 
   const {data,error}=await db.from('editorial_items').update(payload).eq('id',id).select('*').single()
   if(error) throw error
-  return fromItem(data)
+  const item=fromItem(data)
+  await syncEditorialAutomation(id)
+  return item
 }
 
 export async function setEditorialStepDone(id:string,done:boolean) {
