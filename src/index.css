@@ -8774,3 +8774,77 @@ body.editorial-touch-dragging .editorial-drag-handle{
     flex-basis:22px;
   }
 }
+
+
+/* =========================================================
+   TASK EDITOR V3 — layout essenziale senza stato
+   ========================================================= */
+.task-editor-choice-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:start;
+  gap:10px;
+}
+
+.task-editor-choice-grid>.task-team-picker,
+.task-editor-choice-grid>.task-client-multi-field,
+.task-editor-choice-grid>.task-client-single-card{
+  min-width:0;
+  min-height:132px;
+  padding:12px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:18px;
+  background:rgba(255,255,255,.76);
+}
+
+.task-editor-choice-grid>.task-team-picker{
+  align-content:start;
+}
+
+.task-editor-choice-grid .task-editor-client-picker{
+  padding:0;
+  border:0;
+  background:transparent;
+}
+
+.task-client-single-label{
+  display:block;
+  margin-bottom:8px;
+  color:rgba(5,5,5,.37);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.task-client-single-card .field{
+  background:rgba(5,5,5,.035);
+}
+
+.task-editor-date-card{
+  width:min(260px,100%);
+  min-height:52px;
+  padding:9px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.76);
+}
+
+.task-editor-date-card input{
+  width:100%;
+}
+
+@media(max-width:640px){
+  .task-editor-choice-grid{
+    grid-template-columns:1fr;
+  }
+
+  .task-editor-choice-grid>.task-team-picker,
+  .task-editor-choice-grid>.task-client-multi-field,
+  .task-editor-choice-grid>.task-client-single-card{
+    min-height:0;
+  }
+
+  .task-editor-date-card{
+    width:100%;
+  }
+}
