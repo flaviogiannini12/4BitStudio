@@ -40,6 +40,7 @@ export function TaskEditorModal({
     title: task?.title ?? '',
     description: task?.description ?? '',
     clientId: task?.clientId ?? initialClientId ?? '',
+    clientIds: task ? (task.clientId ? [task.clientId] : []) : (initialClientId ? [initialClientId] : []),
     assigneeId: task ? (task.assigneeId ?? '') : defaultFlavioId,
     dueDate: task?.dueDate ?? initialDate ?? '',
     status: task?.status ?? 'todo',
@@ -86,7 +87,11 @@ export function TaskEditorModal({
         if (task.status !== 'done' && payload.status === 'done') onCelebrate?.()
         await actions.updateTask(task.id, payload)
       } else {
-        await actions.createTask({ ...payload, sortOrder: Date.now() })
+        const targets = draft.clientIds.length ? draft.clientIds : [null]
+        const baseSortOrder = Date.now()
+        for (const [index,clientId] of targets.entries()) {
+          await actions.createTask({ ...payload, clientId, sortOrder: baseSortOrder + index })
+        }
       }
       onClose()
     } finally {
@@ -156,13 +161,38 @@ export function TaskEditorModal({
         </div>
 
         <div className="task-editor-grid">
-          <label className="form-field">
+          {task ? <label className="form-field">
             <span>Lavoro / cliente</span>
             <select className="field" value={draft.clientId} onChange={e => setDraft({...draft,clientId:e.target.value})}>
               <option value="">4Bit Studio / Interno</option>
               {orderedClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-          </label>
+          </label> : <div className="form-field task-client-multi-field">
+            <span>Lavori / clienti</span>
+            <div className="task-client-chips" role="group" aria-label="Seleziona uno o più lavori">
+              <button
+                type="button"
+                className={`task-client-chip ${draft.clientIds.length===0 ? 'selected' : ''}`}
+                onClick={()=>setDraft({...draft,clientIds:[]})}
+              >4Bit Studio / Interno</button>
+              {orderedClients.map(client=>{
+                const selected=draft.clientIds.includes(client.id)
+                return <button
+                  type="button"
+                  className={`task-client-chip ${selected ? 'selected' : ''}`}
+                  key={client.id}
+                  aria-pressed={selected}
+                  onClick={()=>setDraft({
+                    ...draft,
+                    clientIds:selected
+                      ? draft.clientIds.filter(id=>id!==client.id)
+                      : [...draft.clientIds,client.id],
+                  })}
+                >{client.name}</button>
+              })}
+            </div>
+            <small>{draft.clientIds.length > 1 ? `${draft.clientIds.length} attività selezionate · verrà creata una task per ciascuna` : draft.clientIds.length === 1 ? '1 attività selezionata' : 'Task interna 4Bit Studio'}</small>
+          </div>}
 
           <label className="form-field">
             <span>Stato</span>
