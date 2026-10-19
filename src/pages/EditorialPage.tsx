@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent } from 'react'
 import { Archive, CalendarDays, ChevronDown, GripVertical, Plus } from 'lucide-react'
 import { EditorialItemModal } from '../components/EditorialItemModal'
 import {
@@ -17,6 +17,37 @@ type View='calendar'|'archive'
 
 const PLATFORM_ORDER: EditorialPlatform[]=['facebook','instagram','facebook_only','tiktok','youtube','whatsapp']
 const STATUS_FILTERS: EditorialStatus[]=['to_produce','review','ready']
+const EDITORIAL_EDITOR_SESSION_KEY='4bit-editorial-editor-session-v1'
+
+type EditorialEditorSession = {
+  mode:'create'|'edit'
+  itemId?:string
+  date:string|null
+}
+
+function readEditorialEditorSession():EditorialEditorSession|null {
+  try {
+    const raw=sessionStorage.getItem(EDITORIAL_EDITOR_SESSION_KEY)
+    if(!raw) return null
+    const parsed=JSON.parse(raw) as Partial<EditorialEditorSession>
+    if(parsed.mode!=='create' && parsed.mode!=='edit') return null
+    return {
+      mode:parsed.mode,
+      itemId:typeof parsed.itemId==='string' ? parsed.itemId : undefined,
+      date:typeof parsed.date==='string' ? parsed.date : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeEditorialEditorSession(session:EditorialEditorSession) {
+  try { sessionStorage.setItem(EDITORIAL_EDITOR_SESSION_KEY,JSON.stringify(session)) } catch {}
+}
+
+function clearEditorialEditorSession() {
+  try { sessionStorage.removeItem(EDITORIAL_EDITOR_SESSION_KEY) } catch {}
+}
 
 function dateKey(date:Date){
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
@@ -107,6 +138,7 @@ export function EditorialPage({
   const [newDate,setNewDate]=useState<string|null>(null)
   const [dragOverDate,setDragOverDate]=useState<string|null>(null)
   const [extraMonths,setExtraMonths]=useState(0)
+  const editorRestoreAttempted=useRef(false)
 
   const [today,setToday]=useState(()=>dateKey(new Date()))
   const days=useMemo(()=>calendarDaysFromToday(today,extraMonths),[today,extraMonths])
@@ -125,6 +157,36 @@ export function EditorialPage({
     scheduleNextDay()
     return ()=>{ if(timer!==null) window.clearTimeout(timer) }
   },[])
+
+  useEffect(()=>{
+    if(editorRestoreAttempted.current || editorOpen) return
+    const session=readEditorialEditorSession()
+    if(!session){
+      editorRestoreAttempted.current=true
+      return
+    }
+
+    if(session.mode==='create'){
+      setEditing(null)
+      setNewDate(session.date ?? today)
+      setEditorOpen(true)
+      editorRestoreAttempted.current=true
+      return
+    }
+
+    if(session.itemId){
+      const found=data.items.find(item=>item.id===session.itemId)
+      if(found){
+        setEditing(found)
+        setNewDate(found.publishDate ?? session.date)
+        setEditorOpen(true)
+        editorRestoreAttempted.current=true
+      }else if(data.items.length){
+        clearEditorialEditorSession()
+        editorRestoreAttempted.current=true
+      }
+    }
+  },[data.items,editorOpen,today])
 
   const filtered=useMemo(()=>data.items.filter(item=>{
     const isArchive=shouldBeInArchive(item,today)
@@ -160,15 +222,24 @@ export function EditorialPage({
     : archiveItems.length
 
   function openCreate(date:string|null){
+    const targetDate=date ?? today
     setEditing(null)
-    setNewDate(date ?? today)
+    setNewDate(targetDate)
     setEditorOpen(true)
+    writeEditorialEditorSession({mode:'create',date:targetDate})
   }
 
   function openEdit(item:EditorialItem){
     setEditing(item)
     setNewDate(item.publishDate)
     setEditorOpen(true)
+    writeEditorialEditorSession({mode:'edit',itemId:item.id,date:item.publishDate})
+  }
+
+  function closeEditor(){
+    clearEditorialEditorSession()
+    setEditorOpen(false)
+    setEditing(null)
   }
 
   async function moveEditorialItem(itemId:string,publishDate:string){
@@ -324,7 +395,7 @@ export function EditorialPage({
       members={members}
       actions={actions}
       onCelebrate={onCelebrate}
-      onClose={()=>setEditorOpen(false)}
+      onClose={closeEditor}
     />
   </>
 }
