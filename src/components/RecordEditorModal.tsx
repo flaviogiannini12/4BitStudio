@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
+import { useMemo, useState, type CSSProperties, type FormEvent, type InputHTMLAttributes } from 'react'
 import { ChevronDown, ImagePlus, Trash2, X } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
@@ -76,6 +76,23 @@ export function RecordEditorModal({
     ? compensationClientChoices
     : compensationClientChoices.slice(0,3)
   const hiddenCompensationClients = Math.max(0,compensationClientChoices.length-visibleCompensationClients.length)
+
+  const compensationClientStyle = (client: Client) => {
+    const name=client.name.trim().toLowerCase()
+    if(name.includes('casaro')) return {
+      '--client-chip-bg':'rgba(255,214,50,.22)',
+      '--client-chip-ink':'#6B5400',
+      '--client-chip-accent':'#FFD632',
+      '--comp-client-selected-ink':'#050505',
+    } as CSSProperties
+    if(name.includes('autoscuola susa')) return {
+      '--client-chip-bg':'rgba(11,111,159,.12)',
+      '--client-chip-ink':'#07577E',
+      '--client-chip-accent':'#0B6F9F',
+      '--comp-client-selected-ink':'#fff',
+    } as CSSProperties
+    return clientChipStyle(client.id,data.clients)
+  }
   const invoiceContribution = invoiceAmount * .04
   const invoiceGross = invoiceAmount + invoiceContribution + 2
   const invoiceNet = invoiceGross * .40
@@ -362,7 +379,7 @@ export function RecordEditorModal({
                 return <button
                   type="button"
                   key={client.id}
-                  style={clientChipStyle(client.id,data.clients)}
+                  style={compensationClientStyle(client)}
                   className={`compensation-client-chip ${selected ? 'selected' : ''}`}
                   aria-pressed={selected}
                   onClick={()=>setCompensationClientIds(selected
