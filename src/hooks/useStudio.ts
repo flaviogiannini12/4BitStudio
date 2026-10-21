@@ -47,8 +47,8 @@ function syncLocalCompensationLedger(entries:LedgerEntry[], compensation:Compens
     compensationId:compensation.id,
     entryDate:compensation.paidAt ? compensation.paidAt.slice(0,10) : (compensation.entryDate ?? new Date().toLocaleDateString('en-CA')),
     direction:'expense',
-    clientId:compensation.clientId,
-    description:`Compenso pagato · ${compensation.memberName || 'Collaboratore'}${compensation.description ? ' — ' + compensation.description : ''}`,
+    clientId:compensation.clientId ?? compensation.clientIds[0] ?? null,
+    description:`${compensation.compensationType === 'salary_recurring' ? 'Stipendio pagato' : 'Compenso pagato'} · ${compensation.memberName || 'Collaboratore'}${compensation.description ? ' — ' + compensation.description : ''}`,
     amount:compensation.amount,
     status:'Pagato',
     category:'Stipendi / compensi',
@@ -96,7 +96,11 @@ function normalizeStudioData(value?: Partial<StudioData> | null): StudioData {
     recurrences: source.recurrences ?? [],
     payments: source.payments ?? [],
     ledgerEntries: source.ledgerEntries ?? [],
-    compensations: source.compensations ?? [],
+    compensations: (source.compensations ?? []).map(compensation => ({
+      ...compensation,
+      clientIds: compensation.clientIds ?? (compensation.clientId ? [compensation.clientId] : []),
+      compensationType: compensation.compensationType ?? 'one_off',
+    })),
     debts: source.debts ?? [],
     deadlines: source.deadlines ?? [],
     maintenancePeriods: source.maintenancePeriods ?? [],
@@ -465,7 +469,20 @@ export function useStudio(user: User | null, ready: boolean) {
         await cloudRepo.syncCompensationLedger(compensation.id)
         await reload(true)
       })
-      const value: Compensation = { id:id('comp'), entryDate:input.entryDate ?? null, paidAt, memberId:input.memberId ?? null, memberName:input.memberName, clientId:input.clientId ?? null, description:input.description, amount:input.amount, status:input.status ?? '', notes:input.notes ?? '' }
+      const value: Compensation = {
+        id:id('comp'),
+        entryDate:input.entryDate ?? null,
+        paidAt,
+        memberId:input.memberId ?? null,
+        memberName:input.memberName,
+        clientId:input.clientId ?? input.clientIds?.[0] ?? null,
+        clientIds:input.clientIds ?? (input.clientId ? [input.clientId] : []),
+        compensationType:input.compensationType ?? 'one_off',
+        description:input.description,
+        amount:input.amount,
+        status:input.status ?? '',
+        notes:input.notes ?? '',
+      }
       saveLocal(current => ({ ...current, compensations:[...current.compensations,value], ledgerEntries:syncLocalCompensationLedger(current.ledgerEntries,value) }))
     },
     async updateCompensation(compId: string, input: Partial<Compensation>) {
