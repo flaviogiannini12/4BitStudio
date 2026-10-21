@@ -8882,3 +8882,240 @@ body.editorial-touch-dragging .editorial-drag-handle{
     padding:12px;
   }
 }
+
+
+/* =========================================================
+   COMPENSI — form semplice con chip
+   ========================================================= */
+.compensation-editor{
+  display:grid;
+  gap:12px;
+}
+
+.compensation-picker-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+}
+
+.compensation-picker-card{
+  display:grid;
+  gap:9px;
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:18px;
+  background:rgba(255,255,255,.76);
+}
+
+.compensation-picker-card.compact{
+  width:max-content;
+  min-width:240px;
+}
+
+.compensation-picker-label{
+  color:rgba(5,5,5,.40);
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.compensation-type-chips,
+.compensation-status-chips,
+.compensation-team-chips,
+.compensation-client-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.compensation-type-chip,
+.compensation-status-chip{
+  min-height:36px;
+  padding:7px 12px;
+  border:1px solid rgba(5,5,5,.075);
+  border-radius:999px;
+  background:rgba(5,5,5,.035);
+  color:rgba(5,5,5,.58);
+  font:inherit;
+  font-size:9px;
+  font-weight:820;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+
+.compensation-type-chip:hover,
+.compensation-status-chip:hover{
+  transform:translateY(-1px);
+  border-color:rgba(5,5,5,.15);
+}
+
+.compensation-type-chip.selected{
+  border-color:#050505;
+  background:#050505;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(5,5,5,.11);
+}
+
+.compensation-status-chip.selected{
+  border-color:#050505;
+  background:#050505;
+  color:#fff;
+}
+
+.compensation-status-chip.paid.selected{
+  border-color:#168767;
+  background:#168767;
+  color:#fff;
+}
+
+.compensation-team-chip{
+  display:inline-flex;
+  min-height:35px;
+  align-items:center;
+  gap:7px;
+  padding:5px 11px 5px 5px;
+  border:1px solid rgba(5,5,5,.07);
+  border-radius:999px;
+  background:rgba(255,255,255,.84);
+  color:rgba(5,5,5,.60);
+  font:inherit;
+  font-size:9px;
+  font-weight:820;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+
+.compensation-team-chip:hover{
+  transform:translateY(-1px);
+  border-color:var(--member-color,rgba(5,5,5,.16));
+}
+
+.compensation-team-avatar{
+  display:grid;
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  place-items:center;
+  border-radius:50%;
+  background:var(--member-color,rgba(5,5,5,.08));
+  color:var(--member-ink,#050505);
+  font-size:8px;
+  font-weight:900;
+}
+
+.compensation-team-chip.selected{
+  border-color:var(--member-color,#050505);
+  background:var(--member-color,#050505);
+  color:var(--member-ink,#fff);
+  box-shadow:0 7px 18px rgba(5,5,5,.09);
+}
+
+.compensation-team-chip.selected .compensation-team-avatar{
+  background:rgba(255,255,255,.20);
+  color:var(--member-ink,#fff);
+}
+
+.compensation-client-chip{
+  --comp-client-selected-ink:#fff;
+  display:inline-flex;
+  min-height:34px;
+  align-items:center;
+  gap:7px;
+  max-width:100%;
+  padding:5px 11px 5px 7px;
+  border:1px solid color-mix(in srgb,var(--client-chip-accent,#050505) 20%, transparent);
+  border-radius:999px;
+  background:var(--client-chip-bg,rgba(5,5,5,.04));
+  color:var(--client-chip-ink,rgba(5,5,5,.62));
+  font:inherit;
+  font-size:9px;
+  font-weight:820;
+  line-height:1.15;
+  text-align:left;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+
+.compensation-client-chip:hover{
+  transform:translateY(-1px);
+  border-color:var(--client-chip-accent,#050505);
+}
+
+.compensation-client-dot{
+  width:8px;
+  height:8px;
+  flex:0 0 8px;
+  border-radius:50%;
+  background:var(--client-chip-accent,#050505);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--client-chip-accent,#050505) 12%, transparent);
+}
+
+.compensation-client-chip.selected{
+  border-color:var(--client-chip-accent,#050505);
+  background:var(--client-chip-accent,#050505);
+  color:var(--comp-client-selected-ink,#fff);
+  box-shadow:0 7px 18px color-mix(in srgb,var(--client-chip-accent,#050505) 17%, transparent);
+}
+
+.compensation-client-chip.selected .compensation-client-dot{
+  background:currentColor;
+  box-shadow:none;
+  opacity:.72;
+}
+
+.compensation-client-chip.internal{
+  --client-chip-bg:rgba(5,5,5,.045);
+  --client-chip-ink:#050505;
+  --client-chip-accent:#050505;
+  --comp-client-selected-ink:#fff;
+}
+
+.compensation-more-clients{
+  display:inline-flex;
+  width:max-content;
+  min-height:30px;
+  align-items:center;
+  gap:5px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.50);
+  font-size:8.5px;
+  font-weight:820;
+}
+
+.compensation-more-clients:hover{
+  background:#050505;
+  color:#fff;
+}
+
+.compensation-more-clients svg{
+  transition:transform .16s ease;
+}
+
+.compensation-more-clients[aria-expanded="true"] svg{
+  transform:rotate(180deg);
+}
+
+@media(max-width:700px){
+  .compensation-picker-grid{
+    grid-template-columns:1fr;
+  }
+
+  .compensation-picker-card.compact{
+    width:100%;
+    min-width:0;
+  }
+
+  .compensation-picker-card{
+    padding:10px;
+  }
+
+  .compensation-type-chip,
+  .compensation-status-chip,
+  .compensation-team-chip,
+  .compensation-client-chip{
+    min-height:33px;
+    font-size:8.5px;
+  }
+}
