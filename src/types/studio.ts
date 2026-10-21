@@ -105,6 +105,8 @@ export interface LedgerEntry {
   notes: string
 }
 
+export type CompensationType = 'one_off' | 'salary_recurring'
+
 export interface Compensation {
   id: string
   entryDate: string | null
@@ -112,6 +114,8 @@ export interface Compensation {
   memberId: string | null
   memberName: string
   clientId: string | null
+  clientIds: string[]
+  compensationType: CompensationType
   description: string
   amount: number
   status: string
@@ -264,6 +268,8 @@ export interface CompensationInput {
   memberId?: string | null
   memberName: string
   clientId?: string | null
+  clientIds?: string[]
+  compensationType?: CompensationType
   description: string
   amount: number
   status?: string
