@@ -63,8 +63,6 @@ export function PaymentsPage({
   actions: Actions
 }) {
   const [tab,setTab] = useState<Tab>('overview')
-  const [showPaid,setShowPaid] = useState(false)
-  const [showClosedDebts,setShowClosedDebts] = useState(false)
   const [editor,setEditor] = useState<{kind:EditorKind;record:any} | null>(null)
 
   const today = todayISO()
@@ -116,14 +114,19 @@ export function PaymentsPage({
   }), [pendingPayments])
 
   const maxIncomingMonth = Math.max(1,...incomingMonths.map(m => m.total))
-  const visiblePayments = payments
-    .filter(p => showPaid || p.status === 'pending')
-    .sort((a,b) => a.status === b.status ? a.dueDate.localeCompare(b.dueDate) : a.status === 'pending' ? -1 : 1)
-  const visibleDebts = debts
-    .filter(d => showClosedDebts || d.status === 'open')
+  const visiblePayments = [...payments]
+    .sort((a,b) => {
+      if(a.status !== b.status) return a.status === 'pending' ? -1 : 1
+      const aDate=a.status === 'paid' ? (a.paidAt?.slice(0,10) ?? a.dueDate) : a.dueDate
+      const bDate=b.status === 'paid' ? (b.paidAt?.slice(0,10) ?? b.dueDate) : b.dueDate
+      return a.status === 'paid' ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate)
+    })
+  const visibleDebts = [...debts]
     .sort((a,b) => {
       if (a.status !== b.status) return a.status === 'open' ? -1 : 1
-      return (a.dueDate ?? '9999-12-31').localeCompare(b.dueDate ?? '9999-12-31')
+      const aDate=a.status === 'paid' ? (a.paidAt?.slice(0,10) ?? a.dueDate ?? '') : (a.dueDate ?? '9999-12-31')
+      const bDate=b.status === 'paid' ? (b.paidAt?.slice(0,10) ?? b.dueDate ?? '') : (b.dueDate ?? '9999-12-31')
+      return a.status === 'paid' ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate)
     })
   const movements = [...ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
   const sortedCompensations = [...compensations].sort((a,b) => {
@@ -199,7 +202,7 @@ export function PaymentsPage({
         <div className={overdueTotal ? 'danger' : ''}><span>Scaduto · lordo</span><strong>{money(overdueTotal)}</strong></div>
         <div><span>Incassato mese · lordo</span><strong>{money(paidThisMonth)}</strong><small>Netto {money(paidThisMonthNet)}</small></div>
       </div>
-      <div className="list-toolbar"><p><strong>{pendingPayments.length}</strong> incassi aperti</p><label className="switch-label"><input type="checkbox" checked={showPaid} onChange={e => setShowPaid(e.target.checked)}/><span/>Mostra incassati</label></div>
+      <div className="list-toolbar"><p><strong>{pendingPayments.length}</strong> incassi aperti · <strong>{paidPayments.length}</strong> incassati</p></div>
       <div className="payment-list full-list">
         {visiblePayments.map(p => <article className={`payment-row tone-${p.status === 'paid' ? 'paid' : countdownTone(p.dueDate)}`} key={p.id}>
           <div className="countdown-box"><small>{p.status === 'paid' ? 'stato' : 'scadenza'}</small><strong>{p.status === 'paid' ? 'incassato' : countdownLabel(p.dueDate)}</strong></div>
@@ -216,7 +219,7 @@ export function PaymentsPage({
           <div className="row-actions">
             {p.status === 'pending'
               ? <button className="primary-button compact" onClick={() => void actions.markPaymentPaid(p.id)}>Segna incassato</button>
-              : <span className="paid-badge"><CheckCircle2 size={14}/> Incassato</span>}
+              : <span className="paid-badge payment-paid-card"><CheckCircle2 size={14}/> Incassato</span>}
             <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'payment',record:p})}><Pencil size={13}/></button>
           </div>
         </article>)}
@@ -261,7 +264,6 @@ export function PaymentsPage({
         <div><span>Debito aperto totale</span><strong>{money(openDebtsTotal)}</strong><small>{openDebts.length ? openDebts.length + ' voci da restituire' : 'Nessun importo da restituire'}</small></div>
         <Landmark size={28}/>
       </div>
-      <div className="list-toolbar"><label className="switch-label"><input type="checkbox" checked={showClosedDebts} onChange={e => setShowClosedDebts(e.target.checked)}/><span/>Mostra restituiti</label></div>
       <div className="economy-record-list">
         {visibleDebts.map(d => {
           const paid = d.status === 'paid'
@@ -270,14 +272,14 @@ export function PaymentsPage({
             <span className="economy-record-icon"><Landmark size={17}/></span>
             <div className="economy-record-main"><strong>{d.creditor}</strong><span>{d.description || 'Debito / rimborso'}</span><small>{d.dueDate ? `Entro ${formatShortDate(d.dueDate)}` : 'Nessuna scadenza'}{d.notes ? ' · ' + d.notes : ''}</small></div>
             <b>{money(d.amount)}</b>
-            <span className={`economy-status ${paid ? 'done' : overdue ? 'danger' : 'open'}`}>{paid ? 'Restituito' : overdue ? 'Scaduto' : 'Da restituire'}</span>
+            <span className={`economy-status ${paid ? 'done economy-status-green-card' : overdue ? 'danger' : 'open'}`}>{paid ? 'Restituito' : overdue ? 'Scaduto' : 'Da restituire'}</span>
             <div className="economy-record-actions">
               {!paid && <button className="primary-button compact" onClick={() => void actions.updateDebt(d.id,{status:'paid',paidAt:new Date().toISOString()})}>Segna restituito</button>}
               <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'debt',record:d})}><Pencil size={13}/></button>
             </div>
           </article>
         })}
-        {!visibleDebts.length && <div className="economy-empty-state"><Landmark size={22}/><strong>Nessun debito aperto</strong><span>Quando avrai una somma da restituire, comparirà qui.</span></div>}
+        {!visibleDebts.length && <div className="economy-empty-state"><Landmark size={22}/><strong>Nessun debito registrato</strong><span>Quando avrai una somma da restituire, comparirà qui.</span></div>
       </div>
     </section>}
 
