@@ -77,6 +77,16 @@ export function PaymentsPage({
   const debts = data.debts ?? []
   const deadlines = data.deadlines ?? []
   const client = (id: string | null) => clients.find(c => c.id === id)?.name ?? '4Bit Studio'
+  const compensationClients = (compensation: StudioData['compensations'][number]) => {
+    const ids=compensation.clientIds?.length
+      ? compensation.clientIds
+      : compensation.clientId
+        ? [compensation.clientId]
+        : []
+    if(!ids.length) return '4Bit Studio'
+    const names=ids.map(id=>clients.find(c=>c.id===id)?.name).filter(Boolean)
+    return names.length ? names.join(' + ') : '4Bit Studio'
+  }
 
   const pendingPayments = payments.filter(p => p.status === 'pending')
   const paidPayments = payments.filter(p => p.status === 'paid')
@@ -229,7 +239,7 @@ export function PaymentsPage({
           const paid = statusIsPaid(c.status)
           return <article className={`economy-record-row ${paid ? 'is-done' : ''}`} key={c.id}>
             <span className="economy-record-icon"><WalletCards size={17}/></span>
-            <div className="economy-record-main"><strong>{c.memberName || 'Collaboratore'}</strong><span>{c.description}</span><small>{client(c.clientId)} · {c.entryDate ? formatShortDate(c.entryDate) : 'Data non indicata'}</small></div>
+            <div className="economy-record-main"><strong>{c.memberName || 'Collaboratore'}</strong><span>{c.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso'}{c.description ? ' · ' + c.description : ''}</span><small>{compensationClients(c)} · {c.entryDate ? formatShortDate(c.entryDate) : 'Data non indicata'}</small></div>
             <b>{money(c.amount)}</b>
             <span className={`economy-status ${paid ? 'done' : 'open'}`}>{c.status || (paid ? 'Pagato' : 'Da pagare')}</span>
             <div className="economy-record-actions">
