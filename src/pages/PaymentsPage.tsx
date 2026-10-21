@@ -139,7 +139,6 @@ export function PaymentsPage({
   return <div className="economy-page">
     <section className="section-block economy-hero economy-hero-compact">
       <div className="economy-kpi-grid economy-kpi-grid-top">
-        <EconomyKpi icon={Banknote} label="Incassato questo mese · lordo" value={money(paidThisMonth)} note={`Netto stimato ${money(paidThisMonthNet)}`} tone="positive"/>
         <EconomyKpi icon={CalendarDays} label="In arrivo questo mese · lordo" value={money(incomingThisMonth)} note={`Netto previsto ${money(incomingThisMonthNet)} · ${incomingThisMonthRows.length} incassi`} tone="brand"/>
         <EconomyKpi icon={Wallet} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
         <EconomyKpi icon={Landmark} label="Debiti da restituire" value={money(openDebtsTotal)} note={openDebts.length ? openDebts.length + ' debiti aperti' : 'nessun debito aperto'} tone="neutral"/>
