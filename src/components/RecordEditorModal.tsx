@@ -1,11 +1,13 @@
 import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from 'react'
-import { ImagePlus, Trash2, X } from 'lucide-react'
+import { ChevronDown, ImagePlus, Trash2, X } from 'lucide-react'
 import { Modal } from './Modal'
 import type {
   Client, Compensation, Debt, Deadline, LedgerEntry, MaintenancePeriod, Payment, Recurrence, StudioData, TeamMember,
 } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 import { imageFileToDataUrl } from '../lib/image'
+import { clientChipStyle } from '../lib/clientTone'
+import { memberToneClass } from '../lib/memberTone'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 type Kind = 'client' | 'payment' | 'recurrence' | 'ledger' | 'deadline' | 'compensation' | 'debt' | 'maintenance' | 'member'
@@ -34,6 +36,46 @@ export function RecordEditorModal({
   const [invoiceAmount,setInvoiceAmount] = useState(() => (kind === 'payment' || kind === 'recurrence') ? Number((record as Payment | Recurrence | null)?.amount ?? 0) : 0)
   const [debtCreditor,setDebtCreditor] = useState(() => kind === 'debt' ? ((record as Debt | null)?.creditor ?? '') : '')
   const [ledgerDirection,setLedgerDirection] = useState<LedgerEntry['direction']>(() => kind === 'ledger' ? ((record as LedgerEntry | null)?.direction ?? 'expense') : 'expense')
+  const compensationRecord = kind === 'compensation' ? (record as Compensation | null) : null
+  const [compensationMemberId,setCompensationMemberId] = useState(() =>
+    compensationRecord?.memberId ?? data.members.find(member => member.active)?.id ?? ''
+  )
+  const [compensationClientIds,setCompensationClientIds] = useState<string[]>(() =>
+    compensationRecord?.clientIds?.length
+      ? compensationRecord.clientIds
+      : compensationRecord?.clientId
+        ? [compensationRecord.clientId]
+        : presetClientId
+          ? [presetClientId]
+          : []
+  )
+  const [compensationType,setCompensationType] = useState<Compensation['compensationType']>(() =>
+    compensationRecord?.compensationType ?? 'one_off'
+  )
+  const [compensationStatus,setCompensationStatus] = useState(() =>
+    compensationRecord?.status && ['pagato','paid','saldato'].includes(compensationRecord.status.trim().toLowerCase())
+      ? 'Pagato'
+      : 'Da pagare'
+  )
+  const [showAllCompensationClients,setShowAllCompensationClients] = useState(false)
+
+  const orderedCompensationClients = useMemo(
+    () => [...data.clients]
+      .filter(client => client.status !== 'archived' && client.status !== 'lead')
+      .sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [data.clients],
+  )
+
+  const compensationClientChoices = useMemo(() => {
+    const selected=orderedCompensationClients.filter(client=>compensationClientIds.includes(client.id))
+    const remaining=orderedCompensationClients.filter(client=>!compensationClientIds.includes(client.id))
+    return [...selected,...remaining]
+  },[orderedCompensationClients,compensationClientIds])
+
+  const visibleCompensationClients = showAllCompensationClients
+    ? compensationClientChoices
+    : compensationClientChoices.slice(0,3)
+  const hiddenCompensationClients = Math.max(0,compensationClientChoices.length-visibleCompensationClients.length)
   const invoiceContribution = invoiceAmount * .04
   const invoiceGross = invoiceAmount + invoiceContribution + 2
   const invoiceNet = invoiceGross * .40
@@ -127,9 +169,21 @@ export function RecordEditorModal({
       }
 
       if (kind === 'compensation') {
-        const memberId = nullable('memberId')
-        const memberName = data.members.find(m => m.id === memberId)?.name ?? s('memberName')
-        const payload = { entryDate:nullable('entryDate'), memberId, memberName, clientId:nullable('clientId'), description:s('description'), amount:n('amount'), status:s('status'), notes:s('notes') }
+        const memberId = compensationMemberId || null
+        const memberName = data.members.find(m => m.id === memberId)?.name ?? compensationRecord?.memberName ?? 'Collaboratore'
+        const description = s('description') || (compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso')
+        const payload = {
+          entryDate:nullable('entryDate'),
+          memberId,
+          memberName,
+          clientId:compensationClientIds[0] ?? null,
+          clientIds:compensationClientIds,
+          compensationType,
+          description,
+          amount:n('amount'),
+          status:compensationStatus,
+          notes:s('notes'),
+        }
         if (record) await actions.updateCompensation(record.id,payload)
         else await actions.createCompensation(payload)
       }
@@ -255,14 +309,108 @@ export function RecordEditorModal({
         <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
       </>}
 
-      {kind === 'compensation' && <>
-        <div className="field-grid two"><MemberSelect data={data} defaultValue={v('memberId')}/><ClientSelect data={data} defaultValue={v('clientId') || presetClientId || ''} allowEmpty/></div>
-        <Field name="memberName" label="Nome collaboratore (fallback)" defaultValue={v('memberName')}/>
-        <Field name="description" label="Descrizione" defaultValue={v('description')} required/>
-        <div className="field-grid two"><Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/><Field name="entryDate" label="Data" type="date" defaultValue={v('entryDate')}/></div>
-        <Field name="status" label="Stato" defaultValue={v('status')}/>
-        <TextArea name="notes" label="Note" defaultValue={v('notes')}/>
-      </>}
+      {kind === 'compensation' && <div className="compensation-editor">
+        <section className="compensation-picker-card">
+          <span className="compensation-picker-label">Tipo compenso</span>
+          <div className="compensation-type-chips">
+            <button
+              type="button"
+              className={`compensation-type-chip ${compensationType === 'salary_recurring' ? 'selected' : ''}`}
+              onClick={()=>setCompensationType('salary_recurring')}
+            >Stipendio ricorrente</button>
+            <button
+              type="button"
+              className={`compensation-type-chip ${compensationType === 'one_off' ? 'selected' : ''}`}
+              onClick={()=>setCompensationType('one_off')}
+            >Compenso</button>
+          </div>
+        </section>
+
+        <div className="compensation-picker-grid">
+          <section className="compensation-picker-card">
+            <span className="compensation-picker-label">Collaboratore</span>
+            <div className="compensation-team-chips" role="group" aria-label="Seleziona collaboratore">
+              {data.members.filter(member=>member.active || member.id===compensationMemberId).map(member=>{
+                const selected=compensationMemberId===member.id
+                return <button
+                  type="button"
+                  key={member.id}
+                  className={`compensation-team-chip ${memberToneClass(member.name)} ${selected ? 'selected' : ''}`}
+                  aria-pressed={selected}
+                  onClick={()=>setCompensationMemberId(member.id)}
+                >
+                  <span className="compensation-team-avatar">{member.name.slice(0,1).toUpperCase()}</span>
+                  <span>{member.name}</span>
+                </button>
+              })}
+            </div>
+          </section>
+
+          <section className="compensation-picker-card">
+            <span className="compensation-picker-label">Lavori / clienti</span>
+            <div className="compensation-client-chips" role="group" aria-label="Seleziona uno o più lavori">
+              <button
+                type="button"
+                className={`compensation-client-chip internal ${compensationClientIds.length===0 ? 'selected' : ''}`}
+                aria-pressed={compensationClientIds.length===0}
+                onClick={()=>setCompensationClientIds([])}
+              >
+                <span className="compensation-client-dot"/>4Bit Studio / Interno
+              </button>
+              {visibleCompensationClients.map(client=>{
+                const selected=compensationClientIds.includes(client.id)
+                return <button
+                  type="button"
+                  key={client.id}
+                  style={clientChipStyle(client.id,data.clients)}
+                  className={`compensation-client-chip ${selected ? 'selected' : ''}`}
+                  aria-pressed={selected}
+                  onClick={()=>setCompensationClientIds(selected
+                    ? compensationClientIds.filter(id=>id!==client.id)
+                    : [...compensationClientIds,client.id]
+                  )}
+                >
+                  <span className="compensation-client-dot"/>{client.name}
+                </button>
+              })}
+            </div>
+            {compensationClientChoices.length>3 && <button
+              type="button"
+              className="compensation-more-clients"
+              aria-expanded={showAllCompensationClients}
+              onClick={()=>setShowAllCompensationClients(value=>!value)}
+            >
+              {showAllCompensationClients ? 'Mostra meno' : `+${hiddenCompensationClients} altre`}
+              <ChevronDown size={14}/>
+            </button>}
+          </section>
+        </div>
+
+        <Field name="description" label="Descrizione (facoltativa)" defaultValue={v('description')} placeholder={compensationType === 'salary_recurring' ? 'Es. stipendio ottobre' : 'Es. shooting, sito, montaggio…'}/>
+
+        <div className="field-grid two">
+          <Field name="amount" label="Importo €" type="number" step="0.01" defaultValue={v('amount')} required/>
+          <Field name="entryDate" label="Data" type="date" defaultValue={v('entryDate') || new Date().toLocaleDateString('en-CA')}/>
+        </div>
+
+        <section className="compensation-picker-card compact">
+          <span className="compensation-picker-label">Stato</span>
+          <div className="compensation-status-chips">
+            <button
+              type="button"
+              className={`compensation-status-chip ${compensationStatus === 'Da pagare' ? 'selected' : ''}`}
+              onClick={()=>setCompensationStatus('Da pagare')}
+            >Da pagare</button>
+            <button
+              type="button"
+              className={`compensation-status-chip paid ${compensationStatus === 'Pagato' ? 'selected' : ''}`}
+              onClick={()=>setCompensationStatus('Pagato')}
+            >Pagato</button>
+          </div>
+        </section>
+
+        <TextArea name="notes" label="Note (facoltative)" defaultValue={v('notes')}/>
+      </div>}
 
       {kind === 'debt' && <>
         <label className="form-field debt-creditor-field">
