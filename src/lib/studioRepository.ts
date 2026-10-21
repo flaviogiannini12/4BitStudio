@@ -57,7 +57,20 @@ const fromTask = (r: any): Task => ({ id: r.id, title: r.title, clientId: r.clie
 const fromRecurrence = (r: any): Recurrence => ({ id: r.id, clientId: r.client_id, label: r.label, amount: Number(r.amount), intervalMonths: r.interval_months, dueDay: r.due_day, nextDueDate: r.next_due_date, active: r.active, invoiced: Boolean(r.invoiced), notes: r.notes ?? '', createdAt: r.created_at })
 const fromPayment = (r: any): Payment => ({ id: r.id, clientId: r.client_id, projectId: r.project_id, recurrenceId: r.recurrence_id, label: r.label, amount: Number(r.amount), dueDate: r.due_date, status: r.status, invoiced: Boolean(r.invoiced), paidAt: r.paid_at, reminderCount: r.reminder_count ?? 0, lastReminderAt: r.last_reminder_at, notes: r.notes ?? '', createdAt: r.created_at })
 const fromLedger = (r: any): LedgerEntry => ({ id:r.id, paymentId:r.payment_id ?? null, compensationId:r.compensation_id ?? null, debtId:r.debt_id ?? null, entryDate:r.entry_date, direction:r.direction, clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', category:r.category ?? '', notes:r.notes ?? '' })
-const fromComp = (r: any): Compensation => ({ id:r.id, entryDate:r.entry_date, paidAt:r.paid_at ?? null, memberId:r.member_id, memberName:r.member_name ?? '', clientId:r.client_id, description:r.description ?? '', amount:Number(r.amount), status:r.status ?? '', notes:r.notes ?? '' })
+const fromComp = (r: any): Compensation => ({
+  id:r.id,
+  entryDate:r.entry_date,
+  paidAt:r.paid_at ?? null,
+  memberId:r.member_id,
+  memberName:r.member_name ?? '',
+  clientId:r.client_id,
+  clientIds:Array.isArray(r.client_ids) ? r.client_ids : (r.client_id ? [r.client_id] : []),
+  compensationType:r.compensation_type === 'salary_recurring' ? 'salary_recurring' : 'one_off',
+  description:r.description ?? '',
+  amount:Number(r.amount),
+  status:r.status ?? '',
+  notes:r.notes ?? '',
+})
 const fromDebt = (r: any): Debt => ({ id:r.id, creditor:r.creditor ?? '', description:r.description ?? '', amount:Number(r.amount), dueDate:r.due_date, status:r.status, paidAt:r.paid_at, notes:r.notes ?? '', createdAt:r.created_at })
 const fromDeadline = (r: any): Deadline => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', provider:r.provider ?? '', dueDate:r.due_date, cost:r.cost == null ? null : Number(r.cost), status:r.status ?? '', notes:r.notes ?? '' })
 const fromMaintenance = (r: any): MaintenancePeriod => ({ id:r.id, clientId:r.client_id, service:r.service ?? '', periodicity:r.periodicity ?? '', amount:Number(r.amount), periodFrom:r.period_from, periodTo:r.period_to, status:r.status ?? '', notes:r.notes ?? '' })
@@ -211,7 +224,9 @@ export const cloudRepo = {
       paid_at: input.paidAt ?? null,
       member_id: input.memberId || null,
       member_name: input.memberName,
-      client_id: input.clientId || null,
+      client_id: input.clientId || input.clientIds?.[0] || null,
+      client_ids: input.clientIds ?? (input.clientId ? [input.clientId] : []),
+      compensation_type: input.compensationType ?? 'one_off',
       description: input.description,
       amount: input.amount,
       status: input.status ?? '',
@@ -225,6 +240,8 @@ export const cloudRepo = {
       ...(input.memberId !== undefined ? { member_id: input.memberId || null } : {}),
       ...(input.memberName !== undefined ? { member_name: input.memberName } : {}),
       ...(input.clientId !== undefined ? { client_id: input.clientId || null } : {}),
+      ...(input.clientIds !== undefined ? { client_ids: input.clientIds, client_id: input.clientIds[0] || null } : {}),
+      ...(input.compensationType !== undefined ? { compensation_type: input.compensationType } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.amount !== undefined ? { amount: input.amount } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
@@ -261,7 +278,7 @@ export const cloudRepo = {
     const db=requireCloud()
     const {data:comp,error}=await db
       .from('compensations')
-      .select('id,workspace_id,entry_date,paid_at,member_name,client_id,description,amount,status,notes,created_at')
+      .select('id,workspace_id,entry_date,paid_at,member_name,client_id,client_ids,compensation_type,description,amount,status,notes,created_at')
       .eq('id',compensationId)
       .single()
     if(error) throw error
@@ -278,8 +295,8 @@ export const cloudRepo = {
       compensation_id:comp.id,
       entry_date:comp.paid_at ? String(comp.paid_at).slice(0,10) : (comp.entry_date || String(comp.created_at).slice(0,10)),
       direction:'expense',
-      client_id:comp.client_id || null,
-      description:`Compenso pagato · ${comp.member_name || 'Collaboratore'}${comp.description ? ' — ' + comp.description : ''}`,
+      client_id:comp.client_id || comp.client_ids?.[0] || null,
+      description:`${comp.compensation_type === 'salary_recurring' ? 'Stipendio pagato' : 'Compenso pagato'} · ${comp.member_name || 'Collaboratore'}${comp.description ? ' — ' + comp.description : ''}`,
       amount:Number(comp.amount ?? 0),
       status:'Pagato',
       category:'Stipendi / compensi',
