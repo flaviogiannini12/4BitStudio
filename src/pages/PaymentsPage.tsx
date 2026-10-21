@@ -277,7 +277,7 @@ export function PaymentsPage({
             </div>
           </article>
         })}
-        {!visibleDebts.length && <div className="economy-empty-state"><Landmark size={22}/><strong>Nessun debito registrato</strong><span>Quando avrai una somma da restituire, comparirà qui.</span></div>
+        {!visibleDebts.length && <div className="economy-empty-state"><Landmark size={22}/><strong>Nessun debito registrato</strong><span>Quando avrai una somma da restituire, comparirà qui.</span></div>}
       </div>
     </section>}
 
