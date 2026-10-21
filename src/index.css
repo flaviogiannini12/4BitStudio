@@ -9119,3 +9119,63 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:8.5px;
   }
 }
+
+
+/* =========================================================
+   ECONOMIA — incassi e debiti chiusi sempre visibili
+   ========================================================= */
+.economy-kpi-grid-top{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+.payment-row.tone-paid{
+  opacity:1!important;
+  border-color:rgba(24,140,91,.16)!important;
+  background:linear-gradient(90deg,rgba(24,140,91,.055),rgba(255,255,255,.78) 34%)!important;
+}
+
+.payment-row.tone-paid .countdown-box{
+  background:rgba(24,140,91,.11)!important;
+  color:#167e55!important;
+}
+
+.payment-paid-card{
+  min-height:34px;
+  padding:7px 10px;
+  border-radius:11px;
+  background:rgba(24,140,91,.10);
+  color:#167e55!important;
+}
+
+.economy-record-row.debt.is-done{
+  opacity:1!important;
+  border-color:rgba(24,140,91,.16)!important;
+  background:linear-gradient(90deg,rgba(24,140,91,.055),rgba(255,255,255,.72) 34%)!important;
+}
+
+.economy-record-row.debt.is-done .economy-record-icon{
+  background:rgba(24,140,91,.10);
+  color:#167e55;
+}
+
+.economy-status-green-card{
+  min-height:30px;
+  display:inline-flex;
+  align-items:center;
+  padding-inline:10px!important;
+  border:1px solid rgba(24,140,91,.11);
+  background:rgba(24,140,91,.10)!important;
+  color:#167e55!important;
+}
+
+@media(max-width:980px){
+  .economy-kpi-grid-top{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media(max-width:720px){
+  .economy-kpi-grid-top{
+    grid-template-columns:1fr;
+  }
+}
