@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   CircleDollarSign,
   Clock3,
   LayoutDashboard,
@@ -21,6 +22,7 @@ import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from 
 import type { StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 import { RecordEditorModal } from '../components/RecordEditorModal'
+import { memberToneClass } from '../lib/memberTone'
 
 type Actions = ReturnType<typeof useStudio>['actions']
 type Tab = 'overview' | 'income' | 'compensations' | 'debts' | 'operations'
@@ -63,6 +65,7 @@ export function PaymentsPage({
 }) {
   const [tab,setTab] = useState<Tab>('overview')
   const [editor,setEditor] = useState<{kind:EditorKind;record:any} | null>(null)
+  const [expandedCompensationMember,setExpandedCompensationMember] = useState<string | null>(null)
 
   const today = todayISO()
   const currentMonth = monthKey(new Date())
@@ -133,6 +136,21 @@ export function PaymentsPage({
     const bDate = b.entryDate ?? b.paidAt?.slice(0,10) ?? ''
     return bDate.localeCompare(aDate)
   })
+  const compensationGroups = useMemo(() => {
+    const groups=new Map<string,{key:string;memberId:string|null;memberName:string;rows:typeof sortedCompensations}>()
+    for(const compensation of sortedCompensations){
+      const key=compensation.memberId || `name:${compensation.memberName || 'Collaboratore'}`
+      const existing=groups.get(key)
+      if(existing) existing.rows.push(compensation)
+      else groups.set(key,{
+        key,
+        memberId:compensation.memberId,
+        memberName:compensation.memberName || 'Collaboratore',
+        rows:[compensation],
+      })
+    }
+    return [...groups.values()].sort((a,b)=>a.memberName.localeCompare(b.memberName,'it'))
+  },[sortedCompensations])
   const sortedDeadlines = [...deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
 
   return <div className="economy-page">
@@ -235,21 +253,51 @@ export function PaymentsPage({
         <div><span>Voci del mese</span><strong>{money(compensationThisMonth)}</strong></div>
         <div><span>Pagato storico</span><strong>{money(paidCompensationsTotal)}</strong></div>
       </div>
-      <div className="economy-record-list">
-        {sortedCompensations.map(c => {
-          const paid = statusIsPaid(c.status)
-          return <article className={`economy-record-row ${paid ? 'is-done' : ''}`} key={c.id}>
-            <span className="economy-record-icon"><WalletCards size={17}/></span>
-            <div className="economy-record-main"><strong>{c.memberName || 'Collaboratore'}</strong><span>{c.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso'}{c.description ? ' · ' + c.description : ''}</span><small>{compensationClients(c)} · {c.entryDate ? formatShortDate(c.entryDate) : 'Data non indicata'}</small></div>
-            <b>{money(c.amount)}</b>
-            <span className={`economy-status ${paid ? 'done' : 'open'}`}>{c.status || (paid ? 'Pagato' : 'Da pagare')}</span>
-            <div className="economy-record-actions">
-              {!paid && <button className="secondary-button compact" onClick={() => void actions.updateCompensation(c.id,{status:'Pagato'})}>Segna pagato</button>}
-              <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'compensation',record:c})}><Pencil size={13}/></button>
-            </div>
-          </article>
+      <div className="compensation-team-groups">
+        {compensationGroups.map(group => {
+          const expanded=expandedCompensationMember===group.key
+          const total=group.rows.reduce((sum,row)=>sum+row.amount,0)
+          const openRows=group.rows.filter(row=>!statusIsPaid(row.status))
+          const openTotal=openRows.reduce((sum,row)=>sum+row.amount,0)
+          return <section className={`compensation-team-group ${expanded ? 'is-open' : ''}`} key={group.key}>
+            <button
+              type="button"
+              className="compensation-team-group-toggle"
+              onClick={()=>setExpandedCompensationMember(current=>current===group.key ? null : group.key)}
+              aria-expanded={expanded}
+            >
+              <span className={`compensation-team-group-avatar ${memberToneClass(group.memberName)}`}>{group.memberName.slice(0,2).toUpperCase()}</span>
+              <span className="compensation-team-group-name">
+                <strong>{group.memberName}</strong>
+                <small>{group.rows.length} {group.rows.length === 1 ? 'transazione' : 'transazioni'}</small>
+              </span>
+              <span className="compensation-team-group-stat"><small>Totale</small><strong>{money(total)}</strong></span>
+              <span className={`compensation-team-group-stat ${openTotal ? 'pending' : 'settled'}`}><small>Da pagare</small><strong>{money(openTotal)}</strong></span>
+              <span className="compensation-team-group-chevron"><ChevronDown size={17}/></span>
+            </button>
+
+            {expanded && <div className="compensation-team-transactions">
+              {group.rows.map(compensation => {
+                const paid=statusIsPaid(compensation.status)
+                return <article className={`economy-record-row compensation-transaction ${paid ? 'is-done' : ''}`} key={compensation.id}>
+                  <span className="economy-record-icon"><WalletCards size={17}/></span>
+                  <div className="economy-record-main">
+                    <strong>{compensation.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso'}{compensation.description ? ' · ' + compensation.description : ''}</strong>
+                    <span>{compensationClients(compensation)}</span>
+                    <small>{compensation.entryDate ? formatShortDate(compensation.entryDate) : 'Data non indicata'}</small>
+                  </div>
+                  <b>{money(compensation.amount)}</b>
+                  <span className={`economy-status ${paid ? 'done' : 'open'}`}>{compensation.status || (paid ? 'Pagato' : 'Da pagare')}</span>
+                  <div className="economy-record-actions">
+                    {!paid && <button className="secondary-button compact" onClick={() => void actions.updateCompensation(compensation.id,{status:'Pagato'})}>Segna pagato</button>}
+                    <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'compensation',record:compensation})}><Pencil size={13}/></button>
+                  </div>
+                </article>
+              })}
+            </div>}
+          </section>
         })}
-        {!sortedCompensations.length && <div className="empty-inline">Nessun compenso registrato.</div>}
+        {!compensationGroups.length && <div className="empty-inline">Nessun compenso registrato.</div>}
       </div>
     </section>}
 
