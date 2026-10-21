@@ -9179,3 +9179,160 @@ body.editorial-touch-dragging .editorial-drag-handle{
     grid-template-columns:1fr;
   }
 }
+
+
+/* =========================================================
+   ECONOMIA — compensi raggruppati per persona
+   ========================================================= */
+.compensation-team-groups{
+  display:grid;
+  gap:9px;
+  margin-top:10px;
+}
+
+.compensation-team-group{
+  overflow:hidden;
+  border:1px solid rgba(5,5,5,.055);
+  border-radius:18px;
+  background:rgba(255,255,255,.62);
+}
+
+.compensation-team-group-toggle{
+  display:grid;
+  width:100%;
+  grid-template-columns:42px minmax(150px,1fr) auto auto 32px;
+  align-items:center;
+  gap:12px;
+  padding:13px 14px;
+  background:transparent;
+  text-align:left;
+  transition:background .16s ease;
+}
+
+.compensation-team-group-toggle:hover{
+  background:rgba(255,255,255,.72);
+}
+
+.compensation-team-group-avatar{
+  display:grid;
+  width:42px;
+  height:42px;
+  place-items:center;
+  border-radius:14px;
+  background:var(--member-color,#050505);
+  color:var(--member-ink,#fff);
+  font-size:10px;
+  font-weight:900;
+}
+
+.compensation-team-group-name{
+  min-width:0;
+}
+
+.compensation-team-group-name strong,
+.compensation-team-group-name small{
+  display:block;
+}
+
+.compensation-team-group-name strong{
+  font-size:12px;
+}
+
+.compensation-team-group-name small{
+  margin-top:3px;
+  color:rgba(5,5,5,.38);
+  font-size:8.5px;
+}
+
+.compensation-team-group-stat{
+  min-width:92px;
+  text-align:right;
+}
+
+.compensation-team-group-stat small,
+.compensation-team-group-stat strong{
+  display:block;
+}
+
+.compensation-team-group-stat small{
+  color:rgba(5,5,5,.34);
+  font-size:8px;
+  font-weight:750;
+}
+
+.compensation-team-group-stat strong{
+  margin-top:3px;
+  font-size:13px;
+}
+
+.compensation-team-group-stat.pending strong{
+  color:#a65d16;
+}
+
+.compensation-team-group-stat.settled strong{
+  color:#167e55;
+}
+
+.compensation-team-group-chevron{
+  display:grid;
+  width:32px;
+  height:32px;
+  place-items:center;
+  border-radius:11px;
+  background:rgba(5,5,5,.045);
+  color:rgba(5,5,5,.42);
+}
+
+.compensation-team-group-chevron svg{
+  transition:transform .16s ease;
+}
+
+.compensation-team-group.is-open .compensation-team-group-chevron svg{
+  transform:rotate(180deg);
+}
+
+.compensation-team-transactions{
+  display:grid;
+  gap:7px;
+  padding:0 10px 10px;
+  border-top:1px solid rgba(5,5,5,.045);
+}
+
+.compensation-team-transactions .compensation-transaction{
+  margin-top:8px;
+}
+
+.compensation-team-transactions .compensation-transaction.is-done{
+  opacity:.72;
+}
+
+@media(max-width:760px){
+  .compensation-team-group-toggle{
+    grid-template-columns:38px minmax(0,1fr) 30px;
+    gap:9px;
+    padding:11px;
+  }
+
+  .compensation-team-group-avatar{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+  }
+
+  .compensation-team-group-stat{
+    grid-column:2;
+    min-width:0;
+    text-align:left;
+  }
+
+  .compensation-team-group-stat + .compensation-team-group-stat{
+    grid-column:2;
+  }
+
+  .compensation-team-group-chevron{
+    grid-column:3;
+    grid-row:1;
+    width:30px;
+    height:30px;
+  }
+}
