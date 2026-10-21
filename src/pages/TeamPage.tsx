@@ -26,6 +26,16 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
     const bDate = b.entryDate ?? b.paidAt?.slice(0,10) ?? ''
     return bDate.localeCompare(aDate)
   })
+  const compensationClientNames = (compensation: StudioData['compensations'][number]) => {
+    const ids=compensation.clientIds?.length
+      ? compensation.clientIds
+      : compensation.clientId
+        ? [compensation.clientId]
+        : []
+    if(!ids.length) return '4Bit Studio'
+    const names=ids.map(id=>data.clients.find(client=>client.id===id)?.name).filter(Boolean)
+    return names.length ? names.join(' + ') : '4Bit Studio'
+  }
   const compensationByMember = data.members.map(member => ({
     member,
     total: data.compensations.filter(c => c.memberId === member.id || c.memberName === member.name).reduce((sum,c) => sum + c.amount, 0),
@@ -75,7 +85,7 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
         </div>)}
       </div>
       <div className="compensation-history">
-        {sortedCompensations.map(c => <button type="button" className="compensation-history-row" key={c.id} onClick={() => setEditor({kind:'compensation',record:c})}><div><strong>{c.memberName}</strong><small>{data.clients.find(x => x.id === c.clientId)?.name ?? '4Bit Studio'} · {c.description}</small></div><b>{money(c.amount)}</b><span>{c.status}</span></button>)}
+        {sortedCompensations.map(c => <button type="button" className="compensation-history-row" key={c.id} onClick={() => setEditor({kind:'compensation',record:c})}><div><strong>{c.memberName}</strong><small>{compensationClientNames(c)} · {c.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso'}{c.description ? ' · ' + c.description : ''}</small></div><b>{money(c.amount)}</b><span>{c.status}</span></button>)}
       </div>
     </section>
 
