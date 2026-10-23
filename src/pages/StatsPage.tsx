@@ -101,15 +101,10 @@ export function StatsPage({ data }: { data: StudioData }) {
     .filter(payment => payment.dueDate >= today && payment.dueDate <= addDays(today,30))
     .reduce((sum,payment) => sum + grossAmount(payment.amount,payment.invoiced), 0)
 
-  const ledgerExpenseMonth = data.ledgerEntries
-    .filter(entry => entry.direction === 'expense' && entry.entryDate?.startsWith(currentMonth))
-    .reduce((sum,entry) => sum + entry.amount,0)
-
   const ledgerExpenseYear = data.ledgerEntries
     .filter(entry => entry.direction === 'expense' && entry.entryDate?.startsWith(yearPrefix))
     .reduce((sum,entry) => sum + entry.amount,0)
 
-  const monthCashflow = paidThisMonth - ledgerExpenseMonth
   const yearCashflow = paidThisYear - ledgerExpenseYear
 
   const annualizedByClient = activeClients.map(client => ({
@@ -224,7 +219,6 @@ export function StatsPage({ data }: { data: StudioData }) {
         </div>
         <div className="stats-month-kpis">
           <div><span>Incassato mese · lordo</span><strong>{money(paidThisMonth)}</strong><small>{money(taxesThisMonth)} tasse stimate sui fatturati</small></div>
-          <div><span>Risultato lordo mese</span><strong className={monthCashflow>=0?'money-positive':'money-negative'}>{money(monthCashflow)}</strong><small>{money(paidThisMonth)} incassi · {money(ledgerExpenseMonth)} uscite</small></div>
         </div>
       </div>
 
