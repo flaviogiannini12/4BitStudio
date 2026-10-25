@@ -101,6 +101,10 @@ export function StatsPage({ data }: { data: StudioData }) {
     .filter(payment => payment.dueDate >= today && payment.dueDate <= addDays(today,30))
     .reduce((sum,payment) => sum + grossAmount(payment.amount,payment.invoiced), 0)
 
+  const ledgerExpenseMonth = data.ledgerEntries
+    .filter(entry => entry.direction === 'expense' && entry.entryDate?.startsWith(currentMonth))
+    .reduce((sum,entry) => sum + entry.amount,0)
+
   const ledgerExpenseYear = data.ledgerEntries
     .filter(entry => entry.direction === 'expense' && entry.entryDate?.startsWith(yearPrefix))
     .reduce((sum,entry) => sum + entry.amount,0)
@@ -392,7 +396,6 @@ export function StatsPage({ data }: { data: StudioData }) {
         <div className="stats-money-grid">
           <MoneyMetric icon={ArrowUpRight} label="Incassi lordi mese" value={money(paidThisMonth)} positive sub={money(taxesThisMonth)+' tasse stimate'}/>
           <MoneyMetric icon={ArrowDownRight} label="Uscite mese" value={money(ledgerExpenseMonth)}/>
-          <MoneyMetric icon={TrendingUp} label="Risultato lordo mese" value={money(monthCashflow)} positive={monthCashflow>=0}/>
           <MoneyMetric icon={Landmark} label="Risultato lordo anno" value={money(yearCashflow)} positive={yearCashflow>=0} sub={money(paidThisYear)+' incassi lordi · '+money(ledgerExpenseYear)+' uscite'}/>
         </div>
       </section>
