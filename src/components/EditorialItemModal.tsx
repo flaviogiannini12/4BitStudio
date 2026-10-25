@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Archive, Check, Copy, ExternalLink, Link2, Trash2, X } from 'lucide-react'
+import { EditorialAccountLogo, PlatformPreviewIcon } from './EditorialBrandIcons'
 import {
   editorialAccountLabel,
-  editorialPlatformLabel,
   isAutomaticEditorialStep,
 } from '../lib/editorialConfig'
 import { memberToneClass } from '../lib/memberTone'
@@ -14,7 +14,7 @@ import type {
   EditorialMediaKind,
   EditorialPlatform,
 } from '../types/editorial'
-import type { TeamMember } from '../types/studio'
+import type { Client, TeamMember } from '../types/studio'
 
 type Actions = ReturnType<typeof useEditorial>['actions']
 type EditorialDraft = {
@@ -94,6 +94,7 @@ export function EditorialItemModal({
   initialDate,
   data,
   members,
+  clients,
   actions,
   onCelebrate,
   onClose,
@@ -103,6 +104,7 @@ export function EditorialItemModal({
   initialDate:string | null
   data:EditorialData
   members:TeamMember[]
+  clients:Client[]
   actions:Actions
   onCelebrate:()=>void
   onClose:()=>void
@@ -393,7 +395,7 @@ export function EditorialItemModal({
       <div className="task-editor-head editorial-editor-head-v5">
         <div>
           <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
-          <h2>{item ? item.title : 'Contenuto social'}</h2>
+          {item && <h2>{item.title}</h2>}
         </div>
         <button type="button" className="icon-button" onClick={()=>void closeEditor()} disabled={saving}><X size={18}/></button>
       </div>
@@ -402,12 +404,15 @@ export function EditorialItemModal({
         <div className="editorial-choice-block">
           <span className="editorial-choice-label">Profilo</span>
           <div className="editorial-choice-chips account-choice-chips">
-            {(Object.entries(editorialAccountLabel) as [EditorialAccount,string][]).map(([value,label])=><button
+            {(Object.keys(editorialAccountLabel) as EditorialAccount[]).map(value=><button
               type="button"
               key={value}
-              className={`editorial-choice-chip account-chip account-${value} ${draft.accounts.includes(value)?'active':''}`}
+              className={`editorial-choice-chip account-chip account-logo-choice account-${value} ${draft.accounts.includes(value)?'active':''}`}
               onClick={()=>toggleAccount(value)}
-            >{label}</button>)}
+              title={editorialAccountLabel[value]}
+              aria-label={editorialAccountLabel[value]}
+              aria-pressed={draft.accounts.includes(value)}
+            ><EditorialAccountLogo account={value} clients={clients}/></button>)}
           </div>
         </div>
 
@@ -426,9 +431,12 @@ export function EditorialItemModal({
             {PLATFORM_ORDER.filter(platform=>platform!=='whatsapp' || canUseWhatsapp).map(platform=><button
               type="button"
               key={platform}
-              className={`editorial-choice-chip platform-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
+              className={`editorial-choice-chip platform-choice platform-logo-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
               onClick={()=>togglePlatform(platform)}
-            >{editorialPlatformLabel[platform]}</button>)}
+              title={platform==='facebook' ? 'Instagram + Facebook' : platform==='instagram' ? 'Solo Instagram' : platform==='facebook_only' ? 'Solo Facebook' : platform}
+              aria-label={platform==='facebook' ? 'Instagram + Facebook' : platform==='instagram' ? 'Solo Instagram' : platform==='facebook_only' ? 'Solo Facebook' : platform}
+              aria-pressed={draft.platforms.includes(platform)}
+            ><PlatformPreviewIcon platform={platform}/></button>)}
           </div>
         </div>
 
