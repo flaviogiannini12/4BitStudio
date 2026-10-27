@@ -9802,3 +9802,91 @@ body.editorial-touch-dragging .editorial-drag-handle{
     font-size:11.5px!important;
   }
 }
+
+
+/* =========================================================
+   EDITORIALE V8 — contenuti scaduti
+   ========================================================= */
+.editorial-overdue-panel{
+  margin:0 0 14px;
+  padding:10px;
+  border:1px solid rgba(190,58,42,.10);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(190,58,42,.045),rgba(255,255,255,.42));
+}
+
+.editorial-overdue-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:2px 3px 9px;
+}
+
+.editorial-overdue-head>div{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.editorial-overdue-head h3{
+  margin:0;
+  font-size:13px;
+  font-weight:850;
+  letter-spacing:-.025em;
+}
+
+.editorial-overdue-head>span{
+  display:grid;
+  min-width:25px;
+  height:25px;
+  place-items:center;
+  padding:0 7px;
+  border-radius:999px;
+  background:rgba(190,58,42,.10);
+  color:#b13e2d;
+  font-size:8px;
+  font-weight:900;
+}
+
+.editorial-overdue-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#d44d38;
+  box-shadow:0 0 0 4px rgba(212,77,56,.10);
+}
+
+.editorial-overdue-columns{
+  margin:0!important;
+}
+
+.editorial-todo-card.is-overdue{
+  border-color:rgba(190,58,42,.13)!important;
+  background:linear-gradient(135deg,rgba(212,77,56,.07),rgba(255,255,255,.92) 46%)!important;
+}
+
+.editorial-todo-card.is-overdue::before{
+  background:#d44d38!important;
+}
+
+.editorial-status-chip.overdue{
+  min-height:20px!important;
+  padding:3px 7px!important;
+  border:1px solid rgba(190,58,42,.10)!important;
+  background:rgba(212,77,56,.10)!important;
+  color:#b13e2d!important;
+  font-size:7px!important;
+  font-weight:850!important;
+}
+
+@media(max-width:760px){
+  .editorial-overdue-panel{
+    padding:8px;
+    border-radius:17px;
+  }
+
+  .editorial-overdue-head{
+    padding-bottom:7px;
+  }
+}
