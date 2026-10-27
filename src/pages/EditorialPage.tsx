@@ -201,9 +201,14 @@ export function EditorialPage({
     return map
   },[filtered,today])
 
+  const overdueItems=useMemo(()=>[...filtered]
+    .filter(item=>item.publishDate && item.publishDate<today && item.status!=='published' && item.status!=='archived')
+    .sort((a,b)=>(a.publishDate ?? '').localeCompare(b.publishDate ?? '') || (a.publishTime ?? '18:00').localeCompare(b.publishTime ?? '18:00') || a.sortOrder-b.sortOrder)
+  ,[filtered,today])
+
   const archiveItems=useMemo(()=>[...filtered].sort((a,b)=>(b.publishedAt ?? b.archivedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.archivedAt ?? a.updatedAt)),[filtered])
   const visibleCount=view==='calendar'
-    ? filtered.filter(item=>item.publishDate && item.publishDate>=today).length
+    ? filtered.filter(item=>item.publishDate && (item.publishDate>=today || (item.publishDate<today && item.status!=='published' && item.status!=='archived'))).length
     : archiveItems.length
 
   function openCreate(date:string|null){
@@ -293,6 +298,43 @@ export function EditorialPage({
       </div>
 
       {view==='calendar' ? <div className="todo-calendar-panel editorial-calendar-tasklike">
+        {overdueItems.length>0 && <section className="editorial-overdue-panel">
+          <div className="editorial-overdue-head">
+            <div>
+              <span className="editorial-overdue-dot"/>
+              <h3>Scaduti</h3>
+            </div>
+            <span>{overdueItems.length}</span>
+          </div>
+          <div className="editorial-day-content-groups editorial-brand-columns editorial-overdue-columns">
+            {(['casaro','autoscuola_susa'] as EditorialAccount[]).map(accountKey=>{
+              const accountItems=overdueItems.filter(item=>item.account===accountKey)
+              return <div className={`editorial-brand-column account-${accountKey}`} key={accountKey}>
+                <div className="editorial-brand-column-head">
+                  <EditorialAccountLogo account={accountKey} clients={clients}/>
+                </div>
+                <div className="editorial-brand-column-list">
+                  {accountItems.map(item=><EditorialCard
+                    key={item.id}
+                    item={item}
+                    data={data}
+                    members={members}
+                    clients={clients}
+                    overdue
+                    onClick={()=>openEdit(item)}
+                    onDragStart={event=>{
+                      event.dataTransfer.setData('text/4bit-editorial',item.id)
+                      event.dataTransfer.effectAllowed='move'
+                    }}
+                    onDragEnd={()=>setDragOverDate(null)}
+                    onMove={moveEditorialItem}
+                    onDragHover={setDragOverDate}
+                  />)}
+                </div>
+              </div>
+            })}
+          </div>
+        </section>}
         {days.map(date=>{
           const key=dateKey(date)
           const items=byDate.get(key) ?? []
@@ -397,6 +439,7 @@ function EditorialCard({
   data,
   members,
   clients,
+  overdue=false,
   onClick,
   onDragStart,
   onDragEnd,
@@ -407,6 +450,7 @@ function EditorialCard({
   data:EditorialData
   members:TeamMember[]
   clients:Client[]
+  overdue?:boolean
   onClick:()=>void
   onDragStart:(event:DragEvent<HTMLSpanElement>)=>void
   onDragEnd:()=>void
@@ -421,7 +465,7 @@ function EditorialCard({
       .filter((name): name is string=>Boolean(name))
   )]
 
-  return <article className={`todo-task-card editorial-todo-card account-${item.account} ${item.status==='published'?'is-published':''}`}>
+  return <article className={`todo-task-card editorial-todo-card account-${item.account} ${item.status==='published'?'is-published':''} ${overdue?'is-overdue':''}`}>
     <span
       className="editorial-drag-handle"
       draggable
@@ -462,7 +506,9 @@ function EditorialCard({
 
       <div className="todo-task-meta editorial-todo-meta">
         {item.platforms.map(value=><PlatformPreviewIcon key={value} platform={value}/>)}
-        <span className={`editorial-status-chip ${statusTone(item.status)}`}>{statusLabelForItem(item.status,item.platforms)}</span>
+        {overdue
+          ? <span className="editorial-status-chip overdue">Scaduto{item.publishDate ? ` · ${new Date(`${item.publishDate}T12:00:00`).toLocaleDateString('it-IT',{day:'numeric',month:'short'}).replace('.','')}` : ''}</span>
+          : <span className={`editorial-status-chip ${statusTone(item.status)}`}>{statusLabelForItem(item.status,item.platforms)}</span>}
       </div>
 
 
