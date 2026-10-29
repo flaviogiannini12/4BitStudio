@@ -39,10 +39,6 @@ function addDays(value: string, days: number) {
   return dateKey(date)
 }
 
-function daysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate()
-}
-
 function pct(value: number) {
   return Math.round(value) + '%'
 }
@@ -129,42 +125,46 @@ export function StatsPage({ data }: { data: StudioData }) {
   })).filter(row=>row.value>0).sort((a,b)=>b.value-a.value).slice(0,8)
   const maxOpenClient = Math.max(1,...openByClient.map(row=>row.value))
 
-  const monthDays = daysInMonth(year,now.getMonth())
-  let cumulativePaid = 0
-  let cumulativeExpense = 0
-  const monthSeries = Array.from({length:monthDays},(_,index)=>{
-    const day=index+1
-    const key=`${currentMonth}-${String(day).padStart(2,'0')}`
-    const paidDay=paid
-      .filter(payment=>payment.paidAt?.slice(0,10)===key)
-      .reduce((sum,payment)=>sum+grossAmount(payment.amount,payment.invoiced),0)
-    const expenseDay=data.ledgerEntries
-      .filter(entry=>entry.direction==='expense' && entry.entryDate===key)
+  const lastThreeMonths = Array.from({length:3},(_,index)=>{
+    const date=new Date(year,now.getMonth()-2+index,1)
+    const key=monthKey(date)
+    const paidRows=paid.filter(payment=>payment.paidAt?.startsWith(key))
+    const paidValue=paidRows.reduce((sum,payment)=>sum+grossAmount(payment.amount,payment.invoiced),0)
+    const expenseValue=data.ledgerEntries
+      .filter(entry=>entry.direction==='expense' && entry.entryDate?.startsWith(key))
       .reduce((sum,entry)=>sum+entry.amount,0)
-    cumulativePaid += paidDay
-    cumulativeExpense += expenseDay
-    return {day,paidDay,expenseDay,cumulativePaid,cumulativeExpense,isFuture:day>now.getDate()}
+    const taxValue=paidRows.reduce((sum,payment)=>sum+taxAmount(payment.amount,payment.invoiced),0)
+    return {
+      key,
+      label:date.toLocaleDateString('it-IT',{month:'short'}).replace('.',''),
+      longLabel:date.toLocaleDateString('it-IT',{month:'long',year:'numeric'}),
+      paid:paidValue,
+      expense:expenseValue,
+      taxes:taxValue,
+    }
   })
+  const paidLastThreeMonths=lastThreeMonths.reduce((sum,row)=>sum+row.paid,0)
+  const expensesLastThreeMonths=lastThreeMonths.reduce((sum,row)=>sum+row.expense,0)
+  const taxesLastThreeMonths=lastThreeMonths.reduce((sum,row)=>sum+row.taxes,0)
+  const threeMonthRangeLabel=`${lastThreeMonths[0].longLabel} – ${lastThreeMonths[2].longLabel}`
 
   const chartWidth=1000
   const chartHeight=360
-  const chartLeft=50
-  const chartRight=24
-  const chartTop=24
-  const chartBottom=48
+  const chartLeft=72
+  const chartRight=36
+  const chartTop=28
+  const chartBottom=54
   const plotW=chartWidth-chartLeft-chartRight
   const plotH=chartHeight-chartTop-chartBottom
-  const maxMonthValue=Math.max(1,...monthSeries.map(row=>Math.max(row.cumulativePaid,row.cumulativeExpense)))
-  const maxDailyPaid=Math.max(1,...monthSeries.map(row=>row.paidDay))
-  const x=(day:number)=>chartLeft+(day-1)/Math.max(1,monthDays-1)*plotW
-  const y=(value:number)=>chartTop+plotH-(value/maxMonthValue)*plotH
-  const linePath=(key:'cumulativePaid'|'cumulativeExpense')=>monthSeries
-    .filter(row=>!row.isFuture)
-    .map((row,index)=>`${index===0?'M':'L'} ${x(row.day).toFixed(1)} ${y(row[key]).toFixed(1)}`)
+  const maxThreeMonthValue=Math.max(1,...lastThreeMonths.map(row=>Math.max(row.paid,row.expense)))
+  const x=(index:number)=>chartLeft+(index/(lastThreeMonths.length-1))*plotW
+  const y=(value:number)=>chartTop+plotH-(value/maxThreeMonthValue)*plotH
+  const linePath=(key:'paid'|'expense')=>lastThreeMonths
+    .map((row,index)=>`${index===0?'M':'L'} ${x(index).toFixed(1)} ${y(row[key]).toFixed(1)}`)
     .join(' ')
 
-  const paidLine=linePath('cumulativePaid')
-  const expenseLine=linePath('cumulativeExpense')
+  const paidLine=linePath('paid')
+  const expenseLine=linePath('expense')
 
   const yearMonths=Array.from({length:12},(_,index)=>{
     const key=`${year}-${String(index+1).padStart(2,'0')}`
@@ -217,57 +217,63 @@ export function StatsPage({ data }: { data: StudioData }) {
     <section className="stats-month-hero section-block stats-finance-hero">
       <div className="stats-month-head">
         <div>
-          <p className="eyebrow">Andamento economico del mese</p>
-          <h2>{MONTHS[now.getMonth()]} {year}</h2>
+          <p className="eyebrow">Andamento economico · ultimi 3 mesi</p>
+          <h2>{threeMonthRangeLabel}</h2>
           <p>Tutti gli incassi sono mostrati al lordo. I fatturati includono 4% e €2 di marca da bollo.</p>
         </div>
         <div className="stats-month-kpis">
-          <div><span>Incassato mese · lordo</span><strong>{money(paidThisMonth)}</strong><small>{money(taxesThisMonth)} tasse stimate sui fatturati</small></div>
+          <div><span>Incassato ultimi 3 mesi · lordo</span><strong>{money(paidLastThreeMonths)}</strong><small>{money(taxesLastThreeMonths)} tasse stimate · {money(expensesLastThreeMonths)} uscite</small></div>
         </div>
       </div>
 
       <div className="stats-mega-chart-wrap">
-        <svg className="stats-mega-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Andamento economico del mese">
-          {[0,.25,.5,.75,1].map((ratio,index)=><line
-            key={index}
-            x1={chartLeft}
-            x2={chartWidth-chartRight}
-            y1={chartTop+plotH*ratio}
-            y2={chartTop+plotH*ratio}
-            className="stats-chart-gridline"
-          />)}
-
-          {monthSeries.map(row=>{
-            const barW=Math.max(5,plotW/monthDays*.34)
-            const barH=row.isFuture ? 0 : row.paidDay/maxDailyPaid*(plotH*.28)
-            return <rect
-              key={row.day}
-              className="stats-chart-bar stats-money-daily-bar"
-              x={x(row.day)-barW/2}
-              y={chartTop+plotH-barH}
-              width={barW}
-              height={barH}
-              rx={barW/2}
-              style={{animationDelay:`${row.day*18}ms`}}
+        <svg className="stats-mega-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Andamento economico degli ultimi tre mesi">
+          {[0,.25,.5,.75,1].map((ratio,index)=><g key={index}>
+            <line
+              x1={chartLeft}
+              x2={chartWidth-chartRight}
+              y1={chartTop+plotH*ratio}
+              y2={chartTop+plotH*ratio}
+              className="stats-chart-gridline"
             />
-          })}
+            <text
+              x={chartLeft-12}
+              y={chartTop+plotH*ratio+4}
+              textAnchor="end"
+              className="stats-chart-axis-label"
+            >{money(maxThreeMonthValue*(1-ratio))}</text>
+          </g>)}
 
           {paidLine && <path d={paidLine} className="stats-chart-line completed" pathLength="1"/>}
           {expenseLine && <path d={expenseLine} className="stats-chart-line created expense-line" pathLength="1"/>}
 
-          {monthSeries.filter(row=>[1,5,10,15,20,25,monthDays].includes(row.day)).map(row=><text
-            key={row.day}
-            x={x(row.day)}
-            y={chartHeight-16}
-            textAnchor="middle"
-            className="stats-chart-axis-label"
-          >{row.day}</text>)}
+          {lastThreeMonths.map((row,index)=><g key={row.key}>
+            <circle cx={x(index)} cy={y(row.paid)} r="6" className="stats-chart-point completed"/>
+            <circle cx={x(index)} cy={y(row.expense)} r="6" className="stats-chart-point created"/>
+            <text
+              x={x(index)}
+              y={chartHeight-18}
+              textAnchor="middle"
+              className="stats-chart-axis-label stats-chart-month-label"
+            >{row.label}</text>
+            <text
+              x={x(index)}
+              y={y(row.paid)-14}
+              textAnchor="middle"
+              className="stats-chart-value-label completed"
+            >{money(row.paid)}</text>
+            <text
+              x={x(index)}
+              y={y(row.expense)+23}
+              textAnchor="middle"
+              className="stats-chart-value-label created"
+            >{money(row.expense)}</text>
+          </g>)}
         </svg>
 
         <div className="stats-chart-legend">
-          <span><i className="completed"/>Incassato lordo cumulativo</span>
-          <span><i className="created"/>Uscite cumulative ledger</span>
-          <span><i className="daily"/>Incassi giornalieri</span>
+          <span><i className="completed"/>Incassi lordi mensili</span>
+          <span><i className="created"/>Uscite mensili</span>
         </div>
       </div>
     </section>
