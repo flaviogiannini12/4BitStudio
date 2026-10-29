@@ -63,7 +63,7 @@ export function editorialWorkflow(
 
   if (hasWhatsapp) {
     pushUnique(steps,{ label:'WhatsApp · Ideazione', ownerName:'Francesco', done:true, automatic:true })
-    pushUnique(steps,{ label:'WhatsApp · Preparazione contenuto', ownerName:'Francesco', done:false, automatic:true })
+    pushUnique(steps,{ label:'WhatsApp · Preparazione contenuto', ownerName:'Francesco', done:false })
     pushUnique(steps,{ label:'WhatsApp · Copy', ownerName:'Francesco', done:false })
     pushUnique(steps,{ label:'WhatsApp · Invio', ownerName:'Francesco', done:false })
   }
@@ -75,7 +75,6 @@ export function isAutomaticEditorialStep(label:string) {
   return [
     'Ideazione / Script social',
     'WhatsApp · Ideazione',
-    'WhatsApp · Preparazione contenuto',
   ].includes(label)
 }
 
