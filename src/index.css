@@ -9890,3 +9890,51 @@ body.editorial-touch-dragging .editorial-drag-handle{
     padding-bottom:7px;
   }
 }
+
+
+/* =========================================================
+   STATISTICHE — grafico economico ultimi tre mesi
+   ========================================================= */
+.stats-chart-point{
+  vector-effect:non-scaling-stroke;
+  stroke:#fff;
+  stroke-width:3;
+}
+
+.stats-chart-point.completed{
+  fill:#F25623;
+}
+
+.stats-chart-point.created{
+  fill:#050505;
+  opacity:.72;
+}
+
+.stats-chart-value-label{
+  font-size:9px;
+  font-weight:820;
+}
+
+.stats-chart-value-label.completed{
+  fill:#F25623;
+}
+
+.stats-chart-value-label.created{
+  fill:rgba(5,5,5,.64);
+}
+
+.stats-chart-month-label{
+  font-size:11px;
+  font-weight:820;
+  text-transform:capitalize;
+}
+
+@media(max-width:700px){
+  .stats-chart-value-label{
+    font-size:8px;
+  }
+
+  .stats-chart-month-label{
+    font-size:9px;
+  }
+}
