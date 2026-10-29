@@ -150,7 +150,7 @@ async function syncEditorialAutomation(itemId:string) {
   for(const step of steps) {
     let desired: boolean | null = null
     if(['Ideazione / Script social','WhatsApp · Ideazione'].includes(step.label)) desired=true
-    if(step.label==='WhatsApp · Preparazione contenuto') desired=hasDefinitiveLink
+    if(step.label==='WhatsApp · Preparazione contenuto' && hasDefinitiveLink && !step.done) desired=true
     if(desired !== null && desired !== step.done) {
       const {error}=await db.from('editorial_steps').update({done:desired}).eq('id',step.id)
       if(error) throw error
