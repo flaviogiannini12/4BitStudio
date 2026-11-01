@@ -9967,3 +9967,45 @@ body.editorial-touch-dragging .editorial-drag-handle{
     height:28px;
   }
 }
+
+
+/* =========================================================
+   EDITORIALE V10 — elimina spazio vuoto superiore nel nuovo contenuto
+   ========================================================= */
+.editorial-editor-panel-v5{
+  position:relative;
+}
+
+.editorial-editor-head-v5.is-new{
+  position:absolute;
+  top:14px;
+  right:14px;
+  z-index:3;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+.editorial-editor-head-v5.is-new>div{
+  display:none;
+}
+
+.editorial-editor-head-v5.is-new + .editorial-form-v5{
+  padding-top:6px;
+}
+
+.editorial-editor-head-v5.is-new .icon-button{
+  width:42px;
+  height:42px;
+}
+
+@media(max-width:640px){
+  .editorial-editor-head-v5.is-new{
+    top:12px;
+    right:12px;
+  }
+
+  .editorial-editor-head-v5.is-new + .editorial-form-v5{
+    padding-top:4px;
+  }
+}
