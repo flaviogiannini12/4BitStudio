@@ -24,6 +24,7 @@ type EditorialEditorSession = {
   mode:'create'|'edit'
   itemId?:string
   date:string|null
+  account?:EditorialAccount
 }
 
 function readEditorialEditorSession():EditorialEditorSession|null {
@@ -36,6 +37,7 @@ function readEditorialEditorSession():EditorialEditorSession|null {
       mode:parsed.mode,
       itemId:typeof parsed.itemId==='string' ? parsed.itemId : undefined,
       date:typeof parsed.date==='string' ? parsed.date : null,
+      account:parsed.account==='casaro' || parsed.account==='autoscuola_susa' ? parsed.account : undefined,
     }
   } catch {
     return null
@@ -111,6 +113,7 @@ export function EditorialPage({
   const [editorOpen,setEditorOpen]=useState(false)
   const [editing,setEditing]=useState<EditorialItem|null>(null)
   const [newDate,setNewDate]=useState<string|null>(null)
+  const [newAccount,setNewAccount]=useState<EditorialAccount|undefined>(undefined)
   const [dragOverDate,setDragOverDate]=useState<string|null>(null)
   const [extraMonths,setExtraMonths]=useState(()=>{
     const now=new Date()
@@ -154,6 +157,7 @@ export function EditorialPage({
     if(session.mode==='create'){
       setEditing(null)
       setNewDate(session.date ?? today)
+      setNewAccount(session.account)
       setEditorOpen(true)
       editorRestoreAttempted.current=true
       return
@@ -211,17 +215,19 @@ export function EditorialPage({
     ? filtered.filter(item=>item.publishDate && (item.publishDate>=today || (item.publishDate<today && item.status!=='published' && item.status!=='archived'))).length
     : archiveItems.length
 
-  function openCreate(date:string|null){
+  function openCreate(date:string|null,presetAccount?:EditorialAccount){
     const targetDate=date ?? today
     setEditing(null)
     setNewDate(targetDate)
+    setNewAccount(presetAccount)
     setEditorOpen(true)
-    writeEditorialEditorSession({mode:'create',date:targetDate})
+    writeEditorialEditorSession({mode:'create',date:targetDate,account:presetAccount})
   }
 
   function openEdit(item:EditorialItem){
     setEditing(item)
     setNewDate(item.publishDate)
+    setNewAccount(undefined)
     setEditorOpen(true)
     writeEditorialEditorSession({mode:'edit',itemId:item.id,date:item.publishDate})
   }
@@ -230,6 +236,7 @@ export function EditorialPage({
     clearEditorialEditorSession()
     setEditorOpen(false)
     setEditing(null)
+    setNewAccount(undefined)
   }
 
   async function moveEditorialItem(itemId:string,publishDate:string){
@@ -254,7 +261,7 @@ export function EditorialPage({
     <section className="todo-planner-page editorial-task-page">
       <div className="todo-planner-head editorial-planner-head">
         <div><h2>Prossimi contenuti online</h2></div>
-        <button className="primary-button todo-new-task icon-only-add" title="Nuovo contenuto" aria-label="Nuovo contenuto" onClick={()=>openCreate(today)}><Plus size={16}/></button>
+        <button className="primary-button todo-new-task icon-only-add" title="Nuovo contenuto" aria-label="Nuovo contenuto" onClick={()=>openCreate(today,account==='all'?undefined:account)}><Plus size={16}/></button>
       </div>
 
       <div className="todo-toolbar editorial-task-toolbar">
@@ -391,10 +398,16 @@ export function EditorialPage({
                         onDragHover={setDragOverDate}
                       />)}
                     </div>
+                    <button
+                      className="editorial-column-add"
+                      type="button"
+                      title={accountKey==='casaro' ? 'Aggiungi contenuto Casaro' : 'Aggiungi contenuto Autoscuola Susa'}
+                      aria-label={accountKey==='casaro' ? 'Aggiungi contenuto Casaro' : 'Aggiungi contenuto Autoscuola Susa'}
+                      onClick={()=>openCreate(key,accountKey)}
+                    ><Plus size={15}/></button>
                   </div>
                 })}
               </div>
-              <button className="todo-add-row icon-only-add" title="Aggiungi contenuto" aria-label="Aggiungi contenuto" onClick={()=>openCreate(key)}><Plus size={15}/></button>
             </div>
           </section>
         })}
@@ -424,6 +437,7 @@ export function EditorialPage({
       open={editorOpen}
       item={editing}
       initialDate={newDate}
+      initialAccount={newAccount}
       data={data}
       members={members}
       clients={clients}
