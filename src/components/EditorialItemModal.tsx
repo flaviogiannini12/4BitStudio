@@ -396,7 +396,7 @@ export function EditorialItemModal({
   return <div className="task-editor-backdrop editorial-modal-backdrop">
     <button className="task-editor-scrim" onClick={()=>!saving && void closeEditor()} aria-label="Chiudi"/>
     <form ref={formRef} onSubmit={submit} className="task-editor-panel editorial-editor-panel-v5">
-      <div className="task-editor-head editorial-editor-head-v5">
+      <div className={`task-editor-head editorial-editor-head-v5 ${item ? 'has-title' : 'is-new'}`}>
         <div>
           <p className="eyebrow">{item ? 'Modifica contenuto' : 'Nuovo contenuto'}</p>
           {item && <h2>{item.title}</h2>}
