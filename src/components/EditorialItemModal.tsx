@@ -92,6 +92,7 @@ export function EditorialItemModal({
   open,
   item,
   initialDate,
+  initialAccount,
   data,
   members,
   clients,
@@ -102,6 +103,7 @@ export function EditorialItemModal({
   open:boolean
   item:EditorialItem | null
   initialDate:string | null
+  initialAccount?:EditorialAccount
   data:EditorialData
   members:TeamMember[]
   clients:Client[]
@@ -110,7 +112,7 @@ export function EditorialItemModal({
   onClose:()=>void
 }) {
   const initial=useMemo(()=>({
-    accounts:[item?.account ?? 'casaro'] as EditorialAccount[],
+    accounts:[item?.account ?? initialAccount ?? 'casaro'] as EditorialAccount[],
     platforms:item?.platforms?.length ? item.platforms : ['facebook'] as EditorialPlatform[],
     mediaKind:item?.mediaKind ?? 'photo' as EditorialMediaKind,
     title:item?.title ?? '',
@@ -119,7 +121,7 @@ export function EditorialItemModal({
     definitiveUrl:item?.definitiveUrl ?? '',
     publishDate:item?.publishDate ?? initialDate ?? todayISO(),
     publishTime:item?.publishTime ?? '18:00',
-  }),[item,initialDate])
+  }),[item,initialDate,initialAccount])
 
   const [draft,setDraft]=useState(initial)
   const [saving,setSaving]=useState(false)
@@ -136,12 +138,14 @@ export function EditorialItemModal({
   useEffect(()=>{
     if(!open) return
     const saved=readEditorialDraft(storageKey)
-    const next=saved ?? initial
+    const next=saved
+      ? (!item && initialAccount ? {...saved,accounts:[initialAccount]} : saved)
+      : initial
     setDraft(next)
     lastSavedSnapshot.current=JSON.stringify(initial)
     setLocalError(null)
     setDescriptionCopied(false)
-  },[open,item?.id,storageKey])
+  },[open,item?.id,storageKey,initialAccount])
 
   useEffect(()=>{
     if(!open) return
