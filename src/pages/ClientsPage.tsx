@@ -114,10 +114,11 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
   const [changingLogo, setChangingLogo] = useState(false)
   const [taskEditorOpen, setTaskEditorOpen] = useState(false)
   const [editor, setEditor] = useState<{kind:'client'|'payment'|'ledger'|'deadline'|'maintenance'; record:any} | null>(null)
-  const tasks = (data.tasks ?? []).filter(t => t.clientId === client.id && t.status !== 'done')
+  const clientTasks = (data.tasks ?? []).filter(t => t.clientId === client.id)
+  const tasks = clientTasks.filter(t => t.status !== 'done')
+  const completedTasks = clientTasks.filter(t => t.status === 'done')
   const payments = (data.payments ?? []).filter(p => p.clientId === client.id).sort((a,b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
-  const recurrences = (data.recurrences ?? []).filter(r => r.clientId === client.id)
-  const nextDue = tasks.filter(t => t.dueDate).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
+  const nextPayment = [...payments].filter(p => p.status === 'pending').sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
   const deadlines = (data.deadlines ?? []).filter(d => d.clientId === client.id).sort((a,b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
   const maintenance = (data.maintenancePeriods ?? []).filter(m => m.clientId === client.id).sort((a,b) => (b.periodTo ?? '').localeCompare(a.periodTo ?? ''))
   const movements = (data.ledgerEntries ?? []).filter(m => m.clientId === client.id).sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
@@ -184,9 +185,9 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
 
       <div className="client-quick-grid">
         <div><small>Task aperte</small><strong>{tasks.length}</strong></div>
-        <div><small>Prossima deadline</small><strong>{nextDue ? formatShortDate(nextDue.dueDate) : '—'}</strong></div>
-        <div><small>Pagamenti aperti</small><strong>{payments.filter(p => p.status === 'pending').length}</strong></div>
-        <div><small>{client.status === 'lead' ? 'Stato lead' : 'Ricorrenze attive'}</small><strong>{client.status === 'lead' ? (client.leadStage || '—') : recurrences.filter(r => r.active).length}</strong></div>
+        <div><small>Prossimo pagamento in arrivo</small><strong>{nextPayment ? formatShortDate(nextPayment.dueDate) : '—'}</strong></div>
+        <div><small>Task completate</small><strong>{completedTasks.length}</strong></div>
+        <div><small>Incasso totale cliente</small><strong>{money(received)}</strong></div>
       </div>
     </section>
 
@@ -196,8 +197,6 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div><small>Anno acquisizione</small><strong>{client.yearAcquired ?? '—'}</strong></div>
         <div><small>Stato</small><strong>{clientStatusLabel[client.status]}</strong></div>
         <div><small>Dominio</small><strong>{client.website || '—'}</strong></div>
-        <div><small>Contatto</small><strong>{client.contactName || client.email || client.phone || '—'}</strong></div>
-        <div className="master-wide"><small>Servizi</small><strong>{client.services.length ? client.services.join(' · ') : '—'}</strong></div>
         <div className="master-wide"><small>Note</small><strong>{client.notes || '—'}</strong></div>
       </div>
     </section>
