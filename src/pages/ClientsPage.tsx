@@ -4,6 +4,7 @@ import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
 import { ClientLogo } from '../components/ClientLogo'
+import { ClientAccessSection } from '../components/ClientAccessSection'
 import { RecordEditorModal } from '../components/RecordEditorModal'
 import { TaskEditorModal } from '../components/TaskEditorModal'
 import type { Client, ClientStatus, StudioData } from '../types/studio'
@@ -200,6 +201,8 @@ function ClientDetail({ client, data, actions, onBack }: { client: Client; data:
         <div className="master-wide"><small>Note</small><strong>{client.notes || '—'}</strong></div>
       </div>
     </section>
+
+    <ClientAccessSection clientId={client.id}/>
 
     {client.status !== 'lead' && <section className="section-block compact-block client-financial-block">
       <div className="section-heading"><div><p className="eyebrow">Redditività</p><h2>Situazione economica</h2></div></div>
