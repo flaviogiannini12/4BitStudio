@@ -60,7 +60,7 @@ export function ClientAccessSection({ clientId }: { clientId: string }) {
     const { error } = await supabase.rpc('upsert_access_credential', {
       p_id: editing?.id ?? null,
       p_client_id: clientId,
-      p_category: String(fd.get('category') ?? ''),
+      p_category: editing?.category ?? '',
       p_service: String(fd.get('service') ?? ''),
       p_scope_label: editing?.scope_label ?? '',
       p_username: String(fd.get('username') ?? ''),
@@ -97,10 +97,7 @@ export function ClientAccessSection({ clientId }: { clientId: string }) {
 
     {formOpen && cloudEnabled && <form key={editing?.id ?? 'new'} className="access-form" onSubmit={submit}>
       <div className="access-form-title">{editing ? 'Modifica accesso' : 'Nuovo accesso'}</div>
-      <div className="field-grid two">
-        <label className="form-field"><span>Servizio</span><input className="field" name="service" defaultValue={editing?.service ?? ''} placeholder="Aruba, Gmail, Instagram…" required/></label>
-        <label className="form-field"><span>Categoria</span><input className="field" name="category" defaultValue={editing?.category ?? ''} placeholder="Hosting, Email, Social…"/></label>
-      </div>
+      <label className="form-field"><span>Servizio</span><input className="field" name="service" defaultValue={editing?.service ?? ''} placeholder="Aruba, Gmail, Instagram…" required/></label>
       <div className="field-grid two">
         <label className="form-field"><span>Account / username</span><input className="field" name="username" defaultValue={editing?.username ?? ''} autoComplete="off"/></label>
         <label className="form-field"><span>Password</span><input className="field" name="password" type="password" autoComplete="new-password" placeholder={editing?.password ? 'Lascia vuoto per non cambiarla' : ''}/></label>
@@ -114,7 +111,7 @@ export function ClientAccessSection({ clientId }: { clientId: string }) {
       <div className="access-list">
         {rows.map(row => <article key={row.id} className="access-row">
           <div className="access-icon"><KeyRound size={15}/></div>
-          <div className="access-main"><strong>{row.service || 'Accesso'}</strong><small>{row.category}{row.notes ? ' · ' + row.notes : ''}</small></div>
+          <div className="access-main"><strong>{row.service || 'Accesso'}</strong>{row.notes && <small>{row.notes}</small>}</div>
           <div className="access-value"><span>Account</span><b>{row.username || '—'}</b><button onClick={() => void copy(row.username)}><Copy size={12}/></button></div>
           <div className="access-value"><span>Password</span><b>{row.password ? (visible[row.id] ? row.password : '••••••••••') : 'Da inserire'}</b>{row.password && <><button onClick={() => setVisible(v => ({...v,[row.id]:!v[row.id]}))}>{visible[row.id] ? <EyeOff size={12}/> : <Eye size={12}/>}</button><button onClick={() => void copy(row.password)}><Copy size={12}/></button></>}</div>
           <div className="access-row-actions"><button className="icon-button tiny" onClick={() => openEdit(row)}><Pencil size={13}/></button><button className="icon-button tiny" onClick={() => void remove(row.id)}><Trash2 size={13}/></button></div>
