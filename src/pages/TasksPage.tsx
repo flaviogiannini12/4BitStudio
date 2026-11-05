@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarSearch, Check, ChevronDown, GripVertical, Inbox, MoreHorizontal, MoveRight, Plus, UserRound } from 'lucide-react'
+import { CalendarSearch, Check, ChevronDown, Filter, GripVertical, Inbox, MoreHorizontal, MoveRight, Plus, RotateCcw, UserRound, X } from 'lucide-react'
 import { ClientLogo } from '../components/ClientLogo'
 import { TaskEditorModal } from '../components/TaskEditorModal'
+import './TaskFilters.css'
 import { todayISO } from '../lib/date'
 import { clientChipStyle } from '../lib/clientTone'
 import type { StudioData, Task } from '../types/studio'
@@ -84,11 +85,22 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
   const [editorOpen, setEditorOpen] = useState(false)
   const [overdueOpen, setOverdueOpen] = useState(false)
   const [backlogOpen, setBacklogOpen] = useState(false)
+  const [filtersOpen,setFiltersOpen] = useState(false)
+  const filterPanelRef=useRef<HTMLDivElement>(null)
   const editorRestoreAttempted=useRef(false)
 
   useEffect(() => {
     localStorage.setItem('4bit.tasks.onlyDays', onlyDaysWithTasks ? '1' : '0')
   }, [onlyDaysWithTasks])
+
+  useEffect(()=>{
+    if(!filtersOpen) return
+    const close=(event:MouseEvent)=>{
+      if(filterPanelRef.current && !filterPanelRef.current.contains(event.target as Node)) setFiltersOpen(false)
+    }
+    document.addEventListener('mousedown',close)
+    return ()=>document.removeEventListener('mousedown',close)
+  },[filtersOpen])
 
   useEffect(() => {
     if (createSignal > 0) openCreate(null)
@@ -169,6 +181,18 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
     if (!onlyDaysWithTasks) return days
     return days.filter(date => (byDate.get(dateKey(date))?.length ?? 0) > 0)
   }, [days, byDate, onlyDaysWithTasks])
+
+  const activeFilterCount =
+    (clientFilter !== 'all' ? 1 : 0) +
+    (memberFilter !== 'all' ? 1 : 0) +
+    (statusFilter === 'open' && onlyDaysWithTasks ? 1 : 0)
+
+  function resetFilters(){
+    setClientFilter('all')
+    setMemberFilter('all')
+    setOnlyDaysWithTasks(false)
+    setJumpDate('')
+  }
 
   const client = (id: string | null) => data.clients.find(c => c.id === id)
   const member = (id: string | null) => data.members.find(m => m.id === id)
@@ -322,7 +346,7 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
         <button className="primary-button todo-new-task icon-only-add" title="Nuova attività" aria-label="Nuova attività" onClick={() => openCreate(null)}><Plus size={16}/></button>
       </div>
 
-      <div className="todo-toolbar">
+      <div className="todo-toolbar task-toolbar-compact">
         <div className="task-filter-with-count">
           <div className="segmented task-filter task-filter-two">
             <button onClick={() => setStatusFilter('open')} className={statusFilter === 'open' ? 'active' : ''}>Aperte</button>
@@ -331,39 +355,66 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
           <span className="task-filter-counter"><strong>{filtered.length}</strong> task</span>
         </div>
 
-        <label className="todo-filter-select">
-          <span>Lavoro</span>
-          <select value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
-            <option value="all">Tutti i lavori</option>
-            <option value="__internal">4Bit Studio / Interno</option>
-            {orderedClients.map(c => <option value={c.id} key={c.id}>{c.name}</option>)}
-          </select>
-        </label>
+        <div className="task-filter-popover-wrap" ref={filterPanelRef}>
+          <button
+            type="button"
+            className={`task-filter-trigger ${filtersOpen ? 'is-open' : ''} ${activeFilterCount ? 'has-active' : ''}`}
+            onClick={()=>setFiltersOpen(value=>!value)}
+            aria-expanded={filtersOpen}
+          >
+            <Filter size={14}/>
+            <span>Filtri</span>
+            {activeFilterCount>0 && <b>{activeFilterCount}</b>}
+            <ChevronDown size={14}/>
+          </button>
 
-        <label className="todo-filter-select">
-          <span>Persona</span>
-          <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)}>
-            <option value="all">Tutto il team</option>
-            <option value="__unassigned">Non assegnate</option>
-            {data.members.filter(m => m.active).map(m => <option value={m.id} key={m.id}>{m.name}</option>)}
-          </select>
-        </label>
+          {filtersOpen && <div className="task-filter-popover">
+            <div className="task-filter-popover-head">
+              <div><small>Personalizza la vista</small><strong>Filtri task</strong></div>
+              <button type="button" className="icon-button tiny" onClick={()=>setFiltersOpen(false)} aria-label="Chiudi filtri"><X size={14}/></button>
+            </div>
 
-        {statusFilter === 'open' && <>
-          <label className="planner-toggle">
-            <input type="checkbox" checked={onlyDaysWithTasks} onChange={e => setOnlyDaysWithTasks(e.target.checked)}/>
-            <span className="planner-switch"><span/></span>
-            <span>Solo giorni con attività</span>
-          </label>
-          <label className="date-jump">
-            <CalendarSearch size={14}/>
-            <input type="date" value={jumpDate} min={todayKey} onChange={e => {
-              setJumpDate(e.target.value)
-              if (e.target.value) window.setTimeout(() => jumpToDate(e.target.value), 30)
-            }}/>
-            <button type="button" onClick={() => jumpToDate()}><MoveRight size={14}/></button>
-          </label>
-        </>}
+            <div className="task-filter-popover-grid">
+              <label className="task-filter-field">
+                <span>Lavoro</span>
+                <select value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
+                  <option value="all">Tutti i lavori</option>
+                  <option value="__internal">4Bit Studio / Interno</option>
+                  {orderedClients.map(c => <option value={c.id} key={c.id}>{c.name}</option>)}
+                </select>
+              </label>
+
+              <label className="task-filter-field">
+                <span>Persona</span>
+                <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)}>
+                  <option value="all">Tutto il team</option>
+                  <option value="__unassigned">Non assegnate</option>
+                  {data.members.filter(m => m.active).map(m => <option value={m.id} key={m.id}>{m.name}</option>)}
+                </select>
+              </label>
+
+              {statusFilter === 'open' && <label className="task-filter-toggle-row">
+                <span><strong>Solo giorni con attività</strong><small>Nasconde i giorni vuoti.</small></span>
+                <input type="checkbox" checked={onlyDaysWithTasks} onChange={e => setOnlyDaysWithTasks(e.target.checked)}/>
+                <i><span/></i>
+              </label>}
+
+              {statusFilter === 'open' && <div className="task-filter-date-row">
+                <span><strong>Vai alla data</strong><small>Salta direttamente al giorno scelto.</small></span>
+                <div>
+                  <CalendarSearch size={14}/>
+                  <input type="date" value={jumpDate} min={todayKey} onChange={e=>setJumpDate(e.target.value)}/>
+                  <button type="button" disabled={!jumpDate} onClick={() => { jumpToDate(); setFiltersOpen(false) }}><MoveRight size={14}/></button>
+                </div>
+              </div>}
+            </div>
+
+            <div className="task-filter-popover-actions">
+              <button type="button" className="task-filter-reset" onClick={resetFilters} disabled={!activeFilterCount && !jumpDate}><RotateCcw size={13}/> Azzera</button>
+              <button type="button" className="primary-button compact" onClick={()=>setFiltersOpen(false)}>Fatto</button>
+            </div>
+          </div>}
+        </div>
       </div>
 
       {statusFilter === 'open' ? <div className="todo-planner-grid">
