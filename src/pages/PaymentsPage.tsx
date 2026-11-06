@@ -1,21 +1,15 @@
 import { useMemo, useState } from 'react'
 import {
-  AlertTriangle,
-  CalendarDays,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
   CircleDollarSign,
-  Clock3,
-  LayoutDashboard,
   Landmark,
-  ListChecks,
   PauseCircle,
   Pencil,
   PlayCircle,
   Plus,
   Repeat2,
-  Wallet,
   WalletCards,
 } from 'lucide-react'
 import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from '../lib/date'
@@ -23,27 +17,14 @@ import type { StudioData } from '../types/studio'
 import type { useStudio } from '../hooks/useStudio'
 import { RecordEditorModal } from '../components/RecordEditorModal'
 import { memberToneClass } from '../lib/memberTone'
+import { SalaryTrend } from '../components/SalaryTrend'
 
 type Actions = ReturnType<typeof useStudio>['actions']
-type Tab = 'overview' | 'income' | 'compensations' | 'debts' | 'operations'
+type Tab = 'income' | 'compensations' | 'recurrences' | 'movements' | 'debts'
 type EditorKind = 'payment' | 'recurrence' | 'ledger' | 'deadline' | 'compensation' | 'debt'
-
-const MONTHS = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
 
 function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`
-}
-
-function monthLabel(key: string) {
-  const [year,month] = key.split('-').map(Number)
-  return `${MONTHS[month-1]} ${year}`
-}
-
-function monthKeyAtOffset(offset: number) {
-  const date = new Date()
-  date.setDate(1)
-  date.setMonth(date.getMonth()+offset)
-  return monthKey(date)
 }
 
 function statusIsPaid(status: string) {
@@ -63,7 +44,7 @@ export function PaymentsPage({
   data: StudioData
   actions: Actions
 }) {
-  const [tab,setTab] = useState<Tab>('overview')
+  const [tab,setTab] = useState<Tab>('income')
   const [editor,setEditor] = useState<{kind:EditorKind;record:any} | null>(null)
   const [expandedCompensationMember,setExpandedCompensationMember] = useState<string | null>(null)
 
@@ -75,7 +56,6 @@ export function PaymentsPage({
   const ledgerEntries = data.ledgerEntries ?? []
   const compensations = data.compensations ?? []
   const debts = data.debts ?? []
-  const deadlines = data.deadlines ?? []
   const client = (id: string | null) => clients.find(c => c.id === id)?.name ?? '4Bit Studio'
   const compensationClients = (compensation: StudioData['compensations'][number]) => {
     const ids=compensation.clientIds?.length
@@ -97,25 +77,9 @@ export function PaymentsPage({
   const paidThisMonthRows = paidPayments.filter(p => p.paidAt?.startsWith(currentMonth))
   const paidThisMonth = paidThisMonthRows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
   const paidThisMonthNet = paidThisMonthRows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)
-  const incomingThisMonthRows = pendingPayments.filter(p => p.dueDate.startsWith(currentMonth))
-  const incomingThisMonth = incomingThisMonthRows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0)
-  const incomingThisMonthNet = incomingThisMonthRows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)
-
-  const openCompensations = compensations.filter(c => !statusIsPaid(c.status))
-  const openCompensationsTotal = openCompensations.reduce((sum,c) => sum+c.amount,0)
-  const paidCompensationsTotal = compensations.filter(c => statusIsPaid(c.status)).reduce((sum,c) => sum+c.amount,0)
-  const compensationThisMonth = compensations.filter(c => c.entryDate?.startsWith(currentMonth)).reduce((sum,c) => sum+c.amount,0)
-
   const openDebts = debts.filter(d => d.status === 'open')
   const openDebtsTotal = openDebts.reduce((sum,d) => sum+d.amount,0)
 
-  const incomingMonths = useMemo(() => Array.from({length:6},(_,offset) => {
-    const key = monthKeyAtOffset(offset)
-    const rows = pendingPayments.filter(p => p.dueDate.startsWith(key)).sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-    return {key,label:monthLabel(key),rows,total:rows.reduce((sum,p) => sum+invoiceGross(p.amount,p.invoiced),0),net:rows.reduce((sum,p) => sum+invoiceNet(p.amount,p.invoiced),0)}
-  }), [pendingPayments])
-
-  const maxIncomingMonth = Math.max(1,...incomingMonths.map(m => m.total))
   const visiblePayments = [...payments]
     .sort((a,b) => {
       if(a.status !== b.status) return a.status === 'pending' ? -1 : 1
@@ -131,7 +95,7 @@ export function PaymentsPage({
       return a.status === 'paid' ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate)
     })
   const movements = [...ledgerEntries].sort((a,b) => (b.entryDate ?? '').localeCompare(a.entryDate ?? ''))
-  const sortedCompensations = [...compensations].sort((a,b) => {
+  const sortedCompensations = compensations.filter(c => statusIsPaid(c.status)).sort((a,b) => {
     const aDate = a.entryDate ?? a.paidAt?.slice(0,10) ?? ''
     const bDate = b.entryDate ?? b.paidAt?.slice(0,10) ?? ''
     return bDate.localeCompare(aDate)
@@ -151,62 +115,15 @@ export function PaymentsPage({
     }
     return [...groups.values()].sort((a,b)=>a.memberName.localeCompare(b.memberName,'it'))
   },[sortedCompensations])
-  const sortedDeadlines = [...deadlines].sort((a,b) => a.dueDate.localeCompare(b.dueDate))
 
   return <div className="economy-page">
-    <section className="section-block economy-hero economy-hero-compact">
-      <div className="economy-kpi-grid economy-kpi-grid-top">
-        <EconomyKpi icon={CalendarDays} label="In arrivo questo mese · lordo" value={money(incomingThisMonth)} note={`Netto previsto ${money(incomingThisMonthNet)} · ${incomingThisMonthRows.length} incassi`} tone="brand"/>
-        <EconomyKpi icon={Wallet} label="Stipendi / compensi da pagare" value={money(openCompensationsTotal)} note={openCompensations.length + ' voci ancora aperte'} tone="warning"/>
-        <EconomyKpi icon={Landmark} label="Debiti da restituire" value={money(openDebtsTotal)} note={openDebts.length ? openDebts.length + ' debiti aperti' : 'nessun debito aperto'} tone="neutral"/>
-      </div>
-    </section>
-
     <div className="economy-tabs" role="tablist" aria-label="Sezioni economia">
-      <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}><LayoutDashboard size={14}/><span>Panoramica</span></button>
       <button className={tab === 'income' ? 'active' : ''} onClick={() => setTab('income')}><CircleDollarSign size={14}/><span>Incassi</span></button>
       <button className={tab === 'compensations' ? 'active' : ''} onClick={() => setTab('compensations')}><WalletCards size={14}/><span>Stipendi</span></button>
+      <button className={tab === 'recurrences' ? 'active' : ''} onClick={() => setTab('recurrences')}><Repeat2 size={14}/><span>Ricorrenze</span></button>
+      <button className={tab === 'movements' ? 'active' : ''} onClick={() => setTab('movements')}><CircleDollarSign size={14}/><span>Movimenti</span></button>
       <button className={tab === 'debts' ? 'active' : ''} onClick={() => setTab('debts')}><Landmark size={14}/><span>Debiti</span></button>
-      <button className={tab === 'operations' ? 'active' : ''} onClick={() => setTab('operations')}><ListChecks size={14}/><span>Altre voci</span></button>
     </div>
-
-    {tab === 'overview' && <div className="economy-overview-grid">
-      <section className="section-block economy-panel economy-incoming-panel">
-        <div className="section-heading economy-section-heading">
-          <div className="economy-heading-copy"><span className="economy-heading-icon"><CalendarClock size={17}/></span><div><p className="eyebrow">Previsione semplice</p><h2>Incassi mensili in arrivo</h2></div></div>
-          <strong className="stats-total">{money(pendingTotal)}</strong>
-        </div>
-        <div className="economy-month-list">
-          {incomingMonths.map(month => <button key={month.key} type="button" className="economy-month-row" onClick={() => setTab('income')}>
-            <div className="economy-month-copy">
-              <strong>{month.label}</strong>
-              <span>{month.rows.length ? `${month.rows.length}${month.rows.length === 1 ? ' incasso' : ' incassi'} · netto ${money(month.net)}` : 'Nessun incasso previsto'}</span>
-            </div>
-            <div className="economy-month-track"><i style={{width:`${month.total ? Math.max(5,month.total/maxIncomingMonth*100) : 0}%`}}/></div>
-            <b>{money(month.total)}</b>
-          </button>)}
-        </div>
-      </section>
-
-      <section className="section-block economy-panel economy-attention-panel">
-        <div className="section-heading economy-section-heading"><div className="economy-heading-copy"><span className="economy-heading-icon warning"><AlertTriangle size={17}/></span><div><p className="eyebrow">Da controllare</p><h2>Tre cose importanti</h2></div></div></div>
-        <button className={`economy-attention-row ${overduePayments.length ? 'danger' : ''}`} onClick={() => setTab('income')}>
-          <span className="economy-attention-icon"><AlertTriangle size={18}/></span>
-          <div><strong>Incassi scaduti</strong><small>{overduePayments.length} voci</small></div>
-          <b>{money(overdueTotal)}</b>
-        </button>
-        <button className="economy-attention-row" onClick={() => setTab('compensations')}>
-          <span className="economy-attention-icon"><WalletCards size={18}/></span>
-          <div><strong>Compensi da pagare</strong><small>{openCompensations.length} voci</small></div>
-          <b>{money(openCompensationsTotal)}</b>
-        </button>
-        <button className="economy-attention-row" onClick={() => setTab('debts')}>
-          <span className="economy-attention-icon"><Landmark size={18}/></span>
-          <div><strong>Debiti aperti</strong><small>{openDebts.length} voci</small></div>
-          <b>{money(openDebtsTotal)}</b>
-        </button>
-      </section>
-    </div>}
 
     {tab === 'income' && <section className="section-block economy-panel">
       <div className="section-heading responsive-heading">
@@ -245,59 +162,53 @@ export function PaymentsPage({
 
     {tab === 'compensations' && <section className="section-block economy-panel">
       <div className="section-heading responsive-heading">
-        <div className="economy-heading-copy"><span className="economy-heading-icon"><WalletCards size={17}/></span><div><p className="eyebrow">Persone</p><h2>Stipendi & compensi</h2></div></div>
-        <button className="primary-button" onClick={() => setEditor({kind:'compensation',record:null})}><Plus size={15}/> Nuovo compenso</button>
+        <div className="economy-heading-copy"><span className="economy-heading-icon"><WalletCards size={17}/></span><div><h2>Stipendi</h2></div></div>
+        <button className="primary-button" onClick={() => setEditor({kind:'compensation',record:null})}><Plus size={15}/> Nuovo stipendio</button>
       </div>
-      <div className="economy-mini-summary">
-        <div><span>Da pagare</span><strong>{money(openCompensationsTotal)}</strong></div>
-        <div><span>Voci del mese</span><strong>{money(compensationThisMonth)}</strong></div>
-        <div><span>Pagato storico</span><strong>{money(paidCompensationsTotal)}</strong></div>
+
+      <SalaryTrend compensations={sortedCompensations} members={data.members ?? []}/>
+
+      <div className="salary-history-heading">
+        <div><h3>Pagato storico</h3><span>Riepilogo delle somme effettivamente pagate, per persona</span></div>
+        <strong>{money(sortedCompensations.reduce((sum,item)=>sum+item.amount,0))}</strong>
       </div>
-      <div className="compensation-team-groups">
+      <div className="compensation-team-groups salary-history-groups">
         {compensationGroups.map(group => {
           const expanded=expandedCompensationMember===group.key
           const total=group.rows.reduce((sum,row)=>sum+row.amount,0)
-          const openRows=group.rows.filter(row=>!statusIsPaid(row.status))
-          const openTotal=openRows.reduce((sum,row)=>sum+row.amount,0)
           return <section className={`compensation-team-group ${expanded ? 'is-open' : ''}`} key={group.key}>
             <button
               type="button"
-              className="compensation-team-group-toggle"
+              className="compensation-team-group-toggle salary-history-toggle"
               onClick={()=>setExpandedCompensationMember(current=>current===group.key ? null : group.key)}
               aria-expanded={expanded}
             >
               <span className={`compensation-team-group-avatar ${memberToneClass(group.memberName)}`}>{group.memberName.slice(0,2).toUpperCase()}</span>
               <span className="compensation-team-group-name">
                 <strong>{group.memberName}</strong>
-                <small>{group.rows.length} {group.rows.length === 1 ? 'transazione' : 'transazioni'}</small>
+                <small>{group.rows.length} {group.rows.length === 1 ? 'voce pagata' : 'voci pagate'}</small>
               </span>
-              <span className="compensation-team-group-stat"><small>Totale</small><strong>{money(total)}</strong></span>
-              <span className={`compensation-team-group-stat ${openTotal ? 'pending' : 'settled'}`}><small>Da pagare</small><strong>{money(openTotal)}</strong></span>
+              <span className="compensation-team-group-stat"><small>Pagato storico</small><strong>{money(total)}</strong></span>
               <span className="compensation-team-group-chevron"><ChevronDown size={17}/></span>
             </button>
-
             {expanded && <div className="compensation-team-transactions">
-              {group.rows.map(compensation => {
-                const paid=statusIsPaid(compensation.status)
-                return <article className={`economy-record-row compensation-transaction ${paid ? 'is-done' : ''}`} key={compensation.id}>
-                  <span className="economy-record-icon"><WalletCards size={17}/></span>
-                  <div className="economy-record-main">
-                    <strong>{compensation.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Compenso'}{compensation.description ? ' · ' + compensation.description : ''}</strong>
-                    <span>{compensationClients(compensation)}</span>
-                    <small>{compensation.entryDate ? formatShortDate(compensation.entryDate) : 'Data non indicata'}</small>
-                  </div>
-                  <b>{money(compensation.amount)}</b>
-                  <span className={`economy-status ${paid ? 'done' : 'open'}`}>{compensation.status || (paid ? 'Pagato' : 'Da pagare')}</span>
-                  <div className="economy-record-actions">
-                    {!paid && <button className="secondary-button compact" onClick={() => void actions.updateCompensation(compensation.id,{status:'Pagato'})}>Segna pagato</button>}
-                    <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'compensation',record:compensation})}><Pencil size={13}/></button>
-                  </div>
-                </article>
-              })}
+              {group.rows.map(compensation => <article className="economy-record-row compensation-transaction is-done" key={compensation.id}>
+                <span className="economy-record-icon"><WalletCards size={17}/></span>
+                <div className="economy-record-main">
+                  <strong>{compensation.compensationType === 'salary_recurring' ? 'Stipendio ricorrente' : 'Stipendio'}{compensation.description ? ' · ' + compensation.description : ''}</strong>
+                  <span>{compensationClients(compensation)}</span>
+                  <small>{compensation.paidAt ? formatShortDate(compensation.paidAt.slice(0,10)) : compensation.entryDate ? formatShortDate(compensation.entryDate) : 'Data non indicata'}</small>
+                </div>
+                <b>{money(compensation.amount)}</b>
+                <span className="economy-status done">Pagato</span>
+                <div className="economy-record-actions">
+                  <button className="icon-button tiny" title="Modifica" onClick={() => setEditor({kind:'compensation',record:compensation})}><Pencil size={13}/></button>
+                </div>
+              </article>)}
             </div>}
           </section>
         })}
-        {!compensationGroups.length && <div className="empty-inline">Nessun compenso registrato.</div>}
+        {!compensationGroups.length && <div className="empty-inline">Nessuno stipendio pagato ancora registrato.</div>}
       </div>
     </section>}
 
@@ -329,8 +240,7 @@ export function PaymentsPage({
       </div>
     </section>}
 
-    {tab === 'operations' && <div className="economy-operations-stack">
-      <section className="section-block economy-panel">
+    {tab === 'recurrences' && <section className="section-block economy-panel">
         <div className="section-heading responsive-heading"><div><p className="eyebrow">Entrate ricorrenti</p><h2>Ricorrenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'recurrence',record:null})}><Repeat2 size={14}/> Aggiungi</button></div>
         <div className="recurrence-grid">
           {recurrences.map(r => <article className={`recurrence-card ${r.active ? '' : 'inactive'}`} key={r.id}>
@@ -341,9 +251,9 @@ export function PaymentsPage({
             <div className="card-actions"><button className="secondary-button" onClick={() => void actions.updateRecurrence(r.id,{active:!r.active})}>{r.active ? <><PauseCircle size={14}/> Pausa</> : <><PlayCircle size={14}/> Riattiva</>}</button><button className="icon-button tiny" onClick={() => setEditor({kind:'recurrence',record:r})}><Pencil size={13}/></button></div>
           </article>)}
         </div>
-      </section>
+      </section>}
 
-      <section className="section-block economy-panel">
+    {tab === 'movements' && <section className="section-block economy-panel">
         <div className="section-heading responsive-heading"><div><p className="eyebrow">Cassa</p><h2>Movimenti</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'ledger',record:null})}><Plus size={14}/> Movimento</button></div>
         <div className="ledger-summary">
           <div><small>Entrate incassate</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
@@ -380,40 +290,8 @@ export function PaymentsPage({
             </button>
           })}
         </div>
-      </section>
-
-      <section className="section-block economy-panel">
-        <div className="section-heading responsive-heading"><div><p className="eyebrow">Costi e rinnovi</p><h2>Scadenze</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'deadline',record:null})}><Clock3 size={14}/> Aggiungi</button></div>
-        <div className="deadline-grid">
-          {sortedDeadlines.map(d => <button type="button" className={`deadline-card deadline-card-edit ${d.dueDate < today ? 'overdue' : ''}`} key={d.id} onClick={() => setEditor({kind:'deadline',record:d})}>
-            <div><p>{client(d.clientId)}</p><h3>{d.service}</h3><span>{d.provider}</span></div>
-            <div><small>Scadenza</small><strong>{formatShortDate(d.dueDate)}</strong><span>{countdownLabel(d.dueDate)}</span></div>
-            <div><small>Costo</small><strong>{d.cost == null ? '—' : money(d.cost)}</strong><span>{d.status}</span></div>
-            {d.notes && <p className="deadline-note">{d.notes}</p>}
-          </button>)}
-        </div>
-      </section>
-    </div>}
+      </section>}
 
     {editor && <RecordEditorModal kind={editor.kind} record={editor.record} data={data} actions={actions} onClose={() => setEditor(null)}/>}
   </div>
-}
-
-function EconomyKpi({
-  icon:Icon,
-  label,
-  value,
-  note,
-  tone,
-}: {
-  icon: typeof CircleDollarSign
-  label: string
-  value: string
-  note: string
-  tone: 'positive' | 'brand' | 'warning' | 'neutral'
-}) {
-  return <article className={`economy-kpi economy-kpi-${tone}`}>
-    <span className="economy-kpi-icon"><Icon size={20} strokeWidth={1.9}/></span>
-    <div><span>{label}</span><strong>{value}</strong><small>{note}</small></div>
-  </article>
 }
