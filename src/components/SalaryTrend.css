@@ -1,0 +1,37 @@
+/* Economia > Stipendi: andamento annuale, tabella mensile e storico pagato */
+.salary-trend{padding:24px 0 16px;border-top:1px solid rgba(36,31,28,.08);margin-top:18px}
+.salary-trend-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
+.salary-trend-heading h3{margin:0 0 5px;font-size:1.18rem;font-weight:750;letter-spacing:-.035em}
+.salary-trend-heading p{margin:0;color:#85817f;font-size:.87rem}
+.salary-year-picker{display:flex;align-items:center;gap:9px;font-size:.78rem;font-weight:650;color:#787371}
+.salary-year-picker select{border:1px solid #e6e3e0;border-radius:12px;padding:9px 12px;color:#191818;font:inherit;font-weight:750;background:#fff}
+.salary-year-table-wrap{width:100%;overflow-x:auto;border:1px solid #eeebea;border-radius:18px;background:rgba(255,255,255,.6)}
+.salary-year-table{width:100%;min-width:780px;border-collapse:collapse;table-layout:fixed;text-align:center}
+.salary-year-table th{padding:17px 5px 7px;font-size:.75rem;font-weight:650;color:#83807e}
+.salary-year-table td{padding:4px 4px 17px;font-size:.78rem;font-weight:740;white-space:nowrap;color:#252222}
+.salary-year-table th:not(:last-child),.salary-year-table td:not(:last-child){border-right:1px solid #f0eeed}
+.salary-chart-scroll{overflow-x:auto;margin-top:20px;overflow-y:hidden}
+.salary-chart-svg{width:100%;min-width:690px;height:auto;display:block}
+.salary-chart-legend{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:23px;row-gap:10px;margin:4px auto 14px}
+.salary-chart-legend span{display:inline-flex;align-items:center;gap:8px;font-size:.84rem;font-weight:650;color:#4d4947}
+.salary-chart-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.salary-trend-empty{padding:35px 14px;text-align:center;color:#85817f;font-size:.88rem}
+.salary-trend-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.56);border:1px solid #eeebea;border-radius:14px}
+.salary-trend-footer span{font-size:.86rem;color:#77716e}
+.salary-trend-footer strong{font-size:1.07rem}
+.salary-history-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:18px 0}
+.salary-history-heading h3{font-size:1.23rem;margin:0 0 4px;font-weight:750;letter-spacing:-.025em}
+.salary-history-heading span{font-size:.84rem;color:#85817f}
+.salary-history-heading>strong{font-size:1.22rem;white-space:nowrap}
+.salary-history-toggle{grid-template-columns:44px minmax(0,1fr) minmax(105px,auto) 20px}
+.salary-history-groups{margin-bottom:10px}
+@media(max-width:700px){
+  .salary-trend{padding-top:18px}
+  .salary-trend-heading{flex-direction:column;gap:12px}
+  .salary-year-picker{align-self:flex-start}
+  .salary-history-heading{align-items:flex-start}
+  .salary-history-heading>strong{font-size:1rem}
+  .salary-history-toggle{grid-template-columns:38px minmax(0,1fr) minmax(75px,auto) 16px}
+  .salary-year-table{min-width:730px}
+  .salary-chart-svg{min-width:650px}
+}
