@@ -255,10 +255,8 @@ export function PaymentsPage({
 
     {tab === 'movements' && <section className="section-block economy-panel">
         <div className="section-heading responsive-heading"><div><p className="eyebrow">Cassa</p><h2>Movimenti</h2></div><button className="secondary-button" onClick={() => setEditor({kind:'ledger',record:null})}><Plus size={14}/> Movimento</button></div>
-        <div className="ledger-summary">
+        <div className="ledger-summary ledger-summary-single">
           <div><small>Entrate incassate</small><strong>{money(ledgerEntries.filter(x => x.direction === 'income' && x.status === 'Incassato').reduce((s,x) => s+x.amount,0))}</strong></div>
-          <div><small>Da incassare</small><strong>{money(pendingTotal)}</strong></div>
-          <div><small>Uscite</small><strong>{money(ledgerEntries.filter(x => x.direction === 'expense').reduce((s,x) => s+x.amount,0))}</strong></div>
         </div>
         <div className="ledger-list">
           {movements.map(m => {
