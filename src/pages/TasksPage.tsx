@@ -164,6 +164,15 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
   )
 
   const overdue = useMemo(() => sortTasks(filtered.filter(task => task.dueDate && task.dueDate < todayKey)), [filtered, todayKey])
+  const overdueAssignees = useMemo(() => {
+    const namesById = new Map(data.members.map(member => [member.id, member.name]))
+    const totalsByName = new Map<string, number>()
+    for (const task of overdue) {
+      const name = (task.assigneeId && namesById.get(task.assigneeId)) || 'Da assegnare'
+      totalsByName.set(name, (totalsByName.get(name) ?? 0) + 1)
+    }
+    return [...totalsByName].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0], 'it'))
+  }, [overdue, data.members])
   const backlog = useMemo(() => sortTasks(filtered.filter(task => !task.dueDate)), [filtered])
   const byDate = useMemo(() => {
     const map = new Map<string, Task[]>()
@@ -426,7 +435,12 @@ export function TasksPage({ data, actions, createSignal, onCelebrate }: { data: 
               onClick={()=>setOverdueOpen(value=>!value)}
               aria-expanded={overdueOpen}
             >
-              <div><p className="eyebrow">Da recuperare</p><h3>Scadute</h3></div>
+              <div className="todo-overdue-title-row">
+                 <h3>Scadute</h3>
+                 <div className="todo-overdue-owner-pills" aria-label="Task scadute per assegnatario">
+                   {overdueAssignees.map(([name,count]) => <span key={name} className="todo-overdue-owner-pill">{name} <b>{count}</b></span>)}
+                 </div>
+               </div>
               <span className="todo-overdue-count">{overdue.length}</span>
               <ChevronDown size={17} className="todo-overdue-chevron"/>
             </button>
