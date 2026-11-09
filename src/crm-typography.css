@@ -1,0 +1,155 @@
+/*
+ * Typography and page title alignment — same visual language as the
+ * "Andamento annuale degli stipendi" heading.
+ * Keep the existing typographic scale for labels, numbers and controls.
+ */
+:root{
+  --studio-typeface:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif;
+  --studio-mega-title-size:clamp(2.25rem,3.7vw,3.65rem);
+}
+html,body,button,input,textarea,select{
+  font-family:var(--studio-typeface);
+}
+.app-shell h1,.app-shell h2,.app-shell h3,.app-shell h4{
+  font-family:var(--studio-typeface);
+  letter-spacing:-.035em;
+  text-rendering:optimizeLegibility;
+}
+.app-shell > .page-header.page-header-clean h1,
+.page-editorial .editorial-planner-head h2{
+  font-family:var(--studio-typeface)!important;
+  font-size:var(--studio-mega-title-size)!important;
+  font-weight:750!important;
+  line-height:.97!important;
+  letter-spacing:-.055em!important;
+  margin:0!important;
+}
+.app-shell > .page-header.page-header-clean{
+  align-items:flex-end;
+  padding-left:4px;
+  padding-right:4px;
+  margin-bottom:34px;
+}
+.page-editorial .editorial-planner-head{
+  align-items:flex-end!important;
+  padding:0 4px!important;
+  margin:0 0 24px!important;
+}
+/* Match the same title baseline and the same 34px separation below it. */
+@media(min-width:901px){
+  .app-shell > .page-header.page-header-clean{
+    padding-top:82px;
+  }
+  .page-editorial .editorial-task-page{
+    padding-top:82px;
+  }
+}
+@media(min-width:761px) and (max-width:900px){
+  .app-shell > .page-header.page-header-clean{
+    padding-top:20px;
+  }
+  .page-editorial .editorial-task-page{
+    padding-top:20px;
+  }
+}
+
+/* Make the existing movements summary a single compact tile. */
+.ledger-summary.ledger-summary-single{
+  display:block!important;
+}
+.ledger-summary.ledger-summary-single > div{
+  max-width:380px;
+  grid-column:auto!important;
+}
+
+/* Make the names on the overdue accordion visible before opening it. */
+.todo-overdue-title-row{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  flex-wrap:wrap;
+  gap:8px 12px;
+}
+.todo-overdue-title-row h3{
+  margin:0!important;
+  font-weight:750;
+  letter-spacing:-.035em;
+}
+.todo-overdue-owner-pills{
+  display:flex;
+  min-width:0;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.todo-overdue-owner-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:26px;
+  padding:4px 9px;
+  border:1px solid rgba(181,45,45,.11);
+  border-radius:999px;
+  background:rgba(181,45,45,.045);
+  color:#8f3c3e;
+  font-size:11px;
+  font-weight:650;
+  line-height:1.15;
+  white-space:nowrap;
+}
+.todo-overdue-owner-pill b{
+  font-weight:800;
+}
+
+@media(max-width:760px){
+  .app-shell > .page-header.page-header-clean{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:end;
+    padding:18px 4px 0!important;
+    margin-bottom:18px!important;
+  }
+  .app-shell > .page-header.page-header-clean h1,
+  .page-editorial .editorial-planner-head h2{
+    font-size:clamp(27px,6vw,34px)!important;
+    line-height:1.03!important;
+    overflow-wrap:break-word;
+  }
+  /* On mobile the actual page title replaces the duplicate "Task" heading. */
+  .page-tasks > .page-header.page-header-clean{
+    grid-template-columns:minmax(0,1fr) auto!important;
+    justify-items:stretch!important;
+    align-items:end!important;
+    margin-bottom:18px!important;
+  }
+  .page-tasks > .page-header.page-header-clean > div:first-child{
+    display:block!important;
+    min-width:0;
+  }
+  .page-tasks .todo-planner-head{
+    display:none!important;
+  }
+  .page-editorial .editorial-task-page{
+    padding-top:18px!important;
+  }
+  .page-editorial .editorial-planner-head{
+    padding:0 4px!important;
+    margin-bottom:8px!important;
+    align-items:end!important;
+  }
+  .page-editorial .editorial-planner-head h2{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  .ledger-summary.ledger-summary-single > div{
+    max-width:none;
+  }
+  .todo-overdue-title-row{
+    gap:7px;
+  }
+  .todo-overdue-owner-pill{
+    font-size:10px;
+    min-height:24px;
+    padding:4px 7px;
+  }
+}
