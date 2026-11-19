@@ -57,7 +57,7 @@ export function editorialWorkflow(
       pushUnique(steps,{ label:'Photo editing / Grafiche social', ownerName:'Edoardo', done:false })
     }
 
-    pushUnique(steps,{ label:'Description / Copy social', ownerName:'Francesco', done:false })
+    pushUnique(steps,{ label:'Description / Copy social', ownerName:'Edoardo', done:false })
     pushUnique(steps,{ label:'Pubblicazione social', ownerName:'Edoardo', done:false })
   }
 
