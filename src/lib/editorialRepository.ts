@@ -184,6 +184,9 @@ export async function createEditorialItem(input: EditorialItemInput, members: Te
   const db=client()
   const {user,workspaceId}=await currentContext()
   const platforms: EditorialPlatform[] = input.platforms.length ? input.platforms : ['facebook']
+  if (input.account === 'casaro' && platforms.includes('youtube')) {
+    throw new Error('Casaro non ha un canale YouTube.')
+  }
   if (input.account === 'autoscuola_susa' && platforms.includes('whatsapp')) {
     throw new Error('WhatsApp è disponibile solo per l’account Casaro.')
   }
