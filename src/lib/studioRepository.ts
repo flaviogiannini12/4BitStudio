@@ -138,6 +138,26 @@ export const cloudRepo = {
   deleteClient: (id: string) => remove('clients', id),
   async createMember(user: User, input: TeamMemberInput) { const workspaceId = await currentWorkspaceId(); return fromMember(await insert('team_members', { workspace_id: workspaceId, owner_id: user.id, name: input.name, role: input.role ?? 'Team', active: true })) },
   async updateMember(id: string, input: Partial<TeamMember>) { return fromMember(await update('team_members', id, { ...(input.name !== undefined ? { name: input.name } : {}), ...(input.role !== undefined ? { role: input.role } : {}), ...(input.active !== undefined ? { active: input.active } : {}) })) },
+  async deleteMember(id: string) {
+    // Preserve task owners, payroll links and editorial checklists: never silently
+    // reset their foreign keys when deleting a team member.
+    const db = requireCloud()
+    const linkedRecords = [
+      { table:'tasks', column:'assignee_id' },
+      { table:'compensations', column:'member_id' },
+      { table:'editorial_items', column:'assignee_id' },
+      { table:'editorial_steps', column:'owner_member_id' },
+    ] as const
+    const checks = await Promise.all(linkedRecords.map(async ({table,column}) => {
+      const {data,error} = await db.from(table).select('id').eq(column,id).limit(1)
+      if(error) throw error
+      return {table,assigned:Boolean(data?.length)}
+    }))
+    if(checks.some(check=>check.assigned)) {
+      throw new Error('Questa persona ha ancora task, compensi o attività editoriali assegnati. Riassegna prima queste attività per poterla eliminare senza perdere i collegamenti.')
+    }
+    await remove('team_members',id)
+  },
   async createProject(user: User, input: ProjectInput) { const workspaceId = await currentWorkspaceId(); return fromProject(await insert('projects', { workspace_id: workspaceId, owner_id: user.id, client_id: input.clientId, name: input.name, status: input.status ?? 'planning', deadline: input.deadline || null, description: input.description ?? '' })) },
   async updateProject(id: string, input: Partial<Project>) { return fromProject(await update('projects', id, { ...(input.clientId !== undefined ? { client_id: input.clientId } : {}), ...(input.name !== undefined ? { name: input.name } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.deadline !== undefined ? { deadline: input.deadline || null } : {}), ...(input.description !== undefined ? { description: input.description } : {}) })) },
   deleteProject: (id: string) => remove('projects', id),
