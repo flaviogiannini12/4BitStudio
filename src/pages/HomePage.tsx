@@ -1,59 +1,19 @@
-import { ArrowRight, CheckCircle2, Clock3, CalendarDays } from 'lucide-react'
-import { countdownLabel, countdownTone, formatShortDate, money, todayISO } from '../lib/date'
+import { ArrowRight, CheckCircle2, Clock3 } from 'lucide-react'
+import { countdownLabel, countdownTone, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel } from '../lib/labels'
-import { memberToneClass } from '../lib/memberTone'
-import { editorialAccountLabel, statusLabelForItem } from '../lib/editorialConfig'
 import type { EditorialData } from '../types/editorial'
 import type { StudioData } from '../types/studio'
 import { ClientLogo } from '../components/ClientLogo'
 
-export function HomePage({ data, editorialData, onClient, onEditorial, onPayments, onTasks: _onTasks, onPaid, onReorderClients }: { data: StudioData; editorialData: EditorialData; onClient: (id: string) => void; onEditorial: () => void; onPayments: () => void; onTasks: () => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
+export function HomePage({ data, editorialData: _editorialData, onClient, onEditorial: _onEditorial, onPayments, onTasks: _onTasks, onPaid, onReorderClients }: { data: StudioData; editorialData: EditorialData; onClient: (id: string) => void; onEditorial: () => void; onPayments: () => void; onTasks: () => void; onPaid: (paymentId: string) => void; onReorderClients: (ids: string[]) => Promise<void> }) {
   const activeClients = data.clients.filter(c => c.status !== 'archived' && c.status !== 'lead').sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const openTasks = data.tasks.filter(t => t.status !== 'done')
   const datedOpenTasks = openTasks.filter(t => Boolean(t.dueDate))
   const pendingPayments = data.payments.filter(p => p.status === 'pending').sort((a,b) => a.dueDate.localeCompare(b.dueDate))
-  const activeMembers = data.members.filter(m => m.active)
-  const memberTaskCounts = activeMembers.map(member => ({ member, count: datedOpenTasks.filter(t => t.assigneeId === member.id).length }))
-  const today = todayISO()
-  const upcomingEditorial = editorialData.items
-    .filter(item => item.publishDate && item.publishDate >= today && item.status !== 'published' && item.status !== 'archived')
-    .sort((a,b) => (a.publishDate ?? '').localeCompare(b.publishDate ?? '') || (a.publishTime ?? '').localeCompare(b.publishTime ?? '') || a.sortOrder-b.sortOrder)
-    .slice(0,5)
 
   function client(id: string | null) { return data.clients.find(c => c.id === id) }
 
   return <div className="home-stack">
-    <div className="dashboard-two-col home-priority-row">
-      <section className="section-block compact-block home-editorial-preview">
-        <div className="section-heading"><h2>Prossimi contenuti</h2><button className="text-link" onClick={onEditorial}>Piano Editoriale <ArrowRight size={14}/></button></div>
-        <div className="home-editorial-list">
-          {upcomingEditorial.map(item => <button key={item.id} className="home-editorial-row" onClick={onEditorial}>
-            <span className={`home-editorial-date account-${item.account}`}>
-              <strong>{item.publishDate ? new Date(item.publishDate+'T12:00:00').getDate() : '—'}</strong>
-              <small>{item.publishDate ? new Intl.DateTimeFormat('it-IT',{month:'short'}).format(new Date(item.publishDate+'T12:00:00')).replace('.','') : ''}</small>
-            </span>
-            <span className="home-editorial-main">
-              <strong>{item.title}</strong>
-              <small>{editorialAccountLabel[item.account]}</small>
-            </span>
-            <span className={`home-editorial-status ${item.status}`}>{statusLabelForItem(item.status,item.platforms)}</span>
-          </button>)}
-          {!upcomingEditorial.length && <div className="home-editorial-empty"><CalendarDays size={16}/><span>Nessun contenuto in programma.</span></div>}
-        </div>
-      </section>
-
-      <section className="section-block compact-block">
-        <div className="section-heading"><h2>Carico del team</h2></div>
-        <div className="team-load-list">
-          {memberTaskCounts.map(({ member: m, count }) => <div className={memberToneClass(m.name)} key={m.id}>
-            <div className="avatar-mini">{m.name.slice(0,1)}</div>
-            <div><strong>{m.name}</strong><small>{count} {count === 1 ? 'task aperta' : 'task aperte'}</small></div>
-            <div className="load-bar"><span style={{ width: `${Math.min(100, count * 16)}%` }}/></div>
-          </div>)}
-        </div>
-      </section>
-    </div>
-
     <section className="section-block client-control">
       <div className="section-heading"><h2>Clienti attivi</h2><span className="counter-pill">{activeClients.length}</span></div>
       <div className="client-status-grid">
