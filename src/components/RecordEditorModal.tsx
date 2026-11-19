@@ -241,8 +241,13 @@ export function RecordEditorModal({
   }
 
   async function remove() {
-    if (!record || !window.confirm('Eliminare definitivamente questo dato?')) return
+    if (!record) return
+    const message=kind === 'member'
+      ? `Eliminare definitivamente ${(record as TeamMember).name} dal team? Questa operazione non è reversibile.`
+      : 'Eliminare definitivamente questo dato?'
+    if (!window.confirm(message)) return
     setSaving(true)
+    setError(null)
     try {
       if (kind === 'client') await actions.deleteClient(record.id)
       if (kind === 'payment') await actions.deletePayment(record.id)
@@ -252,8 +257,10 @@ export function RecordEditorModal({
       if (kind === 'compensation') await actions.deleteCompensation(record.id)
       if (kind === 'debt') await actions.deleteDebt(record.id)
       if (kind === 'maintenance') await actions.deleteMaintenance(record.id)
-      if (kind === 'member') await actions.updateMember(record.id,{active:false})
+      if (kind === 'member') await actions.deleteMember(record.id)
       onClose()
+    } catch(err) {
+      setError(err instanceof Error ? err.message : 'Eliminazione non riuscita')
     } finally { setSaving(false) }
   }
 
