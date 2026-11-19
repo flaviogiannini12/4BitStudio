@@ -328,6 +328,13 @@ export function useStudio(user: User | null, ready: boolean) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.updateMember(memberId, input); await reload(true) })
       saveLocal(current => ({ ...current, members: current.members.map(x => x.id === memberId ? { ...x, ...input } : x) }))
     },
+    async deleteMember(memberId: string) {
+      if (cloudEnabled && user) return protect(async () => { await cloudRepo.deleteMember(memberId); await reload(true) })
+      if (data.tasks.some(t => t.assigneeId === memberId) || data.compensations.some(c => c.memberId === memberId)) {
+        throw new Error('Questa persona ha ancora task o compensi assegnati. Riassegna prima questi dati.')
+      }
+      saveLocal(current => ({ ...current, members: current.members.filter(m => m.id !== memberId) }))
+    },
     async createProject(input: ProjectInput) {
       if (cloudEnabled && user) return protect(async () => { await cloudRepo.createProject(user, input); await reload(true) })
       const value: Project = { id: id('project'), clientId: input.clientId, name: input.name, status: input.status ?? 'planning', deadline: input.deadline || null, description: input.description ?? '', createdAt: new Date().toISOString() }
