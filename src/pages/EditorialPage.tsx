@@ -254,7 +254,7 @@ export function EditorialPage({
 
   function changeAccount(next:'all'|EditorialAccount){
     setAccount(next)
-    if(next==='autoscuola_susa' && platform==='whatsapp') setPlatform('all')
+    if((next==='autoscuola_susa' && platform==='whatsapp') || (next==='casaro' && platform==='youtube')) setPlatform('all')
   }
 
   return <>
@@ -278,7 +278,7 @@ export function EditorialPage({
           <span>Canale</span>
           <select value={platform} onChange={e=>setPlatform(e.target.value as 'all'|EditorialPlatform)}>
             <option value="all">Tutti i canali</option>
-            {PLATFORM_ORDER.filter(value=>value!=='whatsapp' || account!=='autoscuola_susa').map(value=><option key={value} value={value}>{editorialPlatformLabel[value]}</option>)}
+            {PLATFORM_ORDER.filter(value=>(value!=='whatsapp' || account!=='autoscuola_susa') && (value!=='youtube' || account!=='casaro')).map(value=><option key={value} value={value}>{editorialPlatformLabel[value]}</option>)}
           </select>
         </label>
 
