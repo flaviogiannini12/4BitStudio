@@ -141,6 +141,12 @@ export function EditorialItemModal({
     const next=saved
       ? (!item && initialAccount ? {...saved,accounts:[initialAccount]} : saved)
       : initial
+    // Le bozze di nuovi contenuti possono provenire da una sessione precedente.
+    // Casaro non dispone di un profilo YouTube: escludilo senza alterare i contenuti storici.
+    if(!item && next.accounts.includes('casaro') && next.platforms.includes('youtube')) {
+      next.platforms=next.platforms.filter(value=>value!=='youtube')
+      if(!next.platforms.length) next.platforms=['facebook']
+    }
     setDraft(next)
     lastSavedSnapshot.current=JSON.stringify(initial)
     setLocalError(null)
@@ -218,6 +224,10 @@ export function EditorialItemModal({
   function toggleAccount(account:EditorialAccount) {
     if(item) {
       let platforms=draft.platforms
+      if(account==='casaro' && platforms.includes('youtube')) {
+        platforms=platforms.filter(value=>value!=='youtube')
+        if(!platforms.length) platforms=['facebook']
+      }
       if(account==='autoscuola_susa' && platforms.includes('whatsapp')) {
         platforms=platforms.filter(value=>value!=='whatsapp')
         if(!platforms.length) platforms=['facebook']
@@ -234,6 +244,10 @@ export function EditorialItemModal({
     if(!accounts.length) return
 
     let platforms=draft.platforms
+    if(accounts.includes('casaro') && platforms.includes('youtube')) {
+      platforms=platforms.filter(value=>value!=='youtube')
+      if(!platforms.length) platforms=['facebook']
+    }
     if((accounts.includes('autoscuola_susa') || accounts.length>1) && platforms.includes('whatsapp')) {
       platforms=platforms.filter(value=>value!=='whatsapp')
       if(!platforms.length) platforms=['facebook']
@@ -244,6 +258,7 @@ export function EditorialItemModal({
 
   function togglePlatform(platform:EditorialPlatform) {
     if(platform==='whatsapp' && !canUseWhatsapp) return
+    if(platform==='youtube' && draft.accounts.includes('casaro')) return
 
     const active=draft.platforms.includes(platform)
 
@@ -432,7 +447,7 @@ export function EditorialItemModal({
         <div className="editorial-choice-block">
           <span className="editorial-choice-label">Canali</span>
           <div className="editorial-choice-chips platform-choice-chips">
-            {PLATFORM_ORDER.filter(platform=>platform!=='whatsapp' || canUseWhatsapp).map(platform=><button
+            {PLATFORM_ORDER.filter(platform=>(platform!=='whatsapp' || canUseWhatsapp) && (platform!=='youtube' || !draft.accounts.includes('casaro'))).map(platform=><button
               type="button"
               key={platform}
               className={`editorial-choice-chip platform-choice platform-logo-choice platform-${platform} ${draft.platforms.includes(platform)?'active':''}`}
