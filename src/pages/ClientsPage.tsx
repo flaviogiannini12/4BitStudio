@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Archive, ArrowDown, ArrowLeft, ArrowUp, Camera, GripVertical, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Camera, CheckCircle2, Clock3, GripVertical, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { countdownLabel, formatShortDate, money } from '../lib/date'
 import { clientStatusLabel, taskStatusLabel } from '../lib/labels'
 import { imageFileToDataUrl } from '../lib/image'
@@ -24,6 +24,10 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
   const activeCount = data.clients.filter(client => client.status !== 'archived' && client.status !== 'lead').length
   const leadCount = data.clients.filter(client => client.status === 'lead').length
   const archiveCount = data.clients.filter(client => client.status === 'archived').length
+  const activeClients = data.clients
+    .filter(client => client.status !== 'archived' && client.status !== 'lead')
+    .sort((a,b) => (a.sortOrder ?? 0)-(b.sortOrder ?? 0))
+  const datedOpenTasks = data.tasks.filter(task => task.status !== 'done' && Boolean(task.dueDate))
 
   const list = data.clients
     .filter(c => tab === 'archive' ? c.status === 'archived' : tab === 'lead' ? c.status === 'lead' : c.status !== 'archived' && c.status !== 'lead')
@@ -50,7 +54,49 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
     await actions.reorderClients(ordered.map(client => client.id))
   }
 
-  return <section className="section-block page-section">
+  return <div className="clients-page-stack">
+    <section className="section-block client-control">
+      <div className="section-heading"><h2>Clienti attivi</h2><span className="counter-pill">{activeClients.length}</span></div>
+      <div className="client-status-grid">
+        {activeClients.map(c => {
+          const tasks=datedOpenTasks.filter(t=>t.clientId===c.id)
+          const next=[...tasks].sort((a,b)=>(a.dueDate ?? '').localeCompare(b.dueDate ?? ''))[0]
+          return <button
+            type="button"
+            key={c.id}
+            className="client-status-card draggable-client-card"
+            draggable
+            onDragStart={event => {
+              event.dataTransfer.setData('text/4bit-client',c.id)
+              event.dataTransfer.effectAllowed='move'
+            }}
+            onDragOver={event => {
+              if(event.dataTransfer.types.includes('text/4bit-client')) event.preventDefault()
+            }}
+            onDrop={event => {
+              event.preventDefault()
+              const draggedId=event.dataTransfer.getData('text/4bit-client')
+              if(!draggedId || draggedId===c.id) return
+              const ordered=activeClients.map(client=>client.id).filter(id=>id!==draggedId)
+              const targetIndex=ordered.indexOf(c.id)
+              if(targetIndex<0) return
+              const rect=event.currentTarget.getBoundingClientRect()
+              ordered.splice(event.clientX>rect.left+rect.width/2?targetIndex+1:targetIndex,0,draggedId)
+              void actions.reorderClients(ordered)
+            }}
+            onClick={()=>onSelect(c.id)}
+          >
+            <div className="client-card-top"><span className={`status-dot status-${c.status}`}/><span>{clientStatusLabel[c.status]}</span><ArrowRight size={15}/></div>
+            <div className="home-client-title"><ClientLogo logoUrl={c.logoUrl} name={c.name}/><h3>{c.name}</h3></div>
+            <div className="client-task-count"><strong>{tasks.length}</strong><span>{tasks.length===1?'task aperta':'task aperte'}</span></div>
+            <div className="client-next">{next?<><Clock3 size={13}/><span>{next.title}</span><b>{formatShortDate(next.dueDate)}</b></>:<><CheckCircle2 size={13}/><span>Nessuna scadenza aperta</span></>}</div>
+          </button>
+        })}
+        {!activeClients.length && <div className="empty-inline">Nessun cliente attivo.</div>}
+      </div>
+    </section>
+
+    <section className="section-block page-section">
     <div className="section-heading responsive-heading">
       <div><p className="eyebrow">Un cliente, un solo fascicolo</p><h2>Clienti</h2></div>
       <button className="primary-button" onClick={() => setCreating(true)}><Plus size={15}/> Nuovo cliente</button>
@@ -107,7 +153,8 @@ export function ClientsPage({ data, actions, selectedId, onSelect, onNew: _onNew
       {list.length === 0 && <div className="empty-page-mini">{tab === 'archive' ? 'Archivio vuoto.' : tab === 'lead' ? 'Nessun lead.' : 'Nessun cliente attivo.'}</div>}
     </div>
     {creating && <RecordEditorModal kind="client" record={null} data={data} actions={actions} onClose={() => setCreating(false)}/>}
-  </section>
+    </section>
+  </div>
 }
 
 function ClientDetail({ client, data, actions, onBack }: { client: Client; data: StudioData; actions: Actions; onBack: () => void }) {
