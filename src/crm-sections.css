@@ -1,0 +1,171 @@
+/* Navigazione CRM a cinque sezioni e sezioni Home riallocate */
+.clients-page-stack{
+  display:grid;
+  gap:20px;
+  min-width:0;
+}
+.clients-page-stack > .client-control,
+.clients-page-stack > .page-section{
+  min-width:0;
+}
+.clients-page-stack .client-control .section-heading{
+  margin-bottom:17px;
+}
+.economy-moved-home{
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);
+  align-items:stretch;
+  gap:16px;
+  min-width:0;
+}
+.economy-moved-home > .section-block{
+  min-width:0;
+  overflow:hidden;
+}
+.economy-moved-home .home-payments-focus{
+  display:block!important;
+  padding:23px;
+}
+.economy-moved-home .home-payments-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:16px;
+}
+.economy-moved-home .home-payments-heading h2,
+.economy-moved-home .recurrences-preview h2{
+  margin:0;
+}
+.economy-moved-home .payment-row{
+  min-width:0;
+  grid-template-columns:90px minmax(0,84px) minmax(0,1fr) auto;
+  gap:12px;
+  padding:10px 12px;
+}
+.economy-moved-home .home-payment-countdown{
+  min-height:50px;
+  padding:7px 10px;
+}
+.economy-moved-home .home-payment-amount{
+  font-size:15px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.economy-moved-home .home-payment-actions{
+  display:flex;
+  justify-content:flex-end;
+}
+.economy-moved-home .home-payment-actions .primary-button{
+  white-space:nowrap;
+}
+.economy-moved-home .home-payment-list .payment-main{
+  min-width:0;
+}
+.economy-moved-home .home-payment-list .payment-main h3,
+.economy-moved-home .home-payment-list .payment-main p{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.economy-moved-home .recurrence-strip{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  overflow:visible;
+  margin:0;
+  padding:0;
+}
+.economy-moved-home .recurrence-strip > div{
+  min-width:0;
+  width:auto;
+  flex:auto;
+}
+.economy-moved-home .recurrence-strip > div > strong,
+.economy-moved-home .recurrence-strip > div > span,
+.economy-moved-home .recurrence-strip > div > small{
+  overflow-wrap:anywhere;
+}
+.economy-tabs{
+  max-width:100%;
+}
+.economy-page .stats-page{
+  min-width:0;
+}
+.merged-team-stats-heading{
+  padding:6px 3px 0;
+}
+.merged-team-stats-heading h2{
+  margin:0;
+  font-size:1.5rem;
+  font-weight:760;
+  letter-spacing:-.045em;
+}
+.team-page-stack > .stats-page{
+  min-width:0;
+}
+@media(max-width:1300px){
+  .economy-moved-home{
+    grid-template-columns:1fr;
+  }
+  .economy-moved-home .recurrence-strip{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:760px){
+  .clients-page-stack{gap:12px}
+  .clients-page-stack .client-control .section-heading{
+    margin-bottom:12px;
+  }
+  .economy-moved-home{
+    gap:12px;
+  }
+  .economy-moved-home .home-payments-focus{
+    display:block!important;
+    padding:14px!important;
+  }
+  .economy-moved-home .payment-list{
+    display:grid;
+    gap:8px;
+  }
+  .economy-moved-home .home-payment-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "deadline amount"
+      "main main"
+      "actions actions"!important;
+    gap:9px 10px;
+    min-width:0;
+    padding:11px!important;
+  }
+  .economy-moved-home .home-payment-countdown{grid-area:deadline}
+  .economy-moved-home .home-payment-amount{grid-area:amount;align-self:center}
+  .economy-moved-home .home-payment-main{grid-area:main}
+  .economy-moved-home .home-payment-actions{grid-area:actions;justify-content:flex-start}
+  .economy-moved-home .recurrence-strip{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin:0;
+    padding:0;
+    overflow:visible;
+  }
+  .economy-moved-home .recurrence-strip > div{
+    min-width:0;
+    width:auto;
+  }
+  .mobile-nav .nav-item-team span{
+    white-space:normal;
+    max-width:70px;
+    line-height:1.05;
+    text-align:center;
+  }
+  .merged-team-stats-heading h2{font-size:1.25rem}
+}
+@media(max-width:440px){
+  .economy-moved-home .recurrence-strip{
+    grid-template-columns:1fr;
+  }
+}
