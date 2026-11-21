@@ -55,7 +55,7 @@ const grossAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(
 const taxAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(grossAmount(amount,true) * .60) : 0
 const netAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(grossAmount(amount,true) * .40) : amount
 
-export function StatsPage({ data }: { data: StudioData }) {
+export function StatsPage({ data, mode = 'team' }: { data: StudioData; mode?: 'financial' | 'team' }) {
   const today = todayISO()
   const now = new Date()
   const year = now.getFullYear()
@@ -204,6 +204,7 @@ export function StatsPage({ data }: { data: StudioData }) {
   const nextDeadlines=openTasks.filter(task=>task.dueDate).sort((a,b)=>(a.dueDate??'').localeCompare(b.dueDate??'')).slice(0,5)
 
   return <div className="stats-page stats-page-v2 stats-money-first">
+    {mode === 'financial' && <>
     <section className="stats-month-hero section-block stats-finance-hero">
       <div className="stats-month-head">
         <div>
@@ -382,7 +383,18 @@ export function StatsPage({ data }: { data: StudioData }) {
           <MoneyMetric icon={Landmark} label="Risultato lordo anno" value={money(yearCashflow)} positive={yearCashflow>=0} sub={money(paidThisYear)+' incassi lordi · '+money(ledgerExpenseYear)+' uscite'}/>
         </div>
       </section>
+    </div>
 
+    <section className="stats-metric-footer">
+      <Metric icon={UsersRound} label="Clienti attivi" value={String(activeClients.length)} sub={activeRecurrences.length+' ricorrenze attive'}/>
+      <Metric icon={Repeat2} label="ARR ricorrente · lordo" value={money(annualRecurring)} sub={money(monthlyRecurringEquivalent)+' / mese equivalente'}/>
+      <Metric icon={WalletCards} label="Incassato anno · lordo" value={money(paidThisYear)} sub={money(taxesThisYear)+' tasse stimate'}/>
+      <Metric icon={Clock3} label="Portafoglio aperto · lordo" value={money(pendingTotal)} sub={money(overdueTotal)+' già scaduti'}/>
+    </section>
+    </>}
+
+    {mode === 'team' && <>
+    <div className="stats-dashboard-grid">
       <section className="section-block stats-card-large stats-task-compact">
         <div className="section-heading">
           <div><p className="eyebrow">Operatività</p><h2>Task, in breve</h2></div>
@@ -432,12 +444,7 @@ export function StatsPage({ data }: { data: StudioData }) {
       </div>
     </section>
 
-    <section className="stats-metric-footer">
-      <Metric icon={UsersRound} label="Clienti attivi" value={String(activeClients.length)} sub={activeRecurrences.length+' ricorrenze attive'}/>
-      <Metric icon={Repeat2} label="ARR ricorrente · lordo" value={money(annualRecurring)} sub={money(monthlyRecurringEquivalent)+' / mese equivalente'}/>
-      <Metric icon={WalletCards} label="Incassato anno · lordo" value={money(paidThisYear)} sub={money(taxesThisYear)+' tasse stimate'}/>
-      <Metric icon={Clock3} label="Portafoglio aperto · lordo" value={money(pendingTotal)} sub={money(overdueTotal)+' già scaduti'}/>
-    </section>
+    </>}
   </div>
 }
 
