@@ -20,10 +20,10 @@ const pages: AppPage[] = ['clients','tasks','editorial','payments','team']
 type CreateKind = 'client' | 'task' | 'payment' | 'recurrence' | 'member'
 
 function readPage(): AppPage {
-  const value = window.location.hash.replace('#','') as AppPage
+  const value = window.location.hash.replace('#','')
   if (value === 'home') return 'clients'
   if (value === 'stats') return 'team'
-  return pages.includes(value) ? value : 'clients'
+  return pages.includes(value as AppPage) ? value as AppPage : 'clients'
 }
 
 const titles: Record<AppPage, { title: string; eyebrow: string }> = {
