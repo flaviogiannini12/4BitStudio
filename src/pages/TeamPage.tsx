@@ -2,6 +2,7 @@ import { CheckSquare2, ChevronDown, Pencil, Plus } from 'lucide-react'
 import { money } from '../lib/date'
 import { memberToneClass } from '../lib/memberTone'
 import { StudioAccessSection } from '../components/StudioAccessSection'
+import { StatsPage } from './StatsPage'
 import { RecordEditorModal } from '../components/RecordEditorModal'
 import { useState } from 'react'
 import type { StudioData } from '../types/studio'
@@ -90,6 +91,8 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
     </section>
 
     <StudioAccessSection/>
+    <div className="merged-team-stats-heading"><h2>Statistiche del team</h2></div>
+    <StatsPage data={data} mode="team"/>
     {editor && <RecordEditorModal kind={editor.kind} record={editor.record} data={data} actions={actions} onClose={() => setEditor(null)}/>}
   </div>
 }
