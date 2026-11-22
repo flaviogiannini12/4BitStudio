@@ -43,8 +43,8 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
     paid: data.compensations.filter(c => (c.memberId === member.id || c.memberName === member.name) && c.status.toLowerCase() === 'pagato').reduce((sum,c) => sum + c.amount, 0),
   }))
 
-  return <div className="team-page-stack">
-    <section className="section-block page-section">
+  const teamSection = (
+    <section className="section-block page-section team-summary-near-tasks">
       <div className="section-heading responsive-heading"><div><p className="eyebrow">Persone, non hardcoded</p><h2>Team</h2></div><button className="primary-button" onClick={() => setEditor({kind:'member',record:null})}><Plus size={15}/> Aggiungi persona</button></div>
       <div className="team-grid">
         {data.members.map(member => {
@@ -76,7 +76,9 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
         })}
       </div>
     </section>
+  )
 
+  return <div className="team-page-stack">
     <section className="section-block compact-block">
       <div className="section-heading"><div><p className="eyebrow">Dall'Excel</p><h2>Compensi team</h2></div><div className="inline-actions"><strong className="stats-total">{money(data.compensations.reduce((s,c) => s+c.amount,0))}</strong><button className="secondary-button" onClick={() => setEditor({kind:'compensation',record:null})}><Plus size={14}/> Aggiungi</button></div></div>
       <div className="compensation-grid">
@@ -91,8 +93,7 @@ export function TeamPage({ data, actions, onNew: _onNew }: { data: StudioData; a
     </section>
 
     <StudioAccessSection/>
-    <div className="merged-team-stats-heading"><h2>Statistiche del team</h2></div>
-    <StatsPage data={data} mode="team"/>
+    <StatsPage data={data} mode="team" overviewAside={teamSection}/>
     {editor && <RecordEditorModal kind={editor.kind} record={editor.record} data={data} actions={actions} onClose={() => setEditor(null)}/>}
   </div>
 }
