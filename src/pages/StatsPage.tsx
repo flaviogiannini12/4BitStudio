@@ -14,6 +14,7 @@ import {
   UsersRound,
   WalletCards,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { countdownLabel, money, todayISO } from '../lib/date'
 import type { StudioData } from '../types/studio'
 
@@ -55,7 +56,7 @@ const grossAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(
 const taxAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(grossAmount(amount,true) * .60) : 0
 const netAmount = (amount:number, invoiced?:boolean) => invoiced ? roundMoney(grossAmount(amount,true) * .40) : amount
 
-export function StatsPage({ data, mode = 'team' }: { data: StudioData; mode?: 'financial' | 'team' }) {
+export function StatsPage({ data, mode = 'team', overviewAside }: { data: StudioData; mode?: 'financial' | 'team'; overviewAside?: ReactNode }) {
   const today = todayISO()
   const now = new Date()
   const year = now.getFullYear()
@@ -407,6 +408,7 @@ export function StatsPage({ data, mode = 'team' }: { data: StudioData; mode?: 'f
           <div><span>Completate</span><strong>{pct(completionRate)}</strong></div>
         </div>
       </section>
+      {overviewAside}
     </div>
 
     <section className="section-block stats-card-large stats-task-numbers-card">
