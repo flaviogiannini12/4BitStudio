@@ -119,35 +119,6 @@ export function PaymentsPage({
   },[sortedCompensations])
 
   return <div className="economy-page">
-    <div className="economy-moved-home">
-      <section className="section-block payments-focus home-payments-focus">
-        <div className="section-heading home-payments-heading">
-          <h2>Pagamenti imminenti</h2>
-          <button className="text-link" onClick={()=>setTab('income')}>Vedi tutti <ArrowRight size={14}/></button>
-        </div>
-        <div className="payment-list home-payment-list">
-          {[...pendingPayments].sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,5).map(p=><article className={`payment-row home-payment-row tone-${countdownTone(p.dueDate)}`} key={p.id}>
-            <div className="countdown-box home-payment-countdown"><small>scadenza</small><strong>{countdownLabel(p.dueDate)}</strong></div>
-            <div className="payment-amount home-payment-amount">{money(p.amount)}</div>
-            <div className="payment-main home-payment-main"><h3>{client(p.clientId)}</h3><p>{p.label}</p></div>
-            <div className="row-actions home-payment-actions"><button className="primary-button compact" onClick={()=>void actions.markPaymentPaid(p.id)}>Segna incassato</button></div>
-          </article>)}
-          {!pendingPayments.length && <div className="empty-inline">Nessun pagamento in sospeso.</div>}
-        </div>
-      </section>
-
-      <section className="section-block compact-block recurrences-preview">
-        <div className="section-heading"><h2>Ricorrenze attive</h2><button className="text-link" onClick={()=>setTab('recurrences')}>Vedi tutte <ArrowRight size={14}/></button></div>
-        <div className="recurrence-strip">
-          {recurrences.filter(r=>r.active).map(r=><div key={r.id}>
-            <strong>{client(r.clientId)}</strong><span>{r.label}</span><b>{money(r.amount)}</b>
-            <small>{r.intervalMonths===1?'mensile':r.intervalMonths===3?'trimestrale':`ogni ${r.intervalMonths} mesi`} · {countdownLabel(r.nextDueDate)}</small>
-          </div>)}
-          {!recurrences.some(r=>r.active) && <div className="empty-inline">Nessuna ricorrenza attiva.</div>}
-        </div>
-      </section>
-    </div>
-
     <div className="economy-tabs" role="tablist" aria-label="Sezioni economia">
       <button className={tab === 'income' ? 'active' : ''} onClick={() => setTab('income')}><CircleDollarSign size={14}/><span>Incassi</span></button>
       <button className={tab === 'compensations' ? 'active' : ''} onClick={() => setTab('compensations')}><WalletCards size={14}/><span>Stipendi</span></button>
@@ -323,6 +294,35 @@ export function PaymentsPage({
       </section>}
 
     {tab === 'statistics' && <StatsPage data={data} mode="financial"/>}
+
+    <div className="economy-moved-home">
+      <section className="section-block payments-focus home-payments-focus">
+        <div className="section-heading home-payments-heading">
+          <h2>Pagamenti imminenti</h2>
+          <button className="text-link" onClick={()=>setTab('income')}>Vedi tutti <ArrowRight size={14}/></button>
+        </div>
+        <div className="payment-list home-payment-list">
+          {[...pendingPayments].sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,5).map(p=><article className={`payment-row home-payment-row tone-${countdownTone(p.dueDate)}`} key={p.id}>
+            <div className="countdown-box home-payment-countdown"><small>scadenza</small><strong>{countdownLabel(p.dueDate)}</strong></div>
+            <div className="payment-amount home-payment-amount">{money(p.amount)}</div>
+            <div className="payment-main home-payment-main"><h3>{client(p.clientId)}</h3><p>{p.label}</p></div>
+            <div className="row-actions home-payment-actions"><button className="primary-button compact" onClick={()=>void actions.markPaymentPaid(p.id)}>Segna incassato</button></div>
+          </article>)}
+          {!pendingPayments.length && <div className="empty-inline">Nessun pagamento in sospeso.</div>}
+        </div>
+      </section>
+
+      <section className="section-block compact-block recurrences-preview">
+        <div className="section-heading"><h2>Ricorrenze attive</h2><button className="text-link" onClick={()=>setTab('recurrences')}>Vedi tutte <ArrowRight size={14}/></button></div>
+        <div className="recurrence-strip">
+          {recurrences.filter(r=>r.active).map(r=><div key={r.id}>
+            <strong>{client(r.clientId)}</strong><span>{r.label}</span><b>{money(r.amount)}</b>
+            <small>{r.intervalMonths===1?'mensile':r.intervalMonths===3?'trimestrale':`ogni ${r.intervalMonths} mesi`} · {countdownLabel(r.nextDueDate)}</small>
+          </div>)}
+          {!recurrences.some(r=>r.active) && <div className="empty-inline">Nessuna ricorrenza attiva.</div>}
+        </div>
+      </section>
+    </div>
 
     {editor && <RecordEditorModal kind={editor.kind} record={editor.record} data={data} actions={actions} onClose={() => setEditor(null)}/>}
   </div>
