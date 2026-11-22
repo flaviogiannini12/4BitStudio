@@ -31,7 +31,7 @@ const titles: Record<AppPage, { title: string; eyebrow: string }> = {
   tasks: { title: 'Cosa c’è da fare.', eyebrow: '' },
   editorial: { title: '', eyebrow: '' },
   payments: { title: 'Economia dello studio.', eyebrow: '' },
-  team: { title: 'Team e statistiche.', eyebrow: '' },
+  team: { title: 'Team', eyebrow: '' },
 }
 
 export default function App() {
