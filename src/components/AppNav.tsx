@@ -1,4 +1,4 @@
-import { BarChart3, CalendarRange, CheckSquare2, CircleDollarSign, UsersRound } from 'lucide-react'
+import { Users, CalendarRange, CheckSquare2, CircleDollarSign, UsersRound } from 'lucide-react'
 
 export type AppPage = 'clients' | 'tasks' | 'editorial' | 'payments' | 'team'
 
@@ -7,7 +7,7 @@ const items = [
   { id: 'tasks' as const, label: 'Task', icon: CheckSquare2 },
   { id: 'editorial' as const, label: 'Piano Editoriale', mobileLabel: 'Editoriale', icon: CalendarRange },
   { id: 'payments' as const, label: 'Economia', icon: CircleDollarSign },
-  { id: 'team' as const, label: 'Team e statistiche', mobileLabel: 'Team', icon: BarChart3 }
+  { id: 'team' as const, label: 'Team', icon: Users }
 ]
 
 export function AppNav({ page, onChange }: { page: AppPage; onChange: (page: AppPage) => void }) {
